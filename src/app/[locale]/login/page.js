@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 
 import { apiFetch, saveSession } from "@/lib/apiClient";
 import PasswordInput from "@/components/PasswordInput";
+import Icon from "@/components/ui/Icon";
 
 function LoginContent() {
   const router = useRouter();
@@ -52,7 +53,7 @@ function LoginContent() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-3xl"></span>
+            <Icon name="sprout" size={30} className="text-white" strokeWidth={1.8} />
           </div>
           <h1 className="text-2xl font-black text-gray-900">FermerMarket</h1>
           <p className="text-gray-500 text-sm mt-1">Kabinetinizə daxil olun</p>
@@ -62,7 +63,7 @@ function LoginContent() {
           <div className="p-6">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-4 flex items-center gap-2">
-              <span>️</span> {error}
+              <Icon name="alert" size={16} className="shrink-0" /> {error}
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">

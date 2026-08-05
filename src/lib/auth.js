@@ -2,15 +2,37 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
-const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || "dev-access-secret";
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "dev-refresh-secret";
+export function validateJwtSecrets() {
+  const accessSecret = process.env.JWT_ACCESS_SECRET;
+  const refreshSecret = process.env.JWT_REFRESH_SECRET;
 
-if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
-  console.warn("JWT secrets are not configured; using development fallback values.");
+  if (!accessSecret || !refreshSecret) {
+    throw new Error(
+      "CRITICAL: JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be set in environment variables. Never use fallback secrets in production!"
+    );
+  }
+
+  if (accessSecret.length < 32) {
+    throw new Error("JWT_ACCESS_SECRET must be at least 32 characters long.");
+  }
+
+  if (refreshSecret.length < 32) {
+    throw new Error("JWT_REFRESH_SECRET must be at least 32 characters long.");
+  }
+
+  return { accessSecret, refreshSecret };
 }
 
-const ACCESS_TOKEN_TTL = "15m"; // changed from "365d" to "15m" for enhanced security
-const REFRESH_TOKEN_TTL_DAYS = 30; // changed from 3650 to 30 days as standard best practice
+function getAccessSecret() {
+  return validateJwtSecrets().accessSecret;
+}
+
+function getRefreshSecret() {
+  return validateJwtSecrets().refreshSecret;
+}
+
+const ACCESS_TOKEN_TTL = "15m";
+const REFRESH_TOKEN_TTL_DAYS = 30;
 
 export async function hashPassword(plain) {
   const salt = await bcrypt.genSalt(12);
@@ -24,13 +46,13 @@ export async function verifyPassword(plain, hash) {
 export function signAccessToken(user) {
   return jwt.sign(
     { sub: user.id, role: user.role, email: user.email },
-    ACCESS_SECRET,
+    getAccessSecret(),
     { expiresIn: ACCESS_TOKEN_TTL }
   );
 }
 
 export function signRefreshToken(user) {
-  return jwt.sign({ sub: user.id }, REFRESH_SECRET, {
+  return jwt.sign({ sub: user.id }, getRefreshSecret(), {
     expiresIn: `${REFRESH_TOKEN_TTL_DAYS}d`,
   });
 }
@@ -42,16 +64,18 @@ export function refreshTokenExpiryDate() {
 }
 
 export function verifyAccessToken(token) {
+  const secret = getAccessSecret();
   try {
-    return jwt.verify(token, ACCESS_SECRET);
+    return jwt.verify(token, secret);
   } catch {
     return null;
   }
 }
 
 export function verifyRefreshToken(token) {
+  const secret = getRefreshSecret();
   try {
-    return jwt.verify(token, REFRESH_SECRET);
+    return jwt.verify(token, secret);
   } catch {
     return null;
   }
@@ -79,15 +103,6 @@ export function getAuthUser(request) {
   return null;
 }
 
-/**
- * Role-based access guard. Usage inside a route handler:
- *   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
- *   if (denied) return denied;
- */
-/**
- * Generates a raw reset token (sent to the user) and its SHA-256 hash
- * (stored in DB). Never store the raw token — only the hash.
- */
 export function generatePasswordResetToken() {
   const rawToken = crypto.randomBytes(32).toString("hex");
   const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");

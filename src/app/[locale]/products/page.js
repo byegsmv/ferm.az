@@ -7,8 +7,23 @@ import { getAdSlotContent } from "@/lib/adSlots";
 import { resolveCategorySlugs } from "@/lib/categoryFilter";
 import AdvancedFilterSidebar from "@/components/products/AdvancedFilterSidebar";
 import SideBanner from "@/components/Banners/SideBanner";
+import Icon from "@/components/ui/Icon";
 
 export const dynamic = "force-dynamic";
+
+function getPageWindow(current, total, delta = 1) {
+  const pages = [];
+  const range = [];
+  for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+    range.push(i);
+  }
+  pages.push(1);
+  if (range[0] > 2) pages.push("…");
+  pages.push(...range);
+  if (range[range.length - 1] < total - 1) pages.push("…");
+  if (total > 1) pages.push(total);
+  return pages;
+}
 
 export async function generateMetadata({ searchParams }) {
   const sp = await searchParams;
@@ -179,7 +194,7 @@ export default async function ProductsPage({ searchParams }) {
 
           {showFallbackBanner && (
             <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-800 mb-6">
-              ️ Bu kateqoriyada dəqiq uyğun elan tapılmadı. Sizin üçün oxşar kateqoriyaların elanlarını göstəririk.
+              <Icon name="alert" size={18} className="shrink-0 text-amber-600" /> Bu kateqoriyada dəqiq uyğun elan tapılmadı. Sizin üçün oxşar kateqoriyaların elanlarını göstəririk.
             </div>
           )}
 
@@ -195,16 +210,16 @@ export default async function ProductsPage({ searchParams }) {
           </div>
 
           {products.length === 0 ? (
-            <div className="text-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+            <div className="text-center py-16 sm:py-24 bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center justify-center px-4">
               <div className="w-20 h-20 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mb-4">
-                <span className="text-4xl"></span>
+                <Icon name="search" size={32} strokeWidth={1.6} />
               </div>
               <h2 className="text-xl font-bold text-gray-900 mb-2">Heç bir elan tapılmadı</h2>
               <p className="text-gray-500 max-w-sm mb-6">Axtarış şərtlərinizə uyğun nəticə yoxdur. Zəhmət olmasa filtrləri dəyişərək yenidən yoxlayın.</p>
               <a href="/products" className="btn-primary px-8">Filtrləri Sıfırla</a>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
               {products.map((p, i) => (
                 <Fragment key={p.id}>
                   <ProductCard product={{ id: p.id, slug: p.slug, title: p.titleAz, titleAz: p.titleAz, price: Number(p.price), coverImage: p.images[0]?.url || p.images?.[0]?.url, region: p.region, city: p.city, isCorporate: p.isCorporate, tags: p.tags }} />
@@ -219,20 +234,49 @@ export default async function ProductsPage({ searchParams }) {
           )}
 
           {!isFallback && totalPages > 1 && (
-            <div className="flex justify-center flex-wrap gap-2 mt-10">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                <Link
-                  key={n}
-                  href={{ pathname: "/products", query: { ...sp, page: n } }}
-                  className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
-                    n === pageNum 
-                      ? "bg-brand-600 text-white shadow-lg shadow-brand-200" 
-                      : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
-                  }`}
-                >
-                  {n}
-                </Link>
-              ))}
+            <div className="flex justify-center items-center flex-wrap gap-1.5 sm:gap-2 mt-8 sm:mt-10">
+              <Link
+                href={{ pathname: "/products", query: { ...sp, page: Math.max(1, pageNum - 1) } }}
+                aria-disabled={pageNum === 1}
+                className={`h-10 w-10 flex items-center justify-center rounded-xl text-sm font-bold border transition-all ${
+                  pageNum === 1
+                    ? "pointer-events-none opacity-40 bg-white border-gray-200 text-gray-400"
+                    : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+                }`}
+              >
+                <Icon name="arrowLeft" size={16} />
+              </Link>
+
+              {getPageWindow(pageNum, totalPages).map((n, idx) =>
+                n === "…" ? (
+                  <span key={`dots-${idx}`} className="w-10 h-10 flex items-center justify-center text-gray-400 select-none">…</span>
+                ) : (
+                  <Link
+                    key={n}
+                    href={{ pathname: "/products", query: { ...sp, page: n } }}
+                    aria-current={n === pageNum ? "page" : undefined}
+                    className={`h-10 w-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
+                      n === pageNum
+                        ? "bg-brand-600 text-white shadow-lg shadow-brand-200"
+                        : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+                    }`}
+                  >
+                    {n}
+                  </Link>
+                )
+              )}
+
+              <Link
+                href={{ pathname: "/products", query: { ...sp, page: Math.min(totalPages, pageNum + 1) } }}
+                aria-disabled={pageNum === totalPages}
+                className={`h-10 w-10 flex items-center justify-center rounded-xl text-sm font-bold border transition-all ${
+                  pageNum === totalPages
+                    ? "pointer-events-none opacity-40 bg-white border-gray-200 text-gray-400"
+                    : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+                }`}
+              >
+                <Icon name="arrowRight" size={16} />
+              </Link>
             </div>
           )}
         </div>

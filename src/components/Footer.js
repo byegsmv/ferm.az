@@ -6,13 +6,14 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="bg-gray-900 text-gray-300 pt-12 md:pt-16 pb-16 md:pb-20 mt-8 md:mt-12">
-      <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="relative bg-gray-900 text-gray-300 pt-12 md:pt-16 pb-16 md:pb-20 mt-8 md:mt-12">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/60 to-transparent" />
+      <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10">
         
         {/* Brand & Description */}
-        <div className="col-span-1 md:col-span-1 flex flex-col gap-4">
+        <div className="col-span-1 sm:col-span-2 md:col-span-1 flex flex-col gap-4">
           <Link href="/" className="flex items-center group w-fit">
-            <img src="/logo.png" alt="FermerMarket Logo" className="h-24 md:h-32 w-auto object-contain group-hover:scale-105 transition-transform duration-200" />
+            <img src="/logo.png" alt="FermerMarket Logo" className="h-10 md:h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-200" />
           </Link>
           <p className="text-sm text-gray-400">
             Fermerlər, mağazalar, aqronomlar və alıcılar üçün AI dəstəkli vahid kənd təsərrüfatı ekosistemi.

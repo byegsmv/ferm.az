@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, requireRole } from "@/lib/auth";
 import { blogCreateSchema } from "@/lib/validators";
+import { sanitizeHtml } from "@/lib/security/sanitizer";
 import slugify from "slugify";
 
 // GET /api/blog — public: published posts (or all, for admin/agronomist with ?all=1)
@@ -57,9 +58,17 @@ export async function POST(request) {
     slug = `${baseSlug}-${++n}`;
   }
 
+  const sanitizedData = {
+    ...parsed.data,
+    ...(parsed.data.contentAz ? { contentAz: sanitizeHtml(parsed.data.contentAz) } : {}),
+    ...(parsed.data.contentEn ? { contentEn: sanitizeHtml(parsed.data.contentEn) } : {}),
+    ...(parsed.data.contentRu ? { contentRu: sanitizeHtml(parsed.data.contentRu) } : {}),
+    ...(parsed.data.content ? { content: sanitizeHtml(parsed.data.content) } : {}),
+  };
+
   const post = await prisma.blogPost.create({
     data: {
-      ...parsed.data,
+      ...sanitizedData,
       slug,
       authorId: authUser.sub,
       publishedAt: parsed.data.isPublished ? new Date() : null,

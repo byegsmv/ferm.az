@@ -270,7 +270,7 @@ function MessagesInner() {
                     onClick={closeChat}
                     className="md:hidden w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
                   >
-                    <Icon name="chevronLeft" size={20} />
+                    <Icon name="arrowLeft" size={20} />
                   </button>
                   
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center font-bold text-brand-800 text-sm flex-shrink-0 shadow-inner">

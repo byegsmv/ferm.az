@@ -98,7 +98,7 @@ export default async function CategoriesPage() {
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-gray-900 text-sm">{t('popularBrands')}</h3>
                 <Link href="/brands" className="text-xs text-green-600 font-semibold hover:underline flex items-center gap-0.5">
-                  {t('viewAll')} <Icon name="chevron-right" size={12} />
+                  {t('viewAll')} <Icon name="arrowRight" size={12} />
                 </Link>
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -128,7 +128,7 @@ export default async function CategoriesPage() {
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-gray-900 text-sm">{t('popularStores')}</h3>
                 <Link href="/stores" className="text-xs text-green-600 font-semibold hover:underline flex items-center gap-0.5">
-                  {t('viewAll')} <Icon name="chevron-right" size={12} />
+                  {t('viewAll')} <Icon name="arrowRight" size={12} />
                 </Link>
               </div>
               <div className="space-y-1.5">
@@ -157,7 +157,7 @@ export default async function CategoriesPage() {
                       </div>
                       <div className="text-xs text-gray-400">{store._count.products} {t('products')}</div>
                     </div>
-                    <Icon name="chevron-right" size={14} className="text-gray-300 group-hover:text-green-500 transition-colors flex-shrink-0" />
+                    <Icon name="arrowRight" size={14} className="text-gray-300 group-hover:text-green-500 transition-colors flex-shrink-0" />
                   </Link>
                 ))}
               </div>

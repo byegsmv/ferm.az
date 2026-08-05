@@ -38,8 +38,8 @@ export default function CartPage() {
           const isWholesalePriceApplied = item.isCorporate && item.wholesaleMinQty && item.quantity >= item.wholesaleMinQty && item.wholesalePrice;
 
           return (
-            <div key={item.productId} className="card p-3 flex items-center gap-3">
-              <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+            <div key={item.productId} className="card p-3 sm:p-4 flex items-center gap-3 rounded-2xl">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                 {item.coverImage ? (
                   <SafeImage src={item.coverImage} alt={item.title} fill className="object-cover" />
                 ) : (
@@ -60,21 +60,24 @@ export default function CartPage() {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
-                  className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-40 font-bold text-base transition-colors"
+                  aria-label="Azalt"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 active:scale-95 disabled:opacity-40 font-bold text-base transition-all"
                   disabled={item.quantity <= minQty}
                   onClick={() => refresh(updateQuantity(item.productId, item.quantity - 1))}
                   ><span aria-hidden="true">−</span></button>
                 <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
                 <button
-                  className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 font-bold text-base transition-colors"
+                  aria-label="Artır"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 active:scale-95 font-bold text-base transition-all"
                   onClick={() => refresh(updateQuantity(item.productId, item.quantity + 1))}
                 ><Icon name="plus" size={15} /></button>
               </div>
               <button
                 onClick={() => refresh(removeFromCart(item.productId))}
-                className="text-red-400 hover:text-red-600 transition-colors p-1"
+                aria-label="Sil"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 active:scale-95 transition-all"
               ><Icon name="close" size={16} /></button>
             </div>
           );

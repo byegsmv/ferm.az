@@ -54,7 +54,9 @@ export default function CheckoutPage() {
   if (success) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
-        <p className="text-5xl mb-3"></p>
+        <div className="w-16 h-16 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mx-auto mb-4">
+          <Icon name="checkCircle" size={36} strokeWidth={1.8} />
+        </div>
         <h1 className="text-2xl font-black">Sifariş qəbul edildi!</h1>
         <p className="text-gray-500 mt-2">Sifariş nömrəniz: {success.id?.slice(0, 8)}</p>
         <p className="text-brand-700 font-bold text-lg mt-1">{Number(success.total || 0).toFixed(2)} AZN</p>
@@ -70,7 +72,13 @@ export default function CheckoutPage() {
   }
 
   if (items.length === 0) {
-    return <div className="max-w-md mx-auto px-4 py-16 text-center text-gray-400">Səbətiniz boşdur.</div>;
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <Icon name="cart" size={44} className="mx-auto mb-3 text-gray-300" strokeWidth={1.4} />
+        <p className="text-gray-500 font-medium">Səbətiniz boşdur.</p>
+        <a href="/products" className="btn-primary inline-block mt-5">Elanlara bax</a>
+      </div>
+    );
   }
 
   return (

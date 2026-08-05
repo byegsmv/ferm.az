@@ -93,7 +93,13 @@ import {
   Sliders,
   ThumbsUp,
   UserCheck,
-  Shield
+  Shield,
+  BadgeCheck,
+  GitMerge,
+  Loader2,
+  Paperclip,
+  ShoppingBag,
+  Smile
 } from "lucide-react";
 
 export const ICONS = {
@@ -220,6 +226,24 @@ export const ICONS = {
   thumbsUp: ThumbsUp,
   userCheck: UserCheck,
   shield: Shield,
+  // — Aliases for call sites using alternate casing/naming (kept for compatibility) —
+  "badge-check": BadgeCheck,
+  "check-circle": CircleCheck,
+  "chevron-down": ChevronDown,
+  cpu: Cpu,
+  document: FileText,
+  edit: Pencil,
+  "file-text": FileText,
+  "git-merge": GitMerge,
+  layoutDashboard: LayoutDashboard,
+  loader: Loader2,
+  "map-pin": MapPin,
+  "message-circle": MessageCircle,
+  paperclip: Paperclip,
+  "shopping-bag": ShoppingBag,
+  shoppingBag: ShoppingBag,
+  smile: Smile,
+  x: X,
 };
 
 export default function Icon({ name, size = 18, strokeWidth = 1.8, className = "", ...props }) {

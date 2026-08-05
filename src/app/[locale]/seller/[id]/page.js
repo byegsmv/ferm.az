@@ -91,7 +91,9 @@ export default async function SellerProfilePage({ params }) {
            
            {seller.products.length === 0 ? (
              <div className="bg-white rounded-3xl p-10 text-center border border-gray-100 shadow-sm">
-                <span className="text-4xl"></span>
+                <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto">
+                  <Icon name="package" size={30} strokeWidth={1.6} />
+                </div>
                 <p className="mt-3 font-semibold text-gray-900">Hələlik elan yoxdur</p>
                 <p className="text-sm text-gray-500">Bu satıcının aktiv elanı yoxdur.</p>
              </div>
