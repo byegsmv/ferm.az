@@ -12,22 +12,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
-
       - name: Install dependencies
         run: npm ci
-
       - name: Build
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
       - name: Deploy to Vercel (Production)
         run: vercel deploy --prod --yes
         env:
