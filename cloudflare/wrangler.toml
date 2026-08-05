@@ -1,0 +1,6 @@
+name = "fermermarket-email-worker"
+main = "email-worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+WEBHOOK_URL = "https://fermermarket.az/api/emails/webhook"

@@ -113,3 +113,6 @@ export function requireRole(authUser, allowedRoles) {
   }
   return null;
 }
+
+export const getTokenFromRequest = getAuthUser;
+export const verifyToken = verifyAccessToken;
