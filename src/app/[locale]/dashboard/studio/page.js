@@ -26,12 +26,19 @@ export default function StudioPage() {
     // Listen for clicks inside the iframe preview
     const handleMessage = (e) => {
       if (e.data?.type === "FMK_BLOCK_CLICK") {
-        setActiveBlockIndex(e.data.index);
+        const incomingIndex = e.data.index;
+        if (
+          Number.isInteger(incomingIndex) &&
+          incomingIndex >= 0 &&
+          incomingIndex < blocks.length
+        ) {
+          setActiveBlockIndex(incomingIndex);
+        }
       }
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }, [blocks.length]);
 
   async function fetchBlocks() {
     try {
@@ -104,7 +111,12 @@ export default function StudioPage() {
   };
 
   const updateActiveBlock = (key, value) => {
-    if (activeBlockIndex === null) return;
+    if (
+      activeBlockIndex === null ||
+      !Number.isInteger(activeBlockIndex) ||
+      activeBlockIndex < 0 ||
+      activeBlockIndex >= blocks.length
+    ) return;
     const updated = [...blocks];
     updated[activeBlockIndex].props = {
       ...updated[activeBlockIndex].props,
