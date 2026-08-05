@@ -14,6 +14,20 @@ function isPhone(str) {
   return /^(\+?\d{7,15})$/.test(cleaned);
 }
 
+// Normalize phone for matching: try multiple formats
+// e.g., +994102391705 → ["+994102391705", "994102391705", "0102391705"]
+function phoneVariants(phoneInput) {
+  const cleaned = phoneInput.replace(/[\s\-()]/g, "");
+  const variants = [cleaned];
+  const withoutPlus = cleaned.replace(/^\+/, "");
+  if (withoutPlus !== cleaned) variants.push(withoutPlus);
+  // Azerbaijani format: +994XXXXXXXXX → 0XXXXXXXXX
+  if (withoutPlus.startsWith("994")) {
+    variants.push("0" + withoutPlus.slice(3));
+  }
+  return [...new Set(variants)];
+}
+
 export async function POST(request) {
   // Apply rate limiting: 5 attempts / hour
   const rl = rateLimit(request, { limit: 5, windowMs: 60 * 60_000, keyPrefix: "pwd_reset" });
@@ -35,16 +49,22 @@ export async function POST(request) {
   const trimmed = identifier.trim();
   const viaPhone = isPhone(trimmed);
 
-  // Find user by email, phone, or username (case-insensitive for email/username)
+  // Build search conditions
+  const searchConditions = [
+    { email: { equals: trimmed, mode: "insensitive" } },
+    { username: { equals: trimmed, mode: "insensitive" } },
+  ];
+
+  if (viaPhone) {
+    // Add all phone format variants
+    for (const variant of phoneVariants(trimmed)) {
+      searchConditions.push({ phone: variant });
+    }
+  }
+
+  // Find user by email, phone, or username
   const user = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { email: { equals: trimmed, mode: "insensitive" } },
-        { phone: trimmed },
-        { phone: trimmed.replace(/^\+/, "") },
-        { username: { equals: trimmed, mode: "insensitive" } },
-      ],
-    },
+    where: { OR: searchConditions },
     select: { id: true, email: true, phone: true, fullName: true },
   });
 
