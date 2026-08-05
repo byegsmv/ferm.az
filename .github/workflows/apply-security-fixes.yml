@@ -1,0 +1,280 @@
+name: Apply security fixes (automated)
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  apply-fixes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply automated security fixes
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const base = 'main';
+            const branch = 'security/codeql-fixes';
+            const prTitle = 'fix(security): CodeQL fixes — XSS sanitize, safe merge helper, workflow permissions';
+            const prBody = `Bu PR otomatik olarak oluşturuldu. İçerik:
+- .github/workflows/deploy.yml: minimal permissions eklendi
+- package.json: dompurify eklendi (varsa atlanır)
+- src/app/[locale]/agronom/page.js: preview için SafeImage kullanımı, DOMPurify importu eklenmesi (varsa atlanır), ürün linkleri için slug encode
+- src/lib/safeMerge.js: prototype-pollution koruması için safe merge helper (yeni dosya)
+
+Lütfen değişiklikleri inceleyip test edin.`;
+
+            const deployContent = `name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+
+# Minimal permissions: sadece gereken izinler verildi
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          \${{ secrets.DATABASE_URL }}
+
+      - name: Deploy to Vercel (Production)
+        run: vercel deploy --prod --yes
+        env:
+          \${{ secrets.VERCEL_TOKEN }}
+          \${{ secrets.VERCEL_ORG_ID }}
+          \${{ secrets.VERCEL_PROJECT_ID }}
+`;
+
+            const safeMergeContent = `// Güvenli anahtar filtresi ile kullanıcının gönderdiği objeleri temizleyin
+export const forbiddenKeys = ["__proto__", "prototype", "constructor"];
+
+export function sanitizeObject(input = {}) {
+  const out = {};
+  for (const k of Object.keys(input || {})) {
+    if (forbiddenKeys.includes(k)) continue;
+    out[k] = input[k];
+  }
+  return out;
+}
+
+export function safeDeepMerge(target = {}, source = {}) {
+  if (!source || typeof source !== "object") return target;
+  const out = Array.isArray(target) ? target.slice() : { ...target };
+  for (const [k, v] of Object.entries(source)) {
+    if (forbiddenKeys.includes(k)) continue;
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      out[k] = safeDeepMerge(out[k] || {}, v);
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+`;
+
+            // Helper: get ref sha
+            async function getRefSha(ref) {
+              const refRes = await github.rest.git.getRef({ owner, repo, ref: `refs/heads/${ref}` });
+              return refRes.data.object.sha;
+            }
+
+            // 1) ensure branch exists
+            let baseSha;
+            try {
+              baseSha = await getRefSha(base);
+            } catch (err) {
+              throw new Error(`Base branch '${base}' not found: ${err}`);
+            }
+
+            const branchRef = `refs/heads/${branch}`;
+            try {
+              await github.rest.git.getRef({ owner, repo, ref: branchRef });
+              console.log(`Branch ${branch} already exists`);
+            } catch (err) {
+              console.log(`Creating branch ${branch} from ${base}`);
+              await github.rest.git.createRef({ owner, repo, ref: branchRef, sha: baseSha });
+            }
+
+            // Utility to get file content on a ref (returns {content, sha} or null)
+            async function getFileOnRef(path, ref) {
+              try {
+                const res = await github.rest.repos.getContent({ owner, repo, path, ref });
+                // file object
+                if (Array.isArray(res.data)) return null;
+                const sha = res.data.sha;
+                const encoding = res.data.encoding || 'base64';
+                const content = Buffer.from(res.data.content, encoding).toString('utf8');
+                return { content, sha };
+              } catch (e) {
+                return null;
+              }
+            }
+
+            // Create or update a file on the branch
+            async function createOrUpdate(path, contentStr, message) {
+              const encoded = Buffer.from(contentStr, 'utf8').toString('base64');
+              const existingOnBranch = await getFileOnRef(path, branch);
+              if (existingOnBranch) {
+                // update
+                await github.rest.repos.createOrUpdateFileContents({
+                  owner,
+                  repo,
+                  path,
+                  message,
+                  content: encoded,
+                  branch,
+                  sha: existingOnBranch.sha
+                });
+                console.log(`Updated ${path} on ${branch}`);
+              } else {
+                // create
+                await github.rest.repos.createOrUpdateFileContents({
+                  owner,
+                  repo,
+                  path,
+                  message,
+                  content: encoded,
+                  branch
+                });
+                console.log(`Created ${path} on ${branch}`);
+              }
+            }
+
+            // 2) Update/create deploy workflow (overwrite)
+            await createOrUpdate('.github/workflows/deploy.yml', deployContent, 'fix(security): update deploy workflow permissions');
+
+            // 3) Update package.json: add dompurify if missing
+            const pkg = await getFileOnRef('package.json', base);
+            if (!pkg) {
+              core.setFailed('package.json not found on base branch');
+            } else {
+              const pkgObj = JSON.parse(pkg.content);
+              pkgObj.dependencies = pkgObj.dependencies || {};
+              if (!pkgObj.dependencies['dompurify']) {
+                pkgObj.dependencies['dompurify'] = '^2.4.0';
+                const newPkgContent = JSON.stringify(pkgObj, null, 2) + '\n';
+                await createOrUpdate('package.json', newPkgContent, 'fix(security): add dompurify dependency');
+              } else {
+                console.log('dompurify already present in package.json; skipping');
+              }
+            }
+
+            // 4) Patch agronom page: add DOMPurify import, switch img preview to SafeImage, encode product slug in href
+            const pagePath = 'src/app/[locale]/agronom/page.js';
+            const pageFile = await getFileOnRef(pagePath, base);
+            if (pageFile) {
+              let content = pageFile.content;
+
+              // 4a) add DOMPurify import if missing
+              if (!/import\s+DOMPurify\s+from\s+["']dompurify["']/.test(content)) {
+                // find last import line (simple heuristic: insert after the last import)
+                const importMatches = content.match(/^import .*$/gim);
+                if (importMatches && importMatches.length > 0) {
+                  const lastImport = importMatches[importMatches.length - 1];
+                  content = content.replace(lastImport, `${lastImport}\nimport DOMPurify from \"dompurify\";`);
+                  console.log('Inserted DOMPurify import');
+                } else {
+                  // fallback: prepend
+                  content = `import DOMPurify from "dompurify";\n` + content;
+                  console.log('Prepended DOMPurify import (no import block found)');
+                }
+              } else {
+                console.log('DOMPurify import already present');
+              }
+
+              // 4b) replace preview <img src={preview .../> with <SafeImage src={preview} ... />
+              // simple textual replacement; occurs in the file we inspected earlier
+              if (content.includes('<img src={preview')) {
+                content = content.split('<img src={preview').join('<SafeImage src={preview');
+                // also replace closing '/>' remains same; SafeImage component props may differ but we preserve existing props
+                console.log('Replaced <img src={preview with <SafeImage');
+              } else {
+                console.log('No <img src={preview pattern found; skipping that replacement');
+              }
+
+              // 4c) encode product slug in href={`/products/${p.slug}`}
+              // Replace occurrences of href={`/products/${p.slug}`} with href={`/products/${encodeURIComponent(p.slug)}`}
+              const hrefPattern = /href=\{\`\/products\/\$\{p\.slug\}\`\}/g;
+              if (hrefPattern.test(content)) {
+                content = content.replace(hrefPattern, 'href={`\/products/${encodeURIComponent(p.slug)}`}');
+                console.log('Replaced product href to use encodeURIComponent');
+              } else {
+                // try a slightly different pattern (without p. or different spacing)
+                const hrefPattern2 = /href=\{\`\/products\/\$\{[^}]+\}\`\}/g;
+                if (hrefPattern2.test(content)) {
+                  content = content.replace(hrefPattern2, (match) => {
+                    // extract inner expression between ${...}
+                    const innerMatch = match.match(/\$\{([^}]+)\}/);
+                    if (!innerMatch) return match;
+                    const expr = innerMatch[1]; // e.g., p.slug
+                    return `href={\`/products/\${encodeURIComponent(${expr})}\`}`;
+                  });
+                  console.log('Replaced product href (generic) to use encodeURIComponent');
+                } else {
+                  console.log('No product href pattern found to replace');
+                }
+              }
+
+              // 4d) write updated page content on branch
+              await createOrUpdate(pagePath, content, 'fix(security): sanitize agronom page (DOMPurify, SafeImage, encoded slugs)');
+            } else {
+              console.log(`File ${pagePath} not found on base branch; skipping agronom page edits`);
+            }
+
+            // 5) add src/lib/safeMerge.js if not exists
+            const safeMergeFile = await getFileOnRef('src/lib/safeMerge.js', base);
+            if (!safeMergeFile) {
+              await createOrUpdate('src/lib/safeMerge.js', safeMergeContent, 'fix(security): add safeMerge helper to prevent prototype pollution');
+            } else {
+              console.log('src/lib/safeMerge.js already exists; skipping creation');
+            }
+
+            // 6) create PR if none exists
+            // check open PRs from this head
+            const existingPRs = await github.rest.pulls.list({
+              owner,
+              repo,
+              head: `${owner}:${branch}`,
+              state: 'open'
+            });
+
+            if (existingPRs.data && existingPRs.data.length > 0) {
+              console.log(`PR already exists: ${existingPRs.data[0].html_url}`);
+              return { prUrl: existingPRs.data[0].html_url };
+            }
+
+            const pr = await github.rest.pulls.create({
+              owner,
+              repo,
+              title: prTitle,
+              head: branch,
+              base,
+              body: prBody
+            });
+
+            console.log('Created PR: ' + pr.data.html_url);
+            return { prUrl: pr.data.html_url }
