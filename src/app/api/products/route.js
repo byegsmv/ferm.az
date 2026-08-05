@@ -160,7 +160,7 @@ export async function GET(request) {
       coverImage: p.images?.[0]?.url || null,
       titleAz: mine ? p.titleAz : undefined,
       images: mine ? p.images?.map((img) => ({ url: img.url, altText: img.altText })) : undefined,
-      category: p.category?.slug,
+      category: p.category ? { slug: p.category.slug, nameAz: p.category.nameAz, nameEn: p.category.nameEn, nameRu: p.category.nameRu } : null,
       store: p.store ? { name: p.store.name, slug: p.store.slug } : null,
       preparativeForm: p.preparativeForm,
       useNorm: p.useNorm,

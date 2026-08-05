@@ -51,9 +51,9 @@ export default function ProductGrid({
   function getImageUrl(product) {
     if (product.images && product.images.length > 0) {
       const first = product.images[0];
-      return typeof first === "string" ? first : first.url || "/placeholder.png";
+      return typeof first === "string" ? first : first.url || "/placeholder.svg";
     }
-    return product.image || "/placeholder.png";
+    return product.image || "/placeholder.svg";
   }
 
   // Skeleton loading state
@@ -133,6 +133,7 @@ export default function ProductGrid({
                     src={getImageUrl(product)}
                     alt={title}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => { e.target.src = "/placeholder.svg"; }}
                   />
 
                   {/* Checkbox Overlay (Top-Left) */}
