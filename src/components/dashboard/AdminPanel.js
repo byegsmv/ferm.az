@@ -233,6 +233,9 @@ function UsersManager() {
   const [editUser,setEditUser]=useState(null);
   const [pwUser,setPwUser]=useState(null);
   const [pwValue,setPwValue]=useState("");
+  const [walletUser,setWalletUser]=useState(null);
+  const [walletData,setWalletData]=useState({balance:0,coins:0,loading:false});
+  const [walletSaving,setWalletSaving]=useState(false);
   const { toast, ToastContainer } = useToast();
   useEffect(()=>{
     setLoading(true);
@@ -271,6 +274,30 @@ function UsersManager() {
       setPwUser(null);
       setPwValue("");
     }catch(e){toast(e.message,"error");}
+  }
+  async function openWallet(user){
+    setWalletUser(user);
+    setWalletData({balance:0,coins:0,loading:true});
+    try{
+      const res = await apiFetch(`/api/admin/users/${user.id}/wallet`);
+      setWalletData({balance:Number(res.wallet?.balance||0),coins:Number(res.wallet?.coins||0),loading:false});
+    }catch(e){
+      toast(e.message,"error");
+      setWalletData({balance:0,coins:0,loading:false});
+    }
+  }
+  async function saveWallet(){
+    if(!walletUser)return;
+    setWalletSaving(true);
+    try{
+      await apiFetch(`/api/admin/users/${walletUser.id}/wallet`,{method:"PATCH",body:JSON.stringify({
+        balance:walletData.balance,
+        coins:walletData.coins
+      })});
+      toast("Balans güncəlləndi");
+      setWalletUser(null);
+    }catch(e){toast(e.message,"error");}
+    finally{setWalletSaving(false);}
   }
   const STATUS_COLOR = { ACTIVE:"badge-green",PENDING_VERIFICATION:"badge-yellow",SUSPENDED:"badge-yellow",BANNED:"badge-red" };
   return (
@@ -317,7 +344,7 @@ function UsersManager() {
                       {u.status!=="BANNED"&&<button onClick={()=>updateUser(u.id,{status:"BANNED"})} className="btn-danger btn-xs">Ban</button>}
                       {u.status==="BANNED"&&<button onClick={()=>updateUser(u.id,{status:"ACTIVE"})} className="btn-secondary btn-xs">Aktivləşdir</button>}
                       {u.status==="ACTIVE"&&<button onClick={()=>updateUser(u.id,{status:"SUSPENDED"})} className="btn-secondary btn-xs">Dondurul</button>}
-                      <button onClick={()=>{setPwUser(u);setPwValue("");}} className="btn-secondary btn-xs flex items-center gap-1"><Icon name="lock" size={12}/>Şifrə</button><button onClick={()=>deleteUser(u.id)} className="btn-danger btn-xs flex items-center gap-1"><Icon name="trash" size={12}/>Sil</button>
+                      <button onClick={()=>{setPwUser(u);setPwValue("");}} className="btn-secondary btn-xs flex items-center gap-1"><Icon name="lock" size={12}/>Şifrə</button><button onClick={()=>openWallet(u)} className="btn-secondary btn-xs flex items-center gap-1"><Icon name="wallet" size={12}/>Balans</button><button onClick={()=>deleteUser(u.id)} className="btn-danger btn-xs flex items-center gap-1"><Icon name="trash" size={12}/>Sil</button>
                     </div>
                   </td>
                 </tr>
@@ -374,6 +401,58 @@ function UsersManager() {
               <button onClick={()=>{setPwUser(null);setPwValue("");}} className="btn-secondary px-4 py-2 text-sm rounded-xl">İmtina</button>
               <button onClick={changePassword} className="btn-primary px-4 py-2 text-sm rounded-xl flex items-center gap-1"><Icon name="check" size={14}/>Şifrəni Dəyiş</button>
             </div>
+          </div>
+        </div>
+      )}
+      {walletUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={()=>setWalletUser(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4" onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg">Balans İdarəetmə</h3>
+              <button onClick={()=>setWalletUser(null)} className="btn-icon"><Icon name="x" size={18}/></button>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-3">İstifadəçi: <strong>{walletUser.fullName}</strong> ({walletUser.email})</p>
+              {walletData.loading ? (
+                <div className="text-sm text-gray-400 py-4 text-center">Balans yüklənir...</div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Balans (AZN)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={walletData.balance}
+                      onChange={e=>setWalletData({...walletData,balance:parseFloat(e.target.value)||0})}
+                      className="input-sm w-full"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Coin / Bonus xal</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={walletData.coins}
+                      onChange={e=>setWalletData({...walletData,coins:parseFloat(e.target.value)||0})}
+                      className="input-sm w-full"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
+                    ⚠ Dəyişiklik audit log-a yazılacaq. Mənfi balans təyin etmək mümkündür, diqqətli olun.
+                  </div>
+                </div>
+              )}
+            </div>
+            {!walletData.loading && (
+              <div className="flex gap-2 justify-end pt-2 border-t border-gray-100">
+                <button onClick={()=>setWalletUser(null)} className="btn-secondary px-4 py-2 text-sm rounded-xl">İmtina</button>
+                <button onClick={saveWallet} disabled={walletSaving} className="btn-primary px-4 py-2 text-sm rounded-xl flex items-center gap-1 disabled:opacity-50">
+                  <Icon name="check" size={14}/>{walletSaving?"Saxlanılır...":"Yadda saxla"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
