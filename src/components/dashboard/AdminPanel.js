@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/apiClient";
 import StatCard from "@/components/ui/StatCard";
 import AnalyticsPanel from "@/components/dashboard/AnalyticsPanel";
 import NoCodeAdminStudio from "@/components/dashboard/NoCodeAdminStudio";
+import EmailManager from "./EmailManager";
 import EmptyState from "@/components/ui/EmptyState";
 import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
@@ -48,6 +49,7 @@ const SIDEBAR_GROUPS = [
     { id:"slider",    icon:"image", label:"Slider İdarəsi" },
   ]},
   { label:"Sistem", items:[
+    { id:"emails", icon:"mail", label:"E-poçt" },
     { id:"user-modules", icon:"settings", label:"Rol Modulları" },
     { id:"studio", icon:"component", label:"No-Code Studio" },
   ]},
@@ -1338,6 +1340,7 @@ export default function AdminPanel() {
       case "analytics":   return (
         <div className="space-y-4"><h2 className="font-bold text-lg flex items-center gap-2"><Icon name="trendingUp" size={20}/>Analitika Paneli</h2><AnalyticsPanel mode="admin" /></div>
       );
+      case "emails": return <EmailManager/>;
       case "user-modules": return <UserModulesPanel/>;
       case "studio":      return <NoCodeAdminStudio />;
       default:            return <EmptyState icon="clock" title="Gəlir..."/>;
