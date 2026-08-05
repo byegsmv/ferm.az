@@ -96,17 +96,42 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const authUser = getAuthUser(request);
-  if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const authUser = getAuthUser(request);
+    if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id } = await params;
-  const store = await findStore(id, authUser);
-  if (!store) return Response.json({ error: "Mağaza tapılmadı" }, { status: 404 });
+    const { id } = await params;
+    const store = await findStore(id, authUser);
+    if (!store) return Response.json({ error: "Mağaza tapılmadı" }, { status: 404 });
 
-  const isOwner = store.ownerId === authUser.sub;
-  const isAdmin = ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(authUser.role);
-  if (!isOwner && !isAdmin) return Response.json({ error: "Forbidden" }, { status: 403 });
+    const isOwner = store.ownerId === authUser.sub;
+    const isAdmin = ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(authUser.role);
+    if (!isOwner && !isAdmin) return Response.json({ error: "Forbidden" }, { status: 403 });
 
-  await prisma.store.delete({ where: { id: store.id } });
-  return Response.json({ success: true });
+    // Transactional cleanup: explicitly delete dependent records that might
+    // block deletion, even though schema relations mostly use Cascade/SetNull.
+    // This is a safety net in case of schema drift or missed relations.
+    await prisma.$transaction([
+      prisma.storeSubscription.deleteMany({ where: { storeId: store.id } }),
+      prisma.storeFollow.deleteMany({ where: { storeId: store.id } }),
+      prisma.salesPoint.deleteMany({ where: { storeId: store.id } }),
+      prisma.campaign.deleteMany({ where: { storeId: store.id } }),
+      // Products: set storeId to null instead of deleting them
+      prisma.product.updateMany({ where: { storeId: store.id }, data: { storeId: null } }),
+      // Users with storeId pointing to this store: set to null
+      prisma.user.updateMany({ where: { storeId: store.id }, data: { storeId: null } }),
+      // Now safe to delete the store
+      prisma.store.delete({ where: { id: store.id } }),
+    ]);
+
+    return Response.json({ success: true });
+  } catch (error) {
+    console.error("DELETE /api/stores/[id] error:", error);
+    if (error.code === "P2003") {
+      return Response.json({
+        error: "Bu mağaza sifariş/məhsul məlumatları ilə əlaqəlidir. Əlaqəli məlumatlar təmizlənərək yenidən cəhd edin."
+      }, { status: 409 });
+    }
+    return Response.json({ error: `Server xətası: ${error.message || "naməlum"}` }, { status: 500 });
+  }
 }

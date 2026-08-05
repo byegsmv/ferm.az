@@ -167,6 +167,7 @@ export default function StoreProfileHeader({ store, user, onEdit, stats }) {
               src={displayCoverUrl}
               alt={store?.name || "Kover şəkli"}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={(e) => { e.target.style.display = 'none'; }}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-r from-brand-600 via-green-500 to-emerald-600 flex items-center justify-center p-4">
@@ -214,6 +215,7 @@ export default function StoreProfileHeader({ store, user, onEdit, stats }) {
                     src={displayLogoUrl}
                     alt={store?.name || "Mağaza loqosu"}
                     className="w-full h-full object-cover"
+                    onError={(e) => { e.target.style.display = 'none'; }}
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-brand-500 to-emerald-700 text-white font-black text-2xl md:text-4xl flex items-center justify-center uppercase">

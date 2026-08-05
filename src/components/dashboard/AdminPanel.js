@@ -809,7 +809,7 @@ function StoresManager() {
           {filtered.map(s=>(
             <div key={s.id} className="card p-4">
               <div className="flex items-start gap-3 flex-wrap">
-                {s.logoUrl&&<img src={s.logoUrl} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0"/>}
+                {s.logoUrl&&<img src={s.logoUrl} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" onError={(e)=>{e.target.style.display='none';}}/>}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap justify-between">
                     <p className="font-semibold text-sm">{s.name}</p>

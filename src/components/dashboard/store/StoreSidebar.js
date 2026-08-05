@@ -68,6 +68,7 @@ export default function StoreSidebar({
               src={storeLogo}
               alt={storeName}
               className="w-full h-full object-cover"
+              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
             />
           ) : (
             storeName[0]?.toUpperCase() || "M"

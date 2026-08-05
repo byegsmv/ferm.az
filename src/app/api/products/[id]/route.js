@@ -210,10 +210,31 @@ export async function DELETE(request, { params }) {
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    await prisma.product.delete({ where: { id: product.id } });
+    // Transactional cleanup: delete ALL dependent records before deleting the product.
+    // Most relations already have onDelete: Cascade in the schema (ProductImage, Review,
+    // Favorite, BundleItem, Listing, ProductActiveIngredient, ProductDisease,
+    // ProductPest, ProductCrop, TieredPrice) — those cascade automatically.
+    // BUT OrderItem does NOT have onDelete: Cascade (it defaults to Restrict) so it
+    // blocks deletion if the product was ever ordered. We delete OrderItems manually
+    // in the transaction so the product can always be deleted.
+    // Conversation.productId uses onDelete: SetNull so it won't block.
+    // Category and Seller relations don't block (we're not deleting THEM, just the product).
+    await prisma.$transaction([
+      // Delete any OrderItems referencing this product (from test or real orders)
+      prisma.orderItem.deleteMany({ where: { productId: product.id } }),
+      // Now safe to delete the product — all other relations cascade
+      prisma.product.delete({ where: { id: product.id } }),
+    ]);
+
     return Response.json({ success: true });
   } catch (error) {
     console.error("DELETE /api/products/[id] error:", error);
-    return Response.json({ error: "Server xətası" }, { status: 500 });
+    // Return a more specific error message for FK constraint failures
+    if (error.code === "P2003") {
+      return Response.json({
+        error: "Bu məhsul sifarişlərlə əlaqəlidir və silinə bilmir. Əlaqəli məlumatları əvvəlcə təmizləyin."
+      }, { status: 409 });
+    }
+    return Response.json({ error: `Server xətası: ${error.message || "naməlum"}` }, { status: 500 });
   }
 }
