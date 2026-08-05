@@ -705,6 +705,14 @@ function StoresManager() {
       toast(val?"Aktivləşdirildi":"Deaktiv edildi"); 
     }catch(e){toast(e.message,"error");} 
   }
+  async function deleteStore(id, name) {
+    if (!confirm(`"${name}" mağazasını silmək istədiyinizə əminsiniz? Məhsullar silinməyəcək, yalnız mağaza bağlantısı qaldırılacaq.`)) return;
+    try {
+      await apiFetch(`/api/stores/${id}`, {method: "DELETE"});
+      setStores(p => p.filter(s => s.id !== id));
+      toast("Mağaza silindi");
+    } catch(e) { toast(e.message, "error"); }
+  }
   const filtered = search ? stores.filter(s=>
     s.name?.toLowerCase().includes(search.toLowerCase()) ||
     s.owner?.fullName?.toLowerCase().includes(search.toLowerCase())
@@ -740,6 +748,7 @@ function StoresManager() {
                     {!s.isVerified&&<button onClick={()=>toggle(s.id,"isVerified",true)} className="btn-primary btn-xs flex items-center gap-1"><Icon name="check" size={12}/>Doğrula</button>}
                     {s.isVerified&&<button onClick={()=>toggle(s.id,"isVerified",false)} className="btn-secondary btn-xs">Doğrulanmağı çıxar</button>}
                     <button onClick={()=>toggle(s.id,"isActive",!s.isActive)} className={`btn-xs ${s.isActive?"btn-danger":"btn-primary"}`}>{s.isActive?"Deaktiv et":"Aktivləşdir"}</button>
+                    <button onClick={()=>deleteStore(s.id, s.name)} className="btn-danger btn-xs flex items-center gap-1"><Icon name="trash" size={12}/>Sil</button>
                   </div>
                 </div>
               </div>
