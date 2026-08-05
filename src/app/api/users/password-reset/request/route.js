@@ -14,18 +14,24 @@ function isPhone(str) {
   return /^(\+?\d{7,15})$/.test(cleaned);
 }
 
-// Normalize phone for matching: try multiple formats
-// e.g., +994102391705 → ["+994102391705", "994102391705", "0102391705"]
+// Normalize phone for matching: try all Azerbaijani formats
+// +994102391705, 994102391705, 0102391705, 102391705 → all match each other
 function phoneVariants(phoneInput) {
   const cleaned = phoneInput.replace(/[\s\-()]/g, "");
-  const variants = [cleaned];
+  const variants = new Set([cleaned]);
   const withoutPlus = cleaned.replace(/^\+/, "");
-  if (withoutPlus !== cleaned) variants.push(withoutPlus);
-  // Azerbaijani format: +994XXXXXXXXX → 0XXXXXXXXX
+  if (withoutPlus !== cleaned) variants.add(withoutPlus);
+
+  // +994XXXXXXXXX → 0XXXXXXXXX and 994XXXXXXXXX
   if (withoutPlus.startsWith("994")) {
-    variants.push("0" + withoutPlus.slice(3));
+    variants.add("0" + withoutPlus.slice(3));
   }
-  return [...new Set(variants)];
+  // 0XXXXXXXXX → +994XXXXXXXXX and 994XXXXXXXXX
+  if (withoutPlus.startsWith("0") && withoutPlus.length >= 8) {
+    variants.add("+994" + withoutPlus.slice(1));
+    variants.add("994" + withoutPlus.slice(1));
+  }
+  return [...variants];
 }
 
 export async function POST(request) {
@@ -56,19 +62,16 @@ export async function POST(request) {
   ];
 
   if (viaPhone) {
-    // Add all phone format variants
     for (const variant of phoneVariants(trimmed)) {
       searchConditions.push({ phone: variant });
     }
   }
 
-  // Find user by email, phone, or username
   const user = await prisma.user.findFirst({
     where: { OR: searchConditions },
     select: { id: true, email: true, phone: true, fullName: true },
   });
 
-  // Always return 200 to prevent account enumeration
   if (!user) {
     return Response.json({
       message: "Əgər bu məlumat sistemdə varsa, sıfırlama təlimatları göndərilmişdir.",
@@ -79,29 +82,19 @@ export async function POST(request) {
 
   // === PHONE-BASED RESET (SMS OTP) ===
   if (viaPhone && user.phone) {
-    // Generate 6-digit OTP
     const otp = generateOTP();
     const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
 
-    // Invalidate previous tokens
     await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
-
-    // Store the OTP directly as tokenHash for phone-based reset
     await prisma.passwordResetToken.create({
-      data: {
-        userId: user.id,
-        tokenHash: otp,
-        expiresAt,
-      },
+      data: { userId: user.id, tokenHash: otp, expiresAt },
     });
 
-    // Try to send SMS
     const smsResult = await sendSMS({
       to: user.phone,
       message: `FermerMarket: Sifre yenileme kodunuz: ${otp}. Bu kod ${OTP_TTL_MINUTES} deqiqe erzinde etibarlidir.`,
     });
 
-    // If SMS not configured, fall back to email
     if (smsResult.skipped && user.email) {
       const resetUrl = `${appUrl}/reset-password?token=${otp}&phone=1`;
       await sendPasswordResetEmail({ to: user.email, resetUrl });
@@ -128,15 +121,12 @@ export async function POST(request) {
   const { rawToken, tokenHash } = generatePasswordResetToken();
   const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000);
 
-  // Invalidate previous tokens for this user
   await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
-
   await prisma.passwordResetToken.create({
     data: { userId: user.id, tokenHash, expiresAt },
   });
 
   const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
-
   await sendPasswordResetEmail({ to: user.email, resetUrl });
 
   return Response.json({
