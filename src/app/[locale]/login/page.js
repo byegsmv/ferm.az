@@ -28,15 +28,15 @@ function LoginContent() {
       
       // Use callbackUrl if present, otherwise go to dashboard
       const callbackUrl = searchParams.get("callbackUrl");
-      const target = callbackUrl || "/dashboard";
+      let target = callbackUrl || "/dashboard";
       
-      // Hard redirect ensures cookie is sent with the request
-      const locale = "az"; // default locale
-      // If callbackUrl already has locale prefix, use as-is; otherwise add locale
-      const hasLocale = /^\/(az|en|ru)\//.test(target) || /^\/(az|en|ru)$/.test(target);
-      const finalUrl = hasLocale ? target : `/${locale}${target}`;
+      // With localePrefix: 'as-needed', the default locale 'az' doesn't need
+      // a prefix. Strip any /az, /en, /ru prefix to avoid a double redirect
+      // (e.g. /az/dashboard -> /dashboard) which causes ERR_FAILED in browsers
+      // when a Service Worker intercepts the navigation.
+      target = target.replace(/^\/(az|en|ru)(\/|$)/, "/");
       
-      window.location.href = finalUrl;
+      window.location.href = target;
     } catch (err) {
       const msg = err?.code === "DB_CONN"
         ? "Sunucu bağlantısı hatası. Lütfen yöneticinizle iletişime geçin."
