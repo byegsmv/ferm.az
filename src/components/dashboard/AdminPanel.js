@@ -6,6 +6,9 @@ import StatCard from "@/components/ui/StatCard";
 import AnalyticsPanel from "@/components/dashboard/AnalyticsPanel";
 import NoCodeAdminStudio from "@/components/dashboard/NoCodeAdminStudio";
 import EmailManager from "./EmailManager";
+import MessagingPanel from "@/components/chat/MessagingPanel";
+import AdminProfile from "@/components/dashboard/AdminProfile";
+import AdminSupport from "@/components/dashboard/AdminSupport";
 import EmptyState from "@/components/ui/EmptyState";
 import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
@@ -52,6 +55,9 @@ const SIDEBAR_GROUPS = [
     { id:"emails", icon:"mail", label:"E-poçt" },
     { id:"user-modules", icon:"settings", label:"Rol Modulları" },
     { id:"studio", icon:"component", label:"No-Code Studio" },
+    { id:"messages", icon:"message", label:"Mesajlar" },
+    { id:"profile", icon:"user", label:"Profil & Təhlükəsizlik" },
+    { id:"support", icon:"info", label:"Dəstək" },
   ]},
 ];
 
@@ -1343,6 +1349,14 @@ export default function AdminPanel() {
       case "emails": return <EmailManager/>;
       case "user-modules": return <UserModulesPanel/>;
       case "studio":      return <NoCodeAdminStudio />;
+      case "messages":   return (
+        <div className="space-y-4">
+          <h2 className="font-bold text-lg flex items-center gap-2"><Icon name="message" size={20}/>Mesajlar</h2>
+          <MessagingPanel />
+        </div>
+      );
+      case "profile":    return <AdminProfile />;
+      case "support":    return <AdminSupport />;
       default:            return <EmptyState icon="clock" title="Gəlir..."/>;
     }
   }

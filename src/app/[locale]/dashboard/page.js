@@ -13,6 +13,8 @@ const ROLE_LABELS = {
   BUYER: "Alıcı", DELIVERY_PARTNER: "Çatdırılma Partnyor",
 };
 
+const ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN", "MODERATOR"];
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -23,6 +25,12 @@ export default function DashboardPage() {
     const localUser = getUser();
     if (!localUser) { router.push("/login"); return; }
     
+    // Admin-level users are redirected to /admin — no need for a personal kabinet
+    if (ADMIN_ROLES.includes(localUser.role)) {
+      router.push("/admin");
+      return;
+    }
+
     apiFetch("/api/wallet")
       .then(d => {
         if (d?.wallet) {
@@ -52,9 +60,7 @@ export default function DashboardPage() {
   }
   if (!user) return null;
   const roleLabel = ROLE_LABELS[user.role] || user.role;
-  const hasStore = true; // All non-admin users get store + buyer features
-
-  const isAdminLevel = ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role); // Admins manage platform at /admin, dashboard is their personal view
+  const hasStore = true;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -79,7 +85,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-                  {!isAdminLevel && <DeliveryPanel user={user} />}
+      <DeliveryPanel user={user} />
       
       <div className="space-y-4">
         {hasStore && (

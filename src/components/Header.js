@@ -270,9 +270,11 @@ export default function Header() {
                       <Icon name="layoutDashboard" size={16} /> Admin Panel
                     </Link>
                   )}
-                  <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-brand-50 hover:text-brand-700 font-medium transition" onClick={() => setMenuOpen(false)}>
-                    <Icon name="dashboard" size={16} /> {t("dashboard")}
-                  </Link>
+                  {user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && user.role !== 'MODERATOR' && (
+                    <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-brand-50 hover:text-brand-700 font-medium transition" onClick={() => setMenuOpen(false)}>
+                      <Icon name="dashboard" size={16} /> {t("dashboard")}
+                    </Link>
+                  )}
                   <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 font-medium mt-1 transition">
                     <Icon name="logout" size={16} /> {t("logout")}
                   </button>
