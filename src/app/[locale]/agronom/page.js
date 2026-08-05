@@ -38,11 +38,25 @@ export default function AgronomPage() {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      setPreview(URL.createObjectURL(file));
+    if (!file) return;
+
+    const isImage = typeof file.type === "string" && file.type.startsWith("image/");
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const isValidSize = file.size <= maxSize;
+
+    if (!isImage || !isValidSize) {
+      toast.error("Yalnız 5MB-a qədər şəkil faylı yükləyə bilərsiniz.");
+      e.target.value = "";
+      setImage(null);
+      setPreview(null);
       setResult(null);
+      return;
     }
+
+    const objectUrl = URL.createObjectURL(file);
+    setImage(file);
+    setPreview(objectUrl);
+    setResult(null);
   };
 
   const handleAnalyze = async () => {
@@ -184,7 +198,7 @@ export default function AgronomPage() {
                   <label className="block cursor-pointer">
                     <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                     <div className="border-2 border-dashed border-brand-200 rounded-2xl p-6 text-center hover:bg-brand-50 transition-colors">
-                      {preview ? (
+                      {preview && typeof preview === "string" && preview.startsWith("blob:") ? (
                         <img src={preview} alt="Preview" className="max-h-40 mx-auto rounded-xl object-contain" />
                       ) : (
                         <>
