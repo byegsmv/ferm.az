@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/routing";
 import { apiFetch, getUser } from "@/lib/apiClient";
 import StoreDashboard from "@/components/dashboard/store/StoreDashboard";
-import AdminPanel from "@/components/dashboard/AdminPanel";
 import BuyerPanel from "@/components/dashboard/BuyerPanel";
 import DeliveryPanel from "@/components/dashboard/DeliveryPanel";
-import ModeratorPanel from "@/components/dashboard/ModeratorPanel";
 
 const ROLE_LABELS = {
   SUPER_ADMIN: "Super Admin", ADMIN: "Admin", MODERATOR: "Moderator",
@@ -56,7 +54,7 @@ export default function DashboardPage() {
   const roleLabel = ROLE_LABELS[user.role] || user.role;
   const hasStore = true; // All non-admin users get store + buyer features
 
-  const isAdminLevel = ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role);
+  const isAdminLevel = ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role); // Admins manage platform at /admin, dashboard is their personal view
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -81,9 +79,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && <AdminPanel />}
-      {user.role === "MODERATOR" && <ModeratorPanel />}
-      {!isAdminLevel && <DeliveryPanel user={user} />}
+                  {!isAdminLevel && <DeliveryPanel user={user} />}
       
       <div className="space-y-4">
         {hasStore && (
