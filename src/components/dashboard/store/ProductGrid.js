@@ -127,13 +127,19 @@ export default function ProductGrid({
                     : "border-gray-100 hover:shadow-lg hover:border-gray-200"
                 }`}
               >
-                {/* Image & Overlay Badges */}
-                <div className="relative aspect-square w-full bg-gray-50 overflow-hidden">
+                {/* Image & Overlay Badges — fixed height (not aspect-ratio) so the box
+                    never collapses/expands unpredictably inside a flex-col card, which
+                    was causing broken-image alt text to overlap the title below it. */}
+                <div className="relative w-full h-32 sm:h-36 shrink-0 bg-gray-50 overflow-hidden">
                   <img
                     src={getImageUrl(product)}
-                    alt={title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    onError={(e) => { e.target.src = "/placeholder.svg"; }}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      if (e.target.dataset.fallback) return; // avoid infinite loop if placeholder itself fails
+                      e.target.dataset.fallback = "1";
+                      e.target.src = "/placeholder.svg";
+                    }}
                   />
 
                   {/* Checkbox Overlay (Top-Left) */}
