@@ -1,4 +1,4 @@
-const CACHE_NAME = "fermermarket-shell-v3";
+const CACHE_NAME = "fermermarket-shell-v4";
 const APP_SHELL = [
   "/manifest.json",
   "/icons/icon-192.png",
@@ -43,39 +43,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Do NOT intercept navigation requests — let the browser handle them
+  // directly. Interception caused ERR_FAILED in some browsers when the
+  // middleware issued 307 locale redirects (the SW's fetch with redirect:"follow"
+  // didn't resolve properly in all cases). The app works fine without SW
+  // navigation interception; the middleware handles auth + locale correctly.
   if (request.mode === "navigate") {
-    event.respondWith(
-      (async () => {
-        try {
-          // IMPORTANT: browsers set redirect mode to "manual" on navigation
-          // requests intercepted by a service worker. Our middleware issues
-          // 307 redirects for locale detection (e.g. "/" -> "/az"). If we
-          // fetch(request) as-is, a redirect response comes back as an
-          // opaque "opaqueredirect" with status 0 — NOT 200 — even though
-          // the server and network are perfectly fine. That falsely
-          // triggered the offline fallback page. Explicitly force
-          // redirect: "follow" so real redirects resolve to their final
-          // 200 response instead of being misread as a network failure.
-          const networkResponse = await fetch(request, { redirect: "follow" });
-          if (networkResponse && (networkResponse.ok || networkResponse.status === 200)) {
-            return networkResponse;
-          }
-          const offlinePage = await caches.match("/offline.html");
-          if (offlinePage) return offlinePage;
-          return (
-            networkResponse ||
-            new Response("Oflayn", { status: 503, headers: { "Content-Type": "text/html" } })
-          );
-        } catch (error) {
-          const offlinePage = await caches.match("/offline.html");
-          if (offlinePage) return offlinePage;
-          return new Response(
-            "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Oflayn</title></head><body><h1>Oflayn rejim</h1><p>İnternet bağlantınızı yoxlayın.</p></body></html>",
-            { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } }
-          );
-        }
-      })()
-    );
     return;
   }
 
@@ -152,4 +125,10 @@ self.addEventListener("notificationclick", (event) => {
       if (self.clients.openWindow) return self.clients.openWindow(url);
     })
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
