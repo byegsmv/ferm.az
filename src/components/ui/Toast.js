@@ -12,6 +12,8 @@ export function useToast() {
     setToasts(p=>[...p,{id,msg,type}]);
     setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)), duration);
   }
+  // Alias for compatibility with new admin components
+  const showToast = toast;
   function ToastContainer() {
     const [mounted, setMounted] = useState(false);
     useEffect(() => {
@@ -32,5 +34,5 @@ export function useToast() {
       document.body
     );
   }
-  return { toast, ToastContainer };
+  return { toast, showToast, ToastContainer };
 }

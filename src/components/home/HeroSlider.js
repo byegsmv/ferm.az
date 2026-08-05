@@ -117,14 +117,36 @@ export default function HeroSlider() {
         </div>
       ))}
 
-      {/* Dots */}
-      <div className="absolute bottom-6 md:bottom-8 left-0 right-0 z-20 flex justify-center gap-2.5">
+      {/* Prev / Next arrows (desktop, hidden on touch/mobile) */}
+      <button
+        type="button"
+        onClick={() => setCurrent((c) => (c - 1 + slides.length) % slides.length)}
+        aria-label="Əvvəlki slayd"
+        className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-md border border-white/20 opacity-0 group-hover:opacity-100 hover:bg-white/25 active:scale-95 transition-all duration-300"
+      >
+        <Icon name="arrowLeft" size={20} strokeWidth={2.4} />
+      </button>
+      <button
+        type="button"
+        onClick={() => setCurrent((c) => (c + 1) % slides.length)}
+        aria-label="Növbəti slayd"
+        className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-md border border-white/20 opacity-0 group-hover:opacity-100 hover:bg-white/25 active:scale-95 transition-all duration-300"
+      >
+        <Icon name="arrowRight" size={20} strokeWidth={2.4} />
+      </button>
+
+      {/* Dots (44px touch target, small visual dot) */}
+      <div className="absolute bottom-5 md:bottom-8 left-0 right-0 z-20 flex justify-center gap-1">
         {slides.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setCurrent(idx)}
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${current === idx ? "bg-white w-8 shadow-md" : "bg-white/40 hover:bg-white/60"}`}
-          />
+            aria-label={`Slayd ${idx + 1}`}
+            aria-current={current === idx}
+            className="flex items-center justify-center h-9 w-9 sm:h-11 sm:w-11 shrink-0"
+          >
+            <span className={`block h-2 rounded-full transition-all duration-300 ${current === idx ? "bg-white w-7 shadow-md" : "bg-white/40 w-2 hover:bg-white/60"}`} />
+          </button>
         ))}
       </div>
       

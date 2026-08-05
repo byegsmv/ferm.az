@@ -3,41 +3,44 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// GET all blocks for a page
+// GET blocks for a page
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const page = searchParams.get("page") || "home";
+    const page = searchParams.get("page") || searchParams.get("pageName") || "home";
     
     const blocks = await prisma.dynamicBlock.findMany({
-      where: { page, isActive: true },
+      where: { page },
       orderBy: { sortOrder: "asc" }
     });
     
-    return NextResponse.json(blocks);
+    // Return in both formats for compatibility
+    return NextResponse.json(blocks.length > 0 ? blocks : { components: [] });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ components: [], error: error.message }, { status: 500 });
   }
 }
 
-// POST to update all blocks (save layout)
+// POST to save page layout
 export async function POST(req) {
   try {
-    const { blocks, page = "home" } = await req.json();
+    const body = await req.json();
     
-    // Simple approach: Delete existing and recreate
-    // In production, we'd do a transaction to update existing ones.
+    // Handle both formats: {blocks, page} (existing) and {pageName, components} (PageBuilder)
+    const page = body.page || body.pageName || "home";
+    const items = body.blocks || body.components || [];
+    
+    // Transform components format to DynamicBlock format if needed
+    const toCreate = items.map((b, i) => ({
+      page,
+      type: b.type || b.id || 'custom',
+      props: typeof b.props === 'object' ? b.props : { value: b.props || b.content || '' },
+      sortOrder: i,
+      isActive: b.isActive ?? true
+    }));
+    
     await prisma.$transaction(async (tx) => {
       await tx.dynamicBlock.deleteMany({ where: { page } });
-      
-      const toCreate = blocks.map((b, i) => ({
-        page,
-        type: b.type,
-        props: b.props,
-        sortOrder: i,
-        isActive: b.isActive ?? true
-      }));
-      
       if (toCreate.length > 0) {
         await tx.dynamicBlock.createMany({ data: toCreate });
       }

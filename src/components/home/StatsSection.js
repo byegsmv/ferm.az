@@ -26,15 +26,21 @@ function useCountUp(target, started) {
   return count;
 }
 
-function StatCard({ stat, started }) {
+function StatCard({ stat, started, index }) {
   const count = useCountUp(stat.value, started);
   return (
-    <div className="card p-5 text-center hover:shadow-md transition-shadow">
-      <div className="text-3xl mb-2">{stat.icon}</div>
-      <div className="text-2xl md:text-3xl font-extrabold text-brand-700">
+    <div
+      className="group relative overflow-hidden rounded-2xl md:rounded-[20px] border border-gray-100 bg-white p-4 sm:p-5 md:p-6 text-center shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:-translate-y-1 hover:border-brand-200 transition-all duration-300 animate-fade-in-up"
+      style={{ animationDelay: `${0.1 + index * 0.08}s` }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-brand-50/0 to-brand-50/0 group-hover:from-brand-50/60 group-hover:to-transparent transition-all duration-300 pointer-events-none" />
+      <div className="relative flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-brand-50 text-brand-600 mx-auto mb-2.5 sm:mb-3 group-hover:scale-110 group-hover:bg-brand-100 transition-all duration-300">
+        <Icon name={stat.iconName} size={20} strokeWidth={2} className="sm:w-6 sm:h-6" />
+      </div>
+      <div className="relative text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tabular-nums tracking-tight">
         {count.toLocaleString("az-AZ")}{stat.suffix}
       </div>
-      <div className="text-sm text-gray-500 mt-1 font-medium">{stat.label}</div>
+      <div className="relative text-[11px] sm:text-xs md:text-sm text-gray-500 mt-1 font-semibold leading-tight">{stat.label}</div>
     </div>
   );
 }
@@ -54,12 +60,12 @@ export default function StatsSection() {
 
   return (
     <section ref={ref} className="animate-fade-in-up" style={{ animationDelay: "0.35s" }}>
-      <div className="mb-4">
+      <div className="mb-4 md:mb-5">
         <h2 className="section-title">Niyə FermerMarket?</h2>
         <p className="section-subtitle">Azərbaycanlı fermerlər bizi seçir</p>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        {STATS.map((s) => <StatCard key={s.label} stat={s} started={started} />)}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4">
+        {STATS.map((s, i) => <StatCard key={s.label} stat={s} started={started} index={i} />)}
       </div>
     </section>
   );

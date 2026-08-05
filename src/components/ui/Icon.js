@@ -244,6 +244,7 @@ export const ICONS = {
   shoppingBag: ShoppingBag,
   smile: Smile,
   x: X,
+  "trash-2": Trash2,
 };
 
 export default function Icon({ name, size = 18, strokeWidth = 1.8, className = "", ...props }) {

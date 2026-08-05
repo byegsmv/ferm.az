@@ -144,7 +144,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
   const badge = tier && tier !== "STANDARD" ? TIER_CONFIG[tier] : null;
 
   return (
-    <div className="group card-hover overflow-hidden flex flex-col relative h-full bg-white rounded-xl">
+    <div className="group card-hover overflow-hidden flex flex-col relative h-full bg-white rounded-2xl border border-gray-100">
       <Link
         href={`/products/${product.slug}`}
         className="absolute inset-0 z-0"
@@ -176,7 +176,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
       <button
         onClick={toggleFavorite}
         disabled={loading}
-        className={`absolute top-2 right-2 w-8 h-8 z-10 rounded-full bg-white/70 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm transition-all duration-300 hover:bg-white hover:scale-110 active:scale-95 ${
+        className={`absolute top-2 right-2 w-9 h-9 sm:w-10 sm:h-10 z-10 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm transition-all duration-300 hover:bg-white hover:scale-110 active:scale-95 ${
           favorited ? "opacity-100" : "opacity-100 md:opacity-0 group-hover:opacity-100"
         }`}
         aria-label={favorited ? "Sevimlilərə əlavə edilib" : "Sevimlilərə əlavə et"}
