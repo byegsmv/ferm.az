@@ -6,8 +6,7 @@ export const registerSchema = z.object({
   password: z
     .string()
     .min(8, "Şifrə ən azı 8 simvol olmalıdır")
-    .regex(/[A-Z]/, "Şifrədə ən azı bir böyük hərf olmalıdır")
-    .regex(/[0-9]/, "Şifrədə ən azı bir rəqəm olmalıdır"),
+,
   fullName: z.string().min(2, "Ad Soyad tələb olunur"),
   phone: z.string().optional().or(z.literal("")),
   role: z.enum(["BUYER"]).default("BUYER").optional(),
@@ -110,15 +109,14 @@ export const campaignUpdateSchema = z.object({
 });
 
 export const passwordResetRequestSchema = z.object({
-  email: z.string().email(),
+  identifier: z.string().min(3, "E-poçt, telefon və ya istifadəçi adı daxil edin"),
 });
 
 export const passwordResetConfirmSchema = z.object({
   token: z.string().min(10),
   newPassword: z
     .string()
-    .min(8, "Şifrə ən azı 8 simvol olmalıdır")
-    .regex(/[A-Z]/, "Şifrədə ən azı bir böyük hərf olmalıdır")
+    .min(6, "Şifrə ən azı 6 simvol olmalıdır")
     .regex(/[0-9]/, "Şifrədə ən azı bir rəqəm olmalıdır"),
 });
 
@@ -138,6 +136,7 @@ export const adminUserUpdateSchema = z.object({
   email: z.string().email("Düzgün email daxil edin").optional(),
   phone: z.string().optional().nullable(),
   username: z.string().min(2, "İstifadəçi adı ən azı 2 simvol olmalıdır").optional().nullable(),
+  newPassword: z.string().min(6, "Şifrə ən azı 6 simvol olmalıdır").optional(),
 });
 
 export const categoryCreateSchema = z.object({

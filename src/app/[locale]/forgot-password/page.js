@@ -1,79 +1,102 @@
 "use client";
-import Icon from "@/components/ui/Icon";
 import { useState } from "react";
-import { Link } from "@/i18n/routing";
+import Link from "next/link";
+import Header from "@/components/Header";
+import BottomNav from "@/components/BottomNav";
+import { apiFetch } from "@/lib/apiClient";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
-  const [done, setDone] = useState(false);
+  const [identifier, setIdentifier] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState(null);
+  const [error, setError] = useState(null);
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email.trim()) return;
     setLoading(true);
-    setError("");
+    setError(null);
+    setMessage(null);
+
     try {
-      const res = await fetch("/api/users/password-reset/request", {
+      const res = await apiFetch("/api/users/password-reset/request", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ identifier }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error || "Xəta baş verdi");
+        setError(data.error || "Xəta baş verdi");
+      } else {
+        setMessage(data.message || "Sıfırlama linki göndərilmişdir.");
       }
-      setDone(true);
-    } catch (err) {
-      setError(err.message);
+    } catch {
+      setError("Şəbəkə xətası. Sonra yenidən cəhd edin.");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3"></div>
-          <h1 className="text-2xl font-black text-gray-900">Şifrəni Yenilə</h1>
-          <p className="text-gray-500 text-sm mt-1">E-poçtunuzu daxil edin, link göndərəcəyik</p>
-        </div>
-
-        {done ? (
-          <div className="card p-6 text-center">
-            <div className="text-4xl mb-3"></div>
-            <p className="font-bold text-gray-900 mb-2">Link göndərildi!</p>
-            <p className="text-sm text-gray-500 mb-4">
-              <strong>{email}</strong> ünvanına şifrə sıfırlama linki göndərildi. Zəhmət olmasa yoxlayın.
-            </p>
-            <Link href="/login" className="btn-primary w-full text-center block">Giriş səhifəsinə qayıt</Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="card p-6 space-y-4">
-            {error && <div className="bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">E-poçt ünvanı</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-field"
-                placeholder="siz@example.com"
-                required
-              />
+    <>
+      <Header />
+      <main className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-green-50/40 to-white">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-green-600 flex items-center justify-center mb-3">
+                <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a4 4 0 11-8 0 4 4 0 018 0zM12 15a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h1 className="text-xl font-bold text-gray-900">Şifrəni Unutdum</h1>
+              <p className="text-sm text-gray-500 mt-1 text-center">
+                E-poçt, telefon nömrənizi və ya istifadəçi adınızı daxil edin. Sıfırlama linki e-poçt ünvanınıza göndəriləcək.
+              </p>
             </div>
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? "Göndərilir..." : <span className="flex items-center justify-center gap-1">Link göndər <Icon name="arrowRight" size={14} /></span>}
-            </button>
-            <p className="text-center text-sm text-gray-500">
-              Yadınıza düşdü?{" "}
-              <Link href="/login" className="text-brand-600 font-semibold hover:underline">Giriş et</Link>
-            </p>
-          </form>
-        )}
-      </div>
-    </main>
+
+            {error && (
+              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+            {message && (
+              <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">
+                {message}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  E-poçt / Telefon / İstifadəçi adı
+                </label>
+                <input
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="Nümunə: email@fermermarket.az, 0501234567"
+                  required
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Göndərilir..." : "Sıfırlama Linki Göndər"}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center text-sm text-gray-500">
+              <Link href="/login" className="text-green-600 hover:underline font-medium">
+                ← Giriş səhifəsinə qayıt
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+      <BottomNav />
+    </>
   );
 }

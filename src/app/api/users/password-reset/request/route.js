@@ -7,8 +7,8 @@ import { rateLimit } from "@/lib/rateLimit";
 const RESET_TOKEN_TTL_MINUTES = 30;
 
 export async function POST(request) {
-  // Apply rate limiting: 3 attempts / hour
-  const rl = rateLimit(request, { limit: 3, windowMs: 60 * 60_000, keyPrefix: "pwd_reset" });
+  // Apply rate limiting: 5 attempts / hour
+  const rl = rateLimit(request, { limit: 5, windowMs: 60 * 60_000, keyPrefix: "pwd_reset" });
   if (rl) return rl;
 
   let body;
@@ -20,16 +20,27 @@ export async function POST(request) {
 
   const parsed = passwordResetRequestSchema.safeParse(body);
   if (!parsed.success) {
-    return Response.json({ error: "Düzgün e-poçt daxil edin" }, { status: 422 });
+    return Response.json({ error: "Düzgün məlumat daxil edin" }, { status: 422 });
   }
 
-  const { email } = parsed.data;
-  const user = await prisma.user.findUnique({ where: { email } });
+  const { identifier } = parsed.data;
+  const trimmed = identifier.trim();
 
-  // Always return 200 regardless of whether the user exists —
-  // prevents account enumeration via this endpoint.
-  if (!user) {
-    return Response.json({ message: "Əgər bu e-poçt qeydiyyatdadırsa, bərpa linki göndərildi." });
+  // Find user by email, phone, or username (case-insensitive for email/username)
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: { equals: trimmed, mode: "insensitive" } },
+        { phone: trimmed },
+        { username: { equals: trimmed, mode: "insensitive" } },
+      ],
+    },
+    select: { id: true, email: true },
+  });
+
+  // Always return 200 to prevent account enumeration
+  if (!user || !user.email) {
+    return Response.json({ message: "Əgər bu məlumat sistemdə varsa, sıfırlama linki göndərilmişdir." });
   }
 
   const { rawToken, tokenHash } = generatePasswordResetToken();
@@ -42,10 +53,10 @@ export async function POST(request) {
     data: { userId: user.id, tokenHash, expiresAt },
   });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://fermermarket.vercel.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://fermermarket.az";
   const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
 
   await sendPasswordResetEmail({ to: user.email, resetUrl });
 
-  return Response.json({ message: "Əgər bu e-poçt qeydiyyatdadırsa, bərpa linki göndərildi." });
+  return Response.json({ message: "Sıfırlama linki e-poçt ünvanınıza göndərilmişdir." });
 }

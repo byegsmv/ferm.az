@@ -1,110 +1,130 @@
 "use client";
-import Icon from "@/components/ui/Icon";
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams, } from "next/navigation";
-import { useRouter } from "@/i18n/routing";
-import { Link } from "@/i18n/routing";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import Header from "@/components/Header";
+import BottomNav from "@/components/BottomNav";
+import { apiFetch } from "@/lib/apiClient";
 
-function ResetForm() {
+export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const token = searchParams.get("token") || "";
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [done, setDone] = useState(false);
+  const token = searchParams.get("token");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
 
-  async function handleSubmit(e) {
+  useEffect(() => {
+    if (!token) {
+      setError("Sıfırlama tokeni tapılmadı. Linkin düzgün olduğundan əmin olun.");
+    }
+  }, [token]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password !== confirm) { setError("Şifrələr uyğun gəlmir"); return; }
-    if (password.length < 8) { setError("Şifrə minimum 8 simvol olmalıdır"); return; }
+    setError(null);
+
+    if (newPassword !== confirmPassword) {
+      setError("Şifrələr uyğun gəlmir");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError("Şifrə ən azı 6 simvol olmalıdır");
+      return;
+    }
+
     setLoading(true);
-    setError("");
     try {
-      const res = await fetch("/api/users/password-reset/confirm", {
+      const res = await apiFetch("/api/users/password-reset/confirm", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword: password }),
+        body: JSON.stringify({ token, newPassword }),
       });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Xəta baş verdi");
-      setDone(true);
-      setTimeout(() => router.push("/login"), 2500);
-    } catch (err) {
-      setError(err.message);
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Xəta baş verdi");
+      } else {
+        setSuccess(true);
+      }
+    } catch {
+      setError("Şəbəkə xətası. Sonra yenidən cəhd edin.");
     } finally {
       setLoading(false);
     }
-  }
-
-  if (!token) {
-    return (
-      <div className="card p-6 text-center">
-        <p className="text-4xl mb-3">️</p>
-        <p className="font-bold text-red-600">Keçərsiz link</p>
-        <p className="text-sm text-gray-500 mt-2">Bu link etibarsız və ya müddəti bitib.</p>
-        <Link href="/forgot-password" className="btn-primary mt-4 inline-block">Yenidən cəhd edin</Link>
-      </div>
-    );
-  }
-
-  if (done) {
-    return (
-      <div className="card p-6 text-center">
-        <div className="text-4xl mb-3"></div>
-        <p className="font-bold text-gray-900">Şifrəniz yeniləndi!</p>
-        <p className="text-sm text-gray-500 mt-2">Giriş səhifəsinə yönləndirilirsiniz...</p>
-      </div>
-    );
-  }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="card p-6 space-y-4">
-      {error && <div className="bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Yeni şifrə</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="input-field"
-          placeholder="Minimum 8 simvol"
-          required
-          minLength={8}
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Şifrəni təsdiqləyin</label>
-        <input
-          type="password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          className="input-field"
-          placeholder="Şifrəni yenidən daxil edin"
-          required
-        />
-      </div>
-      <button type="submit" disabled={loading} className="btn-primary w-full">
-        {loading ? "Yenilənir..." : <span className="flex items-center justify-center gap-1">Şifrəni yenilə <Icon name="arrowRight" size={14} /></span>}
-      </button>
-    </form>
-  );
-}
+    <>
+      <Header />
+      <main className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-green-50/40 to-white">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-green-600 flex items-center justify-center mb-3">
+                <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0.55 0 1-0.45 1-1V6c0-0.55-0.45-1-1-1s-1 0.45-1 1v4c0 0.55 0.45 1 1 1zm6 0c0.55 0 1-0.45 1-1V6c0-0.55-0.45-1-1-1s-1 0.45-1 1v4c0 0.55 0.45 1 1 1z" />
+                </svg>
+              </div>
+              <h1 className="text-xl font-bold text-gray-900">Yeni Şifrə Təyin Et</h1>
+            </div>
 
-export default function ResetPasswordPage() {
-  return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3"></div>
-          <h1 className="text-2xl font-black text-gray-900">Yeni Şifrə</h1>
-          <p className="text-gray-500 text-sm mt-1">Hesabınız üçün yeni şifrə seçin</p>
+            {success ? (
+              <div className="text-center space-y-4">
+                <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-green-700">
+                  Şifrəniz uğurla dəyişdirildi! İndi yeni şifrə ilə daxil ola bilərsiniz.
+                </div>
+                <Link href="/login" className="inline-block px-6 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition">
+                  Giriş səhifəsinə keç
+                </Link>
+              </div>
+            ) : (
+              <>
+                {error && (
+                  <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Yeni şifrə</label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Ən azı 6 simvol"
+                      required
+                      minLength={6}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Şifrəni təsdiqlə</label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Şifrəni təkrar daxil edin"
+                      required
+                      minLength={6}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading || !token}
+                    className="w-full py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "Dəyişdirilir..." : "Şifrəni Dəyiş"}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
         </div>
-        <Suspense fallback={<div className="card p-6 text-center"><div className="h-8 bg-gray-100 rounded animate-pulse" /></div>}>
-          <ResetForm />
-        </Suspense>
-      </div>
-    </main>
+      </main>
+      <BottomNav />
+    </>
   );
 }

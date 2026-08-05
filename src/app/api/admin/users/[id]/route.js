@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getAuthUser, requireRole } from "@/lib/auth";
+import { getAuthUser, requireRole, hashPassword } from "@/lib/auth";
 import { adminUserUpdateSchema } from "@/lib/validators";
 
 export async function PATCH(request, { params }) {
@@ -39,9 +39,15 @@ export async function PATCH(request, { params }) {
   const target = await prisma.user.findUnique({ where: { id } });
   if (!target) return Response.json({ error: "İstifadəçi tapılmadı" }, { status: 404 });
 
+  // If newPassword is provided, hash it and replace passwordHash
+  const { newPassword, ...updateData } = parsed.data;
+  if (newPassword) {
+    updateData.passwordHash = await hashPassword(newPassword);
+  }
+
   const updated = await prisma.user.update({
     where: { id },
-    data: parsed.data,
+    data: updateData,
     select: { id: true, email: true, role: true, status: true, isBanned: true, fullName: true, phone: true, username: true },
   });
 

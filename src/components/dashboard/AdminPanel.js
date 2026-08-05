@@ -231,6 +231,8 @@ function UsersManager() {
   const [users,setUsers]=useState([]); const [loading,setLoading]=useState(true);
   const [search,setSearch]=useState(""); const [roleFilter,setRoleFilter]=useState("");
   const [editUser,setEditUser]=useState(null);
+  const [pwUser,setPwUser]=useState(null);
+  const [pwValue,setPwValue]=useState("");
   const { toast, ToastContainer } = useToast();
   useEffect(()=>{
     setLoading(true);
@@ -258,6 +260,16 @@ function UsersManager() {
       setUsers(p=>p.map(u=>u.id===editUser.id?{...u,...updated, fullName:editUser.fullName, email:editUser.email, phone:editUser.phone, username:editUser.username}:u));
       toast("Profil güncəlləndi");
       setEditUser(null);
+    }catch(e){toast(e.message,"error");}
+  }
+  async function changePassword(){
+    if(!pwUser||!pwValue)return;
+    if(pwValue.length<6){toast("Şifrə ən azı 6 simvol olmalıdır","error");return;}
+    try{
+      await apiFetch(`/api/admin/users/${pwUser.id}`,{method:"PATCH",body:JSON.stringify({newPassword:pwValue})});
+      toast("Şifrə dəyişdirildi");
+      setPwUser(null);
+      setPwValue("");
     }catch(e){toast(e.message,"error");}
   }
   const STATUS_COLOR = { ACTIVE:"badge-green",PENDING_VERIFICATION:"badge-yellow",SUSPENDED:"badge-yellow",BANNED:"badge-red" };
@@ -305,7 +317,7 @@ function UsersManager() {
                       {u.status!=="BANNED"&&<button onClick={()=>updateUser(u.id,{status:"BANNED"})} className="btn-danger btn-xs">Ban</button>}
                       {u.status==="BANNED"&&<button onClick={()=>updateUser(u.id,{status:"ACTIVE"})} className="btn-secondary btn-xs">Aktivləşdir</button>}
                       {u.status==="ACTIVE"&&<button onClick={()=>updateUser(u.id,{status:"SUSPENDED"})} className="btn-secondary btn-xs">Dondurul</button>}
-                      <button onClick={()=>deleteUser(u.id)} className="btn-danger btn-xs flex items-center gap-1"><Icon name="trash" size={12}/>Sil</button>
+                      <button onClick={()=>{setPwUser(u);setPwValue("");}} className="btn-secondary btn-xs flex items-center gap-1"><Icon name="lock" size={12}/>Şifrə</button><button onClick={()=>deleteUser(u.id)} className="btn-danger btn-xs flex items-center gap-1"><Icon name="trash" size={12}/>Sil</button>
                     </div>
                   </td>
                 </tr>
@@ -342,6 +354,25 @@ function UsersManager() {
             <div className="flex gap-2 justify-end pt-2 border-t border-gray-100">
               <button onClick={()=>setEditUser(null)} className="btn-secondary px-4 py-2 text-sm rounded-xl">İmtina</button>
               <button onClick={saveEdit} className="btn-primary px-4 py-2 text-sm rounded-xl flex items-center gap-1"><Icon name="check" size={14}/>Yadda saxla</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {pwUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={()=>{setPwUser(null);setPwValue("");}}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4" onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg">Şifrə Dəyiş</h3>
+              <button onClick={()=>{setPwUser(null);setPwValue("");}} className="btn-icon"><Icon name="x" size={18}/></button>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-1">İstifadəçi: <strong>{pwUser.fullName}</strong> ({pwUser.email})</p>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">Yeni şifrə</label>
+              <input type="password" value={pwValue} onChange={e=>setPwValue(e.target.value)} className="input-sm w-full" placeholder="Ən azı 6 simvol" minLength={6}/>
+            </div>
+            <div className="flex gap-2 justify-end pt-2 border-t border-gray-100">
+              <button onClick={()=>{setPwUser(null);setPwValue("");}} className="btn-secondary px-4 py-2 text-sm rounded-xl">İmtina</button>
+              <button onClick={changePassword} className="btn-primary px-4 py-2 text-sm rounded-xl flex items-center gap-1"><Icon name="check" size={14}/>Şifrəni Dəyiş</button>
             </div>
           </div>
         </div>
