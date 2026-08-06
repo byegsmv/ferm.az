@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { Link } from "@/i18n/routing";
 import Icon from "@/components/ui/Icon";
 
@@ -32,7 +32,7 @@ const CATEGORY_THEMES = {
   "ariciliq": { bg: "from-yellow-50 to-amber-50/40 hover:from-yellow-100/80 hover:to-amber-100/50", border: "border-yellow-200/60 hover:border-yellow-300", iconBg: "bg-yellow-100 text-yellow-800", text: "text-yellow-950" },
   "aqro-xidmetler": { bg: "from-indigo-50 to-purple-50/40 hover:from-indigo-100/80 hover:to-purple-100/50", border: "border-indigo-200/60 hover:border-indigo-300", iconBg: "bg-indigo-100 text-indigo-700", text: "text-indigo-950" },
   "kampaniyalar": { bg: "from-rose-50 to-pink-50/40 hover:from-rose-100/80 hover:to-pink-100/50", border: "border-rose-200/60 hover:border-rose-300", iconBg: "bg-rose-100 text-rose-700", text: "text-rose-950" },
-  "terkibine-gore": { bg: "from-cyan-50 to-sky-50/40 hover:from-cyan-100/80 hover:to-sky-100/50", border: "border-cyan-200/60 hover:border-cyan-300", iconBg: "bg-cyan-100 text-cyan-700", text: "text-cyan-950" },
+  "terkibine-gore": { bg: "from-cyan-50 to-sky-50/40 hover:from-cyan-100/80 hover:to-cyan-100/50", border: "border-cyan-200/60 hover:border-cyan-300", iconBg: "bg-cyan-100 text-cyan-700", text: "text-cyan-950" },
 };
 
 const PALETTES = [
@@ -63,44 +63,127 @@ function getCategoryIcon(c) {
   return "sprout";
 }
 
+// Pixels per frame for the continuous auto-scroll (roughly ~30px/sec at 60fps)
+const AUTO_SPEED = 0.5;
+
 export default function CategoriesSlider({ categories = [], title, subtitle }) {
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  const checkScroll = () => {
+  // Auto-scroll / drag state kept in refs so the RAF loop always reads fresh values
+  // without needing to be re-created on every render.
+  const pausedRef = useRef(false);
+  const draggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollRef = useRef(0);
+  const dragMovedRef = useRef(false);
+  const rafRef = useRef(null);
+  const halfWidthRef = useRef(0);
+
+  // Duplicate the list so the strip can loop seamlessly (scrolling past the
+  // first copy lands exactly on the identical second copy).
+  const loopCategories = categories && categories.length > 0 ? [...categories, ...categories] : [];
+
+  const checkScroll = useCallback(() => {
     if (!scrollRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
     setCanScrollLeft(scrollLeft > 5);
     setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
-  };
+  }, []);
+
+  // Measure the width of a single copy of the list (half of the full doubled scrollWidth)
+  const measureHalfWidth = useCallback(() => {
+    if (!scrollRef.current) return;
+    halfWidthRef.current = scrollRef.current.scrollWidth / 2;
+  }, []);
 
   useEffect(() => {
     checkScroll();
+    measureHalfWidth();
     const el = scrollRef.current;
     if (el) {
       el.addEventListener("scroll", checkScroll, { passive: true });
-      window.addEventListener("resize", checkScroll);
+      window.addEventListener("resize", measureHalfWidth);
     }
     return () => {
       if (el) el.removeEventListener("scroll", checkScroll);
-      window.removeEventListener("resize", checkScroll);
+      window.removeEventListener("resize", measureHalfWidth);
     };
-  }, [categories]);
+  }, [categories, checkScroll, measureHalfWidth]);
+
+  // Continuous auto-scroll loop (pauses on hover/drag, resumes automatically)
+  useEffect(() => {
+    if (!scrollRef.current || loopCategories.length === 0) return;
+
+    const step = () => {
+      const el = scrollRef.current;
+      if (el && !pausedRef.current && !draggingRef.current) {
+        el.scrollLeft += AUTO_SPEED;
+        // Seamless loop: once we've scrolled past one full copy of the list,
+        // jump back by that same width — since the content is duplicated,
+        // this jump is visually invisible.
+        if (halfWidthRef.current > 0 && el.scrollLeft >= halfWidthRef.current) {
+          el.scrollLeft -= halfWidthRef.current;
+        }
+      }
+      rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [loopCategories.length]);
 
   if (!categories || categories.length === 0) {
     return null;
   }
 
-  const scrollLeft = () => {
+  const scrollLeftBtn = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({ left: -280, behavior: "smooth" });
     }
   };
 
-  const scrollRight = () => {
+  const scrollRightBtn = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({ left: 280, behavior: "smooth" });
+    }
+  };
+
+  // Pause auto-scroll while the mouse is hovering the strip
+  const handleMouseEnter = () => {
+    pausedRef.current = true;
+  };
+  const handleMouseLeave = () => {
+    pausedRef.current = false;
+    // stop any in-progress drag if the cursor leaves the strip
+    draggingRef.current = false;
+  };
+
+  // Click-and-drag support so users can manually swipe the strip with the mouse
+  const handleMouseDown = (e) => {
+    if (!scrollRef.current) return;
+    draggingRef.current = true;
+    dragMovedRef.current = false;
+    dragStartXRef.current = e.pageX;
+    dragStartScrollRef.current = scrollRef.current.scrollLeft;
+  };
+  const handleMouseMove = (e) => {
+    if (!draggingRef.current || !scrollRef.current) return;
+    const delta = e.pageX - dragStartXRef.current;
+    if (Math.abs(delta) > 3) dragMovedRef.current = true;
+    scrollRef.current.scrollLeft = dragStartScrollRef.current - delta;
+  };
+  const handleMouseUp = () => {
+    draggingRef.current = false;
+  };
+  // Prevent the click navigation from firing right after a real drag
+  const handleClickCapture = (e) => {
+    if (dragMovedRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      dragMovedRef.current = false;
     }
   };
 
@@ -128,16 +211,11 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
       </div>
 
       <div className="relative group/slider">
-        {/* Left Arrow Button */}
+        {/* Left Arrow Button — always visible so users always know they can scroll */}
         <button
-          onClick={scrollLeft}
-          disabled={!canScrollLeft}
+          onClick={scrollLeftBtn}
           aria-label="Əvvəlki"
-          className={`absolute -left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 ${
-            canScrollLeft
-              ? "opacity-100 cursor-pointer sm:opacity-90 sm:group-hover/slider:opacity-100"
-              : "opacity-0 pointer-events-none"
-          }`}
+          className="absolute -left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 opacity-100"
         >
           <Icon name="arrowLeft" size={20} />
         </button>
@@ -145,17 +223,24 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
         {/* Scroll Container */}
         <div
           ref={scrollRef}
-          className="flex gap-3.5 overflow-x-auto no-scrollbar py-2 px-1 snap-x scroll-smooth"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onClickCapture={handleClickCapture}
+          className="flex gap-3.5 overflow-x-auto no-scrollbar py-2 px-1 scroll-smooth cursor-grab active:cursor-grabbing select-none"
         >
-          {categories.map((c, i) => {
+          {loopCategories.map((c, i) => {
             const theme = CATEGORY_THEMES[c.slug] || PALETTES[i % PALETTES.length];
             const iconName = getCategoryIcon(c);
 
             return (
               <Link
-                key={c.id || i}
+                key={`${c.id || c.slug || i}-${i}`}
                 href={`/products?category=${c.slug}`}
-                className={`snap-start shrink-0 w-60 sm:w-64 group/card flex items-center gap-3.5 p-4 rounded-2xl border bg-gradient-to-br ${theme.bg} ${theme.border} hover:shadow-md hover:-translate-y-0.5 transition-all duration-300`}
+                draggable={false}
+                className={`shrink-0 w-60 sm:w-64 group/card flex items-center gap-3.5 p-4 rounded-2xl border bg-gradient-to-br ${theme.bg} ${theme.border} hover:shadow-md hover:-translate-y-0.5 transition-all duration-300`}
               >
                 <span
                   className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center p-2 shadow-sm ${theme.iconBg} group-hover/card:scale-110 transition-transform duration-300`}
@@ -172,16 +257,11 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
           })}
         </div>
 
-        {/* Right Arrow Button */}
+        {/* Right Arrow Button — always visible so users always know they can scroll */}
         <button
-          onClick={scrollRight}
-          disabled={!canScrollRight}
+          onClick={scrollRightBtn}
           aria-label="Növbəti"
-          className={`absolute -right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 ${
-            canScrollRight
-              ? "opacity-100 cursor-pointer sm:opacity-90 sm:group-hover/slider:opacity-100"
-              : "opacity-0 pointer-events-none"
-          }`}
+          className="absolute -right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 opacity-100"
         >
           <Icon name="arrowRight" size={20} />
         </button>
