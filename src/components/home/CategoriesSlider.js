@@ -173,21 +173,19 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
 
   return (
     <section className="max-w-7xl mx-auto px-4 mt-6 relative z-10">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 px-1 gap-2">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center">
-              <Icon name="layers" size={18} />
-            </span>
-            {title || "Kateqoriyalar"}
-          </h2>
-          <p className="text-sm text-gray-500 font-medium mt-0.5">
-            {subtitle || "Məhsul növünü seçin"}
-          </p>
-        </div>
+      <div className="flex flex-col items-center justify-center text-center mb-5 px-1 gap-1">
+        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center">
+            <Icon name="layers" size={18} />
+          </span>
+          {title || "Kateqoriyalar"}
+        </h2>
+        <p className="text-sm text-gray-500 font-medium">
+          {subtitle || "Məhsul növünü seçin"}
+        </p>
         <Link
           href="/products"
-          className="text-sm text-brand-600 font-semibold hover:text-brand-700 flex items-center gap-1 group transition-colors"
+          className="text-sm text-brand-600 font-semibold hover:text-brand-700 flex items-center gap-1 group transition-colors mt-1"
         >
           <span>Bütün kateqoriyalar</span>
           <Icon name="arrowRight" size={14} className="group-hover:translate-x-0.5 transition-transform" />
