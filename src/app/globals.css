@@ -124,7 +124,7 @@ body {
   /* ─ Table ─ */
   .table-header  { @apply bg-gray-50/50 border-b border-[var(--border)] text-xs font-bold text-gray-500 uppercase tracking-wider; }
   .table-row     { @apply border-b border-[var(--border)] hover:bg-gray-50/40 transition-colors duration-150; }
-  .table-cell    { @apply px-5 py-4 text-sm text-gray-700; }
+  .table-cell    { @apply px-4 py-3 text-sm text-gray-700; }
 
   /* ─ Sidebar Nav ─ */
   .nav-item      { @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-zinc-50 hover:text-gray-950 transition-all duration-200; }

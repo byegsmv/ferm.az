@@ -189,7 +189,7 @@ async function main() {
 
   // ---------- DEMO STORE ----------
   const store = await prisma.store.upsert({
-    where: { ownerId: users.STORE.id },
+    where: { slug: "aqro-market" },
     update: {},
     create: {
       ownerId: users.STORE.id,

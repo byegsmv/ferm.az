@@ -72,7 +72,7 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
         <div className="p-4 border-b border-gray-100 flex gap-4 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
             <input 
@@ -100,14 +100,14 @@ export default function AdminUsersPage() {
           </select>
         </div>
 
-        <table className="w-full text-left">
+        <table className="w-full text-left min-w-[700px]">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">İstifadəçi</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Əlaqə</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Rol</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Əməliyyat</th>
+              <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[180px]">İstifadəçi</th>
+              <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[180px]">Əlaqə</th>
+              <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Rol</th>
+              <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Status</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-40 whitespace-nowrap">Əməliyyat</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">

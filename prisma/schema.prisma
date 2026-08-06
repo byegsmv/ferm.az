@@ -1243,3 +1243,16 @@ model IncomingEmail {
   @@index([isRead])
   @@index([receivedAt])
 }
+
+model SiteText {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  group     String   @default("general")
+  label     String   @default("")
+  valueAz   String   @default("")
+  valueEn   String?
+  valueRu   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

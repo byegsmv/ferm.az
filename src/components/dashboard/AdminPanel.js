@@ -8,6 +8,7 @@ import NoCodeAdminStudio from "@/components/dashboard/NoCodeAdminStudio";
 import EmailManager from "./EmailManager";
 import MessagingPanel from "@/components/chat/MessagingPanel";
 import AdminProfile from "@/components/dashboard/AdminProfile";
+import SiteTextsManager from "@/components/dashboard/SiteTextsManager";
 import AdminSupport from "@/components/dashboard/AdminSupport";
 import EmptyState from "@/components/ui/EmptyState";
 import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
@@ -64,14 +65,14 @@ const SIDEBAR_GROUPS = [
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 function AdminSidebar({ tab, setTab, badges, collapsed, setCollapsed }) {
   return (
-    <aside className={`${collapsed?"w-16":"w-64"} hidden md:flex flex-col bg-white border-r border-gray-100 transition-all duration-200 max-h-screen overflow-hidden`}>
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+    <aside className={`${collapsed?"w-16":"w-64"} hidden md:flex flex-col bg-white border-r border-gray-100 transition-all duration-200 shrink-0 h-screen sticky top-0 z-20 overflow-hidden`}>
+      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 shrink-0">
         {!collapsed && <span className="font-extrabold text-gray-900 text-sm">Admin Panel</span>}
-        <button onClick={()=>setCollapsed(v=>!v)} className="btn-icon ml-auto">
+        <button onClick={()=>setCollapsed(v=>!v)} className="btn-icon ml-auto" aria-label="Toggle Sidebar">
           <Icon name={collapsed ? "arrowRight" : "arrowLeft"} size={16} />
         </button>
       </div>
-      <nav className="flex-1 overflow-y-auto p-2 space-y-4">
+      <nav className="flex-1 overflow-y-auto p-2 space-y-4 min-h-0">
         {SIDEBAR_GROUPS.map(group=>(
           <div key={group.label}>
             {!collapsed && <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 mb-1">{group.label}</p>}
@@ -211,7 +212,12 @@ function PendingProducts() {
       <div className="card overflow-hidden">
         <table className="w-full">
           <thead className="table-header">
-            <tr><th className="table-cell text-left">Məhsul</th><th className="table-cell text-left hidden md:table-cell">Satıcı</th><th className="table-cell text-left hidden sm:table-cell">Qiymət</th><th className="table-cell text-right">Əməl</th></tr>
+            <tr>
+              <th className="table-cell text-left min-w-[200px]">Məhsul</th>
+              <th className="table-cell text-left hidden md:table-cell w-44">Satıcı</th>
+              <th className="table-cell text-left hidden sm:table-cell w-28">Qiymət</th>
+              <th className="table-cell text-right w-40 whitespace-nowrap">Əməl</th>
+            </tr>
           </thead>
           <tbody>
             {items.map(p=>(
@@ -324,35 +330,37 @@ function UsersManager() {
       </div>
       {loading ? <SkeletonList count={6}/> : !users.length ? <EmptyState icon="user" title="İstifadəçi tapılmadı"/> : (
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[600px]">
+          <table className="w-full min-w-[720px] text-left">
             <thead className="table-header"><tr>
-              <th className="table-cell text-left">İstifadəçi</th>
-              <th className="table-cell text-left">Rol</th>
-              <th className="table-cell text-left">Status</th>
-              <th className="table-cell text-right">Əməl</th>
+              <th className="table-cell text-left min-w-[200px]">İstifadəçi</th>
+              <th className="table-cell text-left w-36 whitespace-nowrap">Rol</th>
+              <th className="table-cell text-left w-32 whitespace-nowrap">Status</th>
+              <th className="table-cell text-right w-auto whitespace-nowrap">Əməl</th>
             </tr></thead>
             <tbody>
               {users.map(u=>(
                 <tr key={u.id} className="table-row">
-                  <td className="table-cell">
+                  <td className="table-cell min-w-[200px]">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold shrink-0">{u.fullName?.[0]}</div>
-                      <div><p className="font-medium text-sm">{u.fullName}</p><p className="caption">{u.email}</p>{u.phone&&<p className="caption text-brand-600">{u.phone}</p>}</div>
+                      <div className="min-w-0"><p className="font-medium text-sm truncate">{u.fullName}</p><p className="caption truncate">{u.email}</p>{u.phone&&<p className="caption text-brand-600 truncate">{u.phone}</p>}</div>
                     </div>
                   </td>
-                  <td className="table-cell">
+                  <td className="table-cell w-36 whitespace-nowrap">
                     <select defaultValue={u.role} onChange={e=>updateUser(u.id,{role:e.target.value})} className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-brand-400">
                       {ROLES.map(r=><option key={r} value={r}>{r}</option>)}
                     </select>
                   </td>
-                  <td className="table-cell"><span className={`badge ${STATUS_COLOR[u.status]||"badge-gray"}`}>{u.status}</span></td>
-                  <td className="table-cell">
-                    <div className="flex items-center gap-1.5 justify-end flex-wrap">
-                      <button onClick={()=>setEditUser({...u})} className="btn-secondary btn-xs flex items-center gap-1"><Icon name="edit" size={12}/>Redaktə</button>
-                      {u.status!=="BANNED"&&<button onClick={()=>updateUser(u.id,{status:"BANNED"})} className="btn-danger btn-xs">Ban</button>}
-                      {u.status==="BANNED"&&<button onClick={()=>updateUser(u.id,{status:"ACTIVE"})} className="btn-secondary btn-xs">Aktivləşdir</button>}
-                      {u.status==="ACTIVE"&&<button onClick={()=>updateUser(u.id,{status:"SUSPENDED"})} className="btn-secondary btn-xs">Dondurul</button>}
-                      <button onClick={()=>{setPwUser(u);setPwValue("");}} className="btn-secondary btn-xs flex items-center gap-1"><Icon name="lock" size={12}/>Şifrə</button><button onClick={()=>openWallet(u)} className="btn-secondary btn-xs flex items-center gap-1"><Icon name="wallet" size={12}/>Balans</button><button onClick={()=>deleteUser(u.id)} className="btn-danger btn-xs flex items-center gap-1"><Icon name="trash" size={12}/>Sil</button>
+                  <td className="table-cell w-32 whitespace-nowrap"><span className={`badge ${STATUS_COLOR[u.status]||"badge-gray"}`}>{u.status}</span></td>
+                  <td className="table-cell text-right whitespace-nowrap">
+                    <div className="flex items-center gap-1.5 justify-end">
+                      <button onClick={()=>setEditUser({...u})} className="btn-secondary btn-xs flex items-center gap-1 shrink-0" title="Profil Redaktə"><Icon name="edit" size={12}/>Redaktə</button>
+                      {u.status!=="BANNED"&&<button onClick={()=>updateUser(u.id,{status:"BANNED"})} className="btn-danger btn-xs shrink-0">Ban</button>}
+                      {u.status==="BANNED"&&<button onClick={()=>updateUser(u.id,{status:"ACTIVE"})} className="btn-secondary btn-xs shrink-0">Aktivləşdir</button>}
+                      {u.status==="ACTIVE"&&<button onClick={()=>updateUser(u.id,{status:"SUSPENDED"})} className="btn-secondary btn-xs shrink-0">Dondurul</button>}
+                      <button onClick={()=>{setPwUser(u);setPwValue("");}} className="btn-secondary btn-xs flex items-center gap-1 shrink-0" title="Şifrəni Dəyiş"><Icon name="lock" size={12}/>Şifrə</button>
+                      <button onClick={()=>openWallet(u)} className="btn-secondary btn-xs flex items-center gap-1 shrink-0" title="Balans"><Icon name="wallet" size={12}/>Balans</button>
+                      <button onClick={()=>deleteUser(u.id)} className="btn-danger btn-xs flex items-center gap-1 shrink-0" title="Sil"><Icon name="trash" size={12}/>Sil</button>
                     </div>
                   </td>
                 </tr>
@@ -494,22 +502,22 @@ function OrdersAll() {
       </select>
       {loading ? <SkeletonList count={5}/> : !orders.length ? <EmptyState icon="package" title="Sifariş tapılmadı"/> : (
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[580px]">
+          <table className="w-full min-w-[600px] text-left">
             <thead className="table-header"><tr>
-              <th className="table-cell text-left">Sifariş</th>
-              <th className="table-cell text-left hidden sm:table-cell">Alıcı</th>
-              <th className="table-cell text-left">Məbləğ</th>
-              <th className="table-cell text-left">Status</th>
-              <th className="table-cell text-right">Dəyişdir</th>
+              <th className="table-cell text-left w-36">Sifariş</th>
+              <th className="table-cell text-left hidden sm:table-cell min-w-[160px]">Alıcı</th>
+              <th className="table-cell text-left w-28">Məbləğ</th>
+              <th className="table-cell text-left w-32">Status</th>
+              <th className="table-cell text-right w-40">Dəyişdir</th>
             </tr></thead>
             <tbody>
               {orders.map(o=>(
                 <tr key={o.id} className="table-row">
-                  <td className="table-cell"><p className="font-mono text-xs text-gray-500">#{o.id.slice(-8)}</p><p className="caption">{new Date(o.createdAt).toLocaleDateString("az-AZ")}</p></td>
-                  <td className="table-cell hidden sm:table-cell">{o.buyer?.fullName||"—"}</td>
-                  <td className="table-cell font-semibold text-brand-700">₼{Number(o.total).toLocaleString("az-AZ")}</td>
-                  <td className="table-cell"><span className={`badge ${ORDER_STATUS_COLORS[o.status]||"badge-gray"}`}>{ORDER_STATUS_LABELS[o.status]}</span></td>
-                  <td className="table-cell">
+                  <td className="table-cell w-36"><p className="font-mono text-xs text-gray-500">#{o.id.slice(-8)}</p><p className="caption">{new Date(o.createdAt).toLocaleDateString("az-AZ")}</p></td>
+                  <td className="table-cell hidden sm:table-cell min-w-[160px] truncate">{o.buyer?.fullName||"—"}</td>
+                  <td className="table-cell font-semibold text-brand-700 w-28">₼{Number(o.total).toLocaleString("az-AZ")}</td>
+                  <td className="table-cell w-32"><span className={`badge ${ORDER_STATUS_COLORS[o.status]||"badge-gray"}`}>{ORDER_STATUS_LABELS[o.status]}</span></td>
+                  <td className="table-cell text-right w-40">
                     <select defaultValue={o.status} onChange={e=>changeStatus(o.id,e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-brand-400">
                       {Object.entries(ORDER_STATUS_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}
                     </select>
@@ -606,13 +614,13 @@ function CategoriesManager() {
       </form>
       {loading?<SkeletonList count={4}/>:(
         <div className="card overflow-x-auto">
-          <table className="w-full"><thead className="table-header"><tr><th className="table-cell text-left">Kateqoriya</th><th className="table-cell text-left hidden sm:table-cell">Slug</th><th className="table-cell text-left hidden md:table-cell">Tip</th><th className="table-cell text-right">Status</th></tr></thead>
+          <table className="w-full min-w-[500px] text-left"><thead className="table-header"><tr><th className="table-cell text-left min-w-[180px]">Kateqoriya</th><th className="table-cell text-left hidden sm:table-cell w-40">Slug</th><th className="table-cell text-left hidden md:table-cell w-28">Tip</th><th className="table-cell text-right w-28">Status</th></tr></thead>
           <tbody>{items.map(c=>(
             <tr key={c.id} className="table-row">
-              <td className="table-cell font-medium">{c.icon} {c.nameAz}</td>
-              <td className="table-cell hidden sm:table-cell"><code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{c.slug}</code></td>
-              <td className="table-cell hidden md:table-cell"><span className={`badge ${c.parentId?"badge-blue":"badge-purple"}`}>{c.parentId?"Alt":"Ana"}</span></td>
-              <td className="table-cell text-right">
+              <td className="table-cell min-w-[180px] font-medium">{c.icon} {c.nameAz}</td>
+              <td className="table-cell hidden sm:table-cell w-40"><code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{c.slug}</code></td>
+              <td className="table-cell hidden md:table-cell w-28"><span className={`badge ${c.parentId?"badge-blue":"badge-purple"}`}>{c.parentId?"Alt":"Ana"}</span></td>
+              <td className="table-cell text-right w-28">
                 <button onClick={()=>toggleActive(c.id,!c.isActive)} className={`badge cursor-pointer ${c.isActive?"badge-green":"badge-gray"}`}>{c.isActive ? "Aktiv" : "Deaktiv"}</button>
               </td>
             </tr>
@@ -867,14 +875,14 @@ function CouponsManager() {
       </form>
       {loading?<SkeletonList count={3}/>:!items.length?<EmptyState icon="tag" title="Kupon yoxdur"/>:(
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[400px]">
-            <thead className="table-header"><tr><th className="table-cell text-left">Kod</th><th className="table-cell text-left">Endirim</th><th className="table-cell text-left hidden sm:table-cell">İstifadə</th><th className="table-cell text-left">Status</th></tr></thead>
+          <table className="w-full min-w-[440px] text-left">
+            <thead className="table-header"><tr><th className="table-cell text-left w-36">Kod</th><th className="table-cell text-left w-28">Endirim</th><th className="table-cell text-left hidden sm:table-cell w-28">İstifadə</th><th className="table-cell text-right w-28">Status</th></tr></thead>
             <tbody>{items.map(c=>(
               <tr key={c.id} className="table-row">
-                <td className="table-cell"><code className="font-mono font-bold">{c.code}</code></td>
-                <td className="table-cell">{c.discountType==="PERCENTAGE"?`${c.discountValue}%`:`₼${c.discountValue}`}</td>
-                <td className="table-cell hidden sm:table-cell">{c.usedCount}/{c.maxUses||"∞"}</td>
-                <td className="table-cell"><span className={`badge ${c.isActive?"badge-green":"badge-gray"}`}>{c.isActive?"Aktiv":"Deaktiv"}</span></td>
+                <td className="table-cell w-36"><code className="font-mono font-bold">{c.code}</code></td>
+                <td className="table-cell w-28">{c.discountType==="PERCENTAGE"?`${c.discountValue}%`:`₼${c.discountValue}`}</td>
+                <td className="table-cell hidden sm:table-cell w-28">{c.usedCount}/{c.maxUses||"∞"}</td>
+                <td className="table-cell text-right w-28"><span className={`badge ${c.isActive?"badge-green":"badge-gray"}`}>{c.isActive?"Aktiv":"Deaktiv"}</span></td>
               </tr>
             ))}</tbody>
           </table>
@@ -1357,22 +1365,23 @@ export default function AdminPanel() {
       );
       case "profile":    return <AdminProfile />;
       case "support":    return <AdminSupport />;
+      case "site-texts": return <SiteTextsManager />;
       default:            return <EmptyState icon="clock" title="Gəlir..."/>;
     }
   }
 
   return (
-    <div className="md:grid md:grid-cols-[auto_1fr] h-full">
+    <div className="md:grid md:grid-cols-[auto_1fr] min-h-screen bg-gray-50">
       <ToastContainer/>
-      {/* Desktop sidebar — fixed height, own scroll */}
+      {/* Desktop sidebar — fixed height, sticky top, own scroll */}
       <AdminSidebar tab={tab} setTab={setTab} badges={badges} collapsed={collapsed} setCollapsed={setCollapsed}/>
       {/* Content area */}
-      <div className="flex flex-col min-w-0">
+      <div className="flex flex-col min-w-0 flex-1">
         {/* Mobile horizontal tab nav */}
         <AdminMobileNav tab={tab} setTab={setTab}/>
         {/* Main content */}
-        <div className="flex-1 p-4 md:p-6 overflow-x-hidden">
-          <div className="max-w-5xl animate-fade-in-up">
+        <div className="flex-1 p-4 md:p-6 min-w-0">
+          <div className="w-full max-w-[1280px] mx-auto animate-fade-in-up space-y-6">
             {renderPanel()}
           </div>
         </div>
