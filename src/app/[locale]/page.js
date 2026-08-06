@@ -23,7 +23,7 @@ async function getHomeData() {
       prisma.category.findMany({
         where: { isActive: true, parentId: null },
         orderBy: { sortOrder: "asc" },
-        take: 10,
+        take: 20,
       }),
       prisma.listing.findMany({
         where: { tier: { not: "STANDARD" }, OR: [{ endDate: null }, { endDate: { gt: now } }] },
@@ -92,28 +92,6 @@ async function getHomeData() {
   }
 }
 
-const CATEGORY_ICONS = {
-  "bitki-muhafize": "bug",
-  "gubreler": "sprout",
-  "toxum-ting": "leaf",
-  "aqrotexnika": "tractor",
-};
-
-const CATEGORY_THEMES = {
-  heyvandarliq: { bg: "from-amber-50 to-orange-50/30 hover:from-amber-100/70 hover:to-orange-100/30", border: "border-amber-100 hover:border-amber-200", iconBg: "bg-amber-100 text-amber-700", text: "text-amber-900" },
-  qusculuq: { bg: "from-orange-50 to-red-50/30 hover:from-orange-100/70 hover:to-red-100/30", border: "border-orange-100 hover:border-orange-200", iconBg: "bg-orange-100 text-orange-700", text: "text-orange-900" },
-  texnika: { bg: "from-blue-50 to-indigo-50/30 hover:from-blue-100/70 hover:to-indigo-100/30", border: "border-blue-100 hover:border-blue-200", iconBg: "bg-blue-100 text-blue-700", text: "text-blue-900" },
-  taxil: { bg: "from-yellow-50 to-amber-50/30 hover:from-yellow-100/70 hover:to-amber-100/30", border: "border-yellow-100 hover:border-yellow-200", iconBg: "bg-yellow-100 text-yellow-700", text: "text-yellow-900" },
-  gubre: { bg: "from-emerald-50 to-teal-50/30 hover:from-emerald-100/70 hover:to-teal-100/30", border: "border-emerald-100 hover:border-emerald-200", iconBg: "bg-emerald-100 text-emerald-700", text: "text-emerald-900" },
-  toxum: { bg: "from-green-50 to-emerald-50/30 hover:from-green-100/70 hover:to-emerald-100/30", border: "border-green-100 hover:border-green-200", iconBg: "bg-green-100 text-green-700", text: "text-green-900" },
-  ariculiq: { bg: "from-yellow-50 to-orange-50/30 hover:from-yellow-100/70 hover:to-orange-100/30", border: "border-yellow-100 hover:border-yellow-200", iconBg: "bg-yellow-100 text-yellow-800", text: "text-yellow-900" },
-  sudculuk: { bg: "from-sky-50 to-blue-50/30 hover:from-sky-100/70 hover:to-blue-100/30", border: "border-sky-100 hover:border-sky-200", iconBg: "bg-sky-100 text-sky-700", text: "text-sky-900" },
-  meyvə: { bg: "from-rose-50 to-red-50/30 hover:from-rose-100/70 hover:to-red-100/30", border: "border-rose-100 hover:border-rose-200", iconBg: "bg-rose-100 text-rose-700", text: "text-rose-900" },
-  tərəvəz: { bg: "from-green-50 to-lime-50/30 hover:from-green-100/70 hover:to-lime-100/30", border: "border-green-100 hover:border-green-200", iconBg: "bg-green-100 text-green-700", text: "text-green-900" },
-};
-
-const DEFAULT_THEME = { bg: "from-gray-50 to-slate-50/30 hover:from-gray-100/70 hover:to-slate-100/30", border: "border-gray-100 hover:border-gray-200", iconBg: "bg-gray-100 text-gray-700", text: "text-gray-900" };
-
 export default async function HomePage({ searchParams }) {
   const resolvedSearchParams = await searchParams;
   const editMode = resolvedSearchParams?.editMode === "true";
@@ -130,8 +108,6 @@ export default async function HomePage({ searchParams }) {
   } catch(e) { 
     console.error("Fetch failed:", e.message); 
   }
-  
-  const { categories, premiumListings, homepageAd, latestProducts, bundles, blogPosts } = homeData;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -149,7 +125,7 @@ export default async function HomePage({ searchParams }) {
   if (blocks.length === 0) {
     blocks = [
       { type: "HERO_SLIDER", props: {} },
-      { type: "CATEGORIES", props: { title: "Kateqoriyalar", count: 10 } },
+      { type: "CATEGORIES", props: { title: "Kateqoriyalar", count: 20 } },
       { type: "AD_BANNER", props: {} },
       { type: "PREMIUM_ADS", props: { title: "Premium Elanlar" } },
       { type: "LATEST_ADS", props: { title: "Yeni Elanlar", count: 8 } },

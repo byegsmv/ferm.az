@@ -1313,6 +1313,165 @@ function SliderManager() {
   );
 }
 
+
+// ─── User Modules Panel (Rol Modulları) ──────────────────────────────────────
+function UserModulesPanel() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userModules, setUserModules] = useState([]);
+  const [modulesLoading, setModulesLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  const ALL_MODULES = [
+    { key: "WALLET", label: "Pul Kisəsi", icon: "wallet" },
+    { key: "BLOG", label: "Bloq", icon: "fileText" },
+    { key: "BUNDLES", label: "Bağlamalar", icon: "gift" },
+    { key: "CORPORATE_LISTINGS", label: "Korporativ Elanlar", icon: "building" },
+    { key: "AI_AGRONOM", label: "AI Aqronom", icon: "bot" },
+    { key: "ANALYTICS", label: "Analitika", icon: "trendingUp" },
+    { key: "CAMPAIGNS", label: "Kampaniyalar", icon: "bell" },
+    { key: "BULK_CSV", label: "Toplu CSV", icon: "upload" },
+    { key: "DELIVERY", label: "Çatdırılma", icon: "truck" },
+    { key: "LEADERBOARD", label: "Liderlər Lövhəsi", icon: "trophy" },
+    { key: "CATEGORIES_SLIDER", label: "Kateqoriya Slider", icon: "layers" },
+    { key: "HERO_SECTION", label: "Hero Bölməsi", icon: "image" },
+    { key: "PROMO_BANNER", label: "Promo Banner", icon: "tag" },
+    { key: "PRODUCTS_GRID", label: "Məhsul Grid", icon: "grid" },
+    { key: "BLOG_SECTION", label: "Bloq Bölməsi", icon: "edit" },
+    { key: "TESTIMONIALS", label: "Rəylər", icon: "star" },
+    { key: "NEWSLETTER_SIGNUP", label: "Bülleten Abunəliyi", icon: "mail" },
+    { key: "WEATHER_WIDGET", label: "Hava Durumu", icon: "cloud" },
+    { key: "AGRONOMIST_AI", label: "Aqronom AI", icon: "bot" },
+    { key: "COMPARISON_TOOL", label: "Müqayisə Aləti", icon: "gitCompare" },
+    { key: "FAVORITES", label: "Seçilmişlər", icon: "heart" },
+    { key: "DIRECT_MESSAGING", label: "Mesajlaşma", icon: "message" },
+    { key: "WALLET_SYSTEM", label: "Pul Kisəsi Sistemi", icon: "wallet" },
+    { key: "STORE_RATINGS", label: "Mağaza Reytinqi", icon: "star" },
+  ];
+
+  useEffect(() => {
+    apiFetch("/api/admin/users?pageSize=100")
+      .then(d => setUsers(d.users || []))
+      .catch(e => toast(e.message, "error"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  function selectUser(user) {
+    setSelectedUser(user);
+    setModulesLoading(true);
+    apiFetch(`/api/admin/user-modules?userId=${user.id}`)
+      .then(d => {
+        const activeModules = new Set((d.modules || []).map(m => m.module));
+        setUserModules(ALL_MODULES.map(m => ({ ...m, enabled: activeModules.has(m.key) })));
+      })
+      .catch(e => toast(e.message, "error"))
+      .finally(() => setModulesLoading(false));
+  }
+
+  function toggleModule(key) {
+    setUserModules(prev => prev.map(m => m.key === key ? { ...m, enabled: !m.enabled } : m));
+  }
+
+  async function saveModules() {
+    if (!selectedUser) return;
+    setSaving(true);
+    try {
+      // Send all modules with their enabled state
+      const modulesToUpdate = userModules.map(m => ({ module: m.key, enabled: m.enabled }));
+      await apiFetch(`/api/admin/user-modules`, {
+        method: "POST",
+        body: JSON.stringify({ userId: selectedUser.id, modules: modulesToUpdate }),
+      });
+      toast("Modullar yeniləndi", "success");
+    } catch(e) {
+      toast(e.message, "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{[1,2,3,4].map(i=><SkeletonCard key={i}/>)}</div>;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-bold text-lg flex items-center gap-2"><Icon name="settings" size={20}/>Rol Modulları</h2>
+        <p className="text-sm text-gray-500 mt-0.5">İstifadəçilər üçün modul icazələrini idarə edin</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* User list */}
+        <div className="card p-4">
+          <h3 className="font-bold text-sm mb-3">İstifadəçilər</h3>
+          <div className="space-y-1 max-h-96 overflow-y-auto">
+            {users.map(u => (
+              <button
+                key={u.id}
+                onClick={() => selectUser(u)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${selectedUser?.id === u.id ? "bg-brand-50 text-brand-700" : "text-gray-600 hover:bg-gray-50"}`}
+              >
+                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
+                  {u.fullName?.[0]?.toUpperCase() || "U"}
+                </div>
+                <div className="flex-1 text-left min-w-0">
+                  <p className="truncate font-semibold">{u.fullName || "Adsız"}</p>
+                  <p className="text-xs text-gray-400 truncate">{u.email}</p>
+                </div>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 uppercase">{u.role?.split("_")[0]}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Module toggles */}
+        <div className="card p-4">
+          {selectedUser ? (
+            <>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-sm">{selectedUser.fullName} — Modullar</h3>
+                <button
+                  onClick={saveModules}
+                  disabled={saving}
+                  className="btn-primary text-xs px-4 py-2 disabled:opacity-50"
+                >
+                  {saving ? "Saxlanılır..." : "Yadda saxla"}
+                </button>
+              </div>
+              {modulesLoading ? (
+                <div className="space-y-2">{[1,2,3,4,5].map(i => <div key={i} className="h-10 rounded-xl bg-gray-100 animate-pulse" />)}</div>
+              ) : (
+                <div className="space-y-1.5 max-h-96 overflow-y-auto">
+                  {userModules.map(m => (
+                    <button
+                      key={m.key}
+                      onClick={() => toggleModule(m.key)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${m.enabled ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:bg-gray-50"}`}
+                    >
+                      <Icon name={m.icon} size={16} className={m.enabled ? "text-brand-600" : "text-gray-400"} />
+                      <span className="flex-1 text-left">{m.label}</span>
+                      <span className={`w-10 h-5 rounded-full relative transition-colors ${m.enabled ? "bg-brand-600" : "bg-gray-300"}`}>
+                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${m.enabled ? "translate-x-5" : "translate-x-0.5"}`} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
+              <div className="text-center">
+                <Icon name="user" size={32} className="mx-auto mb-2 opacity-50" />
+                <p>Modulları idarə etmək üçün istifadəçi seçin</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function AdminPanel() {
   const [tab, setTab] = useState("stats");
   const [stats, setStats] = useState(null);
