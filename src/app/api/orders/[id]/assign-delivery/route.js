@@ -6,7 +6,7 @@ const assignSchema = z.object({ deliveryPartnerId: z.string().min(1) });
 
 // PATCH /api/orders/:id/assign-delivery — seller-of-item or admin assigns a DELIVERY_PARTNER
 export async function PATCH(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;

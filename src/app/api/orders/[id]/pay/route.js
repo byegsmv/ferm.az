@@ -42,7 +42,7 @@ async function createProviderCharge({ provider, amount, currency, orderId }) {
 }
 
 export async function POST(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;

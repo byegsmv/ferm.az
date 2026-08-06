@@ -12,7 +12,7 @@ export async function GET(request) {
 
   let includeUnpublished = false;
   if (all) {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (authUser && ["ADMIN", "SUPER_ADMIN", "AGRONOMIST"].includes(authUser.role)) {
       includeUnpublished = true;
     }
@@ -32,7 +32,7 @@ export async function GET(request) {
 
 // POST /api/blog — admin/agronomist writes a new tips/news post
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN", "BUYER"]); // All authenticated users can write blog posts
   if (denied) return denied;
 

@@ -5,7 +5,7 @@ import { getAuthUser } from "@/lib/auth";
 // ?userId=xxx — spesifik istifadəçinin modulları
 // Boş — bütün modullar
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser || authUser.role !== "SUPER_ADMIN") {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -33,7 +33,7 @@ export async function GET(request) {
 // {userId, modules: [{module, enabled}, ...]} — bulk update for a specific user
 // {userId, module} — single module add
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser || authUser.role !== "SUPER_ADMIN") {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -89,7 +89,7 @@ export async function POST(request) {
 
 // DELETE /api/admin/user-modules
 export async function DELETE(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser || authUser.role !== "SUPER_ADMIN") {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }

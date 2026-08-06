@@ -14,7 +14,7 @@ export async function GET(request, { params }) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get("pageSize") || "20", 10)));
 
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     const isAdmin = authUser && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(authUser.role);
 
     // Admin all reviews; public only approved
@@ -47,7 +47,7 @@ export async function GET(request, { params }) {
 // POST /api/products/:id/reviews — any logged-in user can write; goes to admin moderation
 export async function POST(request, { params }) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (!authUser) return Response.json({ error: "Rəy yazmaq üçün daxil olmalısınız" }, { status: 401 });
 
     const { id: productId } = await params;

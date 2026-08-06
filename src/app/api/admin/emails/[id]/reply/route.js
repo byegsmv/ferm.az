@@ -3,7 +3,7 @@ import { getAuthUser, requireRole } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 
 export async function POST(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN", "MODERATOR"]);
   if (denied) return denied;
 

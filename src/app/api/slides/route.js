@@ -5,7 +5,7 @@ import { getAuthUser } from "@/lib/auth";
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const showAll = searchParams.get("all") === "1";
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const isAdmin = authUser && ["SUPER_ADMIN","ADMIN"].includes(authUser.role);
 
   const slides = await prisma.homepageSlide.findMany({
@@ -17,7 +17,7 @@ export async function GET(request) {
 
 // POST /api/slides — admin only, create new slide
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser || !["SUPER_ADMIN","ADMIN"].includes(authUser.role))
     return Response.json({ error: "Forbidden" }, { status: 403 });
 
@@ -34,7 +34,7 @@ export async function POST(request) {
 
 // PUT /api/slides — admin only, bulk reorder (array of { id, sortOrder })
 export async function PUT(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser || !["SUPER_ADMIN","ADMIN"].includes(authUser.role))
     return Response.json({ error: "Forbidden" }, { status: 403 });
 

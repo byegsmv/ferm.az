@@ -3,7 +3,7 @@ import { getAuthUser } from "@/lib/auth";
 
 // GET /api/notifications?unread=1&limit=20
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
@@ -24,7 +24,7 @@ export async function GET(request) {
 
 // PATCH /api/notifications — mark all as read
 export async function PATCH(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   await prisma.notification.updateMany({

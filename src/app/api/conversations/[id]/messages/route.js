@@ -16,7 +16,7 @@ async function getConversationForUser(id, userId) {
 // GET /api/conversations/:id/messages — poll for messages
 export async function GET(request, { params }) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const resolvedParams = await params;
@@ -49,7 +49,7 @@ export async function GET(request, { params }) {
 // POST /api/conversations/:id/messages — send a message in an existing conversation
 export async function POST(request, { params }) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const resolvedParams = await params;

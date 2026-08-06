@@ -3,7 +3,7 @@ import { getAuthUser } from "@/lib/auth";
 
 // GET /api/stores/me — current user's store
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const store = await prisma.store.findFirst({
@@ -20,7 +20,7 @@ export async function GET(request) {
 
 // PATCH /api/stores/me — update current user's store
 export async function PATCH(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const store = await prisma.store.findFirst({

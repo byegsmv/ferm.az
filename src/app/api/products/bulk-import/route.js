@@ -15,7 +15,7 @@ import slugify from "slugify";
  * Returns per-row success/error so a bad row doesn't block the rest.
  */
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN", "BUYER"]); // All authenticated users can bulk import
   if (denied) return denied;
 

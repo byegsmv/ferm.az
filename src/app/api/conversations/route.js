@@ -7,7 +7,7 @@ import { sendPushToUser } from "@/lib/push";
 // GET /api/conversations — list own conversations (as buyer or seller), newest first
 export async function GET(request) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     let conversations = await prisma.conversation.findMany({
@@ -49,7 +49,7 @@ export async function GET(request) {
 // Buyers pass sellerId (+ optional productId); sellers pass buyerId to reply to someone new.
 export async function POST(request) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     let body;

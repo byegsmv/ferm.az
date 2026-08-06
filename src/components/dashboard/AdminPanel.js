@@ -51,6 +51,7 @@ const SIDEBAR_GROUPS = [
     { id:"adslots",   icon:"image", label:"Reklam Yerləri" },
     { id:"notify",    icon:"bell", label:"Push Bildirişi" },
     { id:"slider",    icon:"image", label:"Slider İdarəsi" },
+    { id:"site-texts", icon:"edit", label:"Mətn İdarəsi" },
   ]},
   { label:"Sistem", items:[
     { id:"emails", icon:"mail", label:"E-poçt" },

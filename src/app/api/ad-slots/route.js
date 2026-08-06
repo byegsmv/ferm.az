@@ -19,7 +19,7 @@ export async function GET(request) {
   const includeCode = searchParams.get("includeCode") === "1";
 
   if (includeCode) {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (!authUser || !["ADMIN", "SUPER_ADMIN"].includes(authUser.role)) {
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }

@@ -9,7 +9,7 @@ function csvEscape(val) {
 
 // GET /api/admin/export/orders — CSV export of all orders for offline analysis in Excel
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
   if (denied) return denied;
 

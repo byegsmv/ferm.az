@@ -14,7 +14,7 @@ const updateSchema = z.object({
 // PATCH /api/ad-slots/:key — admin only: switch a placement between an
 // internal campaign banner, a pasted external ad-network embed, or off.
 export async function PATCH(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
   if (denied) return denied;
 

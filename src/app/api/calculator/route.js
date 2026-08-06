@@ -16,7 +16,7 @@ export async function POST(request) {
     return Response.json({ error: "Sahə (area) daxil edilməlidir" }, { status: 422 });
   }
 
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
 
   try {
     let useNorm = 0;

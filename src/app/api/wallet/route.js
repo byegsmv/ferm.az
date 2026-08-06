@@ -3,7 +3,7 @@ import { getAuthUser } from "@/lib/auth";
 
 // GET /api/wallet — own wallet balance + recent transactions
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   let wallet = await prisma.wallet.findUnique({

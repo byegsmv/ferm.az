@@ -61,7 +61,7 @@ export async function GET(request, { params }) {
 // PATCH /api/active-ingredients/[id] — Admin/Super Admin only
 export async function PATCH(request, { params }) {
   const { id } = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
   if (denied) return denied;
 
@@ -98,7 +98,7 @@ export async function PATCH(request, { params }) {
 // DELETE /api/active-ingredients/[id] — Admin/Super Admin only
 export async function DELETE(request, { params }) {
   const { id } = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
   if (denied) return denied;
 

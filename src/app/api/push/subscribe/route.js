@@ -4,7 +4,7 @@ import { pushSubscribeSchema } from "@/lib/validators";
 import { z } from "zod";
 
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   let body;
@@ -36,7 +36,7 @@ export async function POST(request) {
 const unsubscribeSchema = z.object({ endpoint: z.string().url() });
 
 export async function DELETE(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   let body;

@@ -3,7 +3,7 @@ import { getAuthUser } from "@/lib/auth";
 
 // POST /api/admin/users/[id]/modules — modul əlavə et
 export async function POST(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser || !["ADMIN","SUPER_ADMIN"].includes(authUser.role)) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -26,7 +26,7 @@ export async function POST(request, { params }) {
 
 // DELETE /api/admin/users/[id]/modules — modul sil
 export async function DELETE(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser || !["ADMIN","SUPER_ADMIN"].includes(authUser.role)) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }

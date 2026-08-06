@@ -3,7 +3,7 @@ import { getAuthUser } from "@/lib/auth";
 
 // GET /api/farmer-profile
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) {
     return Response.json({ error: "Giriş tələb olunur" }, { status: 401 });
   }
@@ -39,7 +39,7 @@ export async function GET(request) {
 
 // PATCH /api/farmer-profile
 export async function PATCH(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) {
     return Response.json({ error: "Giriş tələb olunur" }, { status: 401 });
   }

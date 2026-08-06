@@ -5,7 +5,7 @@ import { getAuthUser } from "@/lib/auth";
 // Returns { following: boolean, followerCount: number }.
 export async function POST(request, { params }) {
   const p = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const store = await prisma.store.findUnique({ where: { id: p.id }, select: { id: true, ownerId: true } });
@@ -46,7 +46,7 @@ export async function POST(request, { params }) {
 // GET /api/stores/[id]/follow — is the current user following this store?
 export async function GET(request, { params }) {
   const p = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ following: false });
 
   const existing = await prisma.storeFollow.findUnique({

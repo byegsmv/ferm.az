@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 // GET /api/farmer/stats — farmer/store dashboard overview
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser || !['FARMER', 'STORE', 'AGRONOMIST', 'SUPER_ADMIN', 'ADMIN'].includes(authUser.role)) {
     return Response.json({ error: 'Forbidden' }, { status: 403 });
   }

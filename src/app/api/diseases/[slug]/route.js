@@ -64,7 +64,7 @@ export async function GET(request, { params }) {
 // PATCH /api/diseases/[slug] — Admin/Super Admin only
 export async function PATCH(request, { params }) {
   const { slug } = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
   if (denied) return denied;
 
@@ -104,7 +104,7 @@ export async function PATCH(request, { params }) {
 // DELETE /api/diseases/[slug] — Admin/Super Admin only
 export async function DELETE(request, { params }) {
   const { slug } = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
   if (denied) return denied;
 

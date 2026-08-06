@@ -4,7 +4,7 @@ import { profileUpdateSchema } from "@/lib/validators";
 import { z } from "zod";
 
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const user = await prisma.user.findUnique({
@@ -24,7 +24,7 @@ export async function GET(request) {
 }
 
 export async function PATCH(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   let body;

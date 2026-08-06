@@ -24,7 +24,7 @@ export async function GET(request, { params }) {
     });
 
     // Allow admins to view any product; public only sees ACTIVE
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     const isAdmin = authUser && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(authUser.role);
     const isOwner = authUser && product && product.sellerId === authUser.sub;
 
@@ -50,7 +50,7 @@ const OWNER_SELF_TOGGLE_STATUSES = ["ACTIVE", "SOLD", "EXPIRED"];
 
 export async function PATCH(request, { params }) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (!authUser) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -184,7 +184,7 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (!authUser) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }

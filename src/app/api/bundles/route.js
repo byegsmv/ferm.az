@@ -8,7 +8,7 @@ import { bundleCreateSchema } from "@/lib/validators";
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const sellerId = searchParams.get("sellerId");
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
 
   const isAdmin = authUser && (authUser.role === "ADMIN" || authUser.role === "SUPER_ADMIN");
   const isOwnerRequest = authUser && sellerId && authUser.sub === sellerId;
@@ -38,7 +38,7 @@ export async function GET(request) {
 
 // POST /api/bundles — farmer/store/admin creates a product bundle deal
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN", "BUYER"]); // All authenticated users can create bundles
   if (denied) return denied;
 

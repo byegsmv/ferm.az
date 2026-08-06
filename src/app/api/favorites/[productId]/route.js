@@ -3,7 +3,7 @@ import { getAuthUser } from "@/lib/auth";
 
 // DELETE /api/favorites/:productId — remove a product from the current user's favorites
 export async function DELETE(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { productId } = await params;

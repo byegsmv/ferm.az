@@ -43,7 +43,7 @@ export async function GET(request) {
 
 // POST /api/listings — Store/Farmer promotes their own product; Admin can promote any
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   let body;

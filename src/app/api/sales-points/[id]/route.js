@@ -4,7 +4,7 @@ import { getAuthUser } from "@/lib/auth";
 // PATCH /api/sales-points/[id]
 export async function PATCH(request, { params }) {
   const { id } = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) {
     return Response.json({ error: "Giriş tələb olunur" }, { status: 401 });
   }
@@ -54,7 +54,7 @@ export async function PATCH(request, { params }) {
 // DELETE /api/sales-points/[id]
 export async function DELETE(request, { params }) {
   const { id } = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) {
     return Response.json({ error: "Giriş tələb olunur" }, { status: 401 });
   }

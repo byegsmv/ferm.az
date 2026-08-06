@@ -8,7 +8,7 @@ const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"];
 // FARMER/STORE: see only their own sales (sellerId forced to self).
 // ADMIN/SUPER_ADMIN: platform-wide by default, or ?sellerId=X for a specific seller.
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const isAdmin = authUser.role === "ADMIN" || authUser.role === "SUPER_ADMIN";

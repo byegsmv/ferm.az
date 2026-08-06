@@ -14,7 +14,7 @@ export async function GET(request) {
   const search = searchParams.get("search");
   const mine = searchParams.get("mine") === "1";
 
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
 
   let where = {
     storeId: { not: null },   // only store catalog products (not regular farmer listings)
@@ -61,7 +61,7 @@ export async function GET(request) {
 
 // POST /api/catalog — create a catalog product (store owners and admins only)
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const allowedRoles = ["STORE", "FARMER", "ADMIN", "SUPER_ADMIN"];

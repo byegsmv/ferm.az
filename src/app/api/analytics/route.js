@@ -3,7 +3,7 @@ import { getAuthUser, requireRole } from "@/lib/auth";
 
 // GET /api/analytics?range=30|90|365
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN", "MODERATOR"]);
   if (denied) return denied;
 

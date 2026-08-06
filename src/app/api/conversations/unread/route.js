@@ -4,7 +4,7 @@ import { getAuthUser } from "@/lib/auth";
 // GET /api/conversations/unread — returns total unread message count for badge
 export async function GET(request) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (!authUser) return Response.json({ count: 0 });
 
     const count = await prisma.message.count({

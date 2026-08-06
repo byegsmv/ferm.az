@@ -11,7 +11,7 @@ async function findStore(id, authUser = null) {
 
 export async function GET(request, { params }) {
   const { id } = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const store = await findStore(id, authUser);
 
   const isStaffOrOwner =
@@ -54,7 +54,7 @@ export async function GET(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
@@ -97,7 +97,7 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;

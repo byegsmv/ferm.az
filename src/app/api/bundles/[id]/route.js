@@ -14,7 +14,7 @@ export async function GET(_request, { params }) {
 
 export async function PATCH(request, { params }) {
   const resolvedParams = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const bundle = await prisma.bundle.findUnique({ where: { id: resolvedParams.id } });
@@ -67,7 +67,7 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const resolvedParams = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const bundle = await prisma.bundle.findUnique({ where: { id: resolvedParams.id } });

@@ -29,7 +29,7 @@ export async function GET(request) {
 
 // POST /api/sales-points
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) {
     return Response.json({ error: "Giriş tələb olunur" }, { status: 401 });
   }

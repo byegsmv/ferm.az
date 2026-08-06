@@ -4,7 +4,7 @@ import { getAuthUser } from "@/lib/auth";
 // PATCH /api/notifications/:id — mark single as read
 export async function PATCH(request, { params }) {
   const resolvedParams = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const notif = await prisma.notification.findUnique({ where: { id: resolvedParams.id } });
@@ -19,7 +19,7 @@ export async function PATCH(request, { params }) {
 // DELETE /api/notifications/:id
 export async function DELETE(request, { params }) {
   const resolvedParams = await params;
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const notif = await prisma.notification.findUnique({ where: { id: resolvedParams.id } });

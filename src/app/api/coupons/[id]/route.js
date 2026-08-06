@@ -4,7 +4,7 @@ import { couponUpdateSchema } from "@/lib/validators";
 
 // PATCH /api/coupons/:id — admin: toggle isActive, edit discount/limits
 export async function PATCH(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
   if (denied) return denied;
 
@@ -37,7 +37,7 @@ export async function PATCH(request, { params }) {
 
 // DELETE /api/coupons/:id — admin only
 export async function DELETE(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
   if (denied) return denied;
 

@@ -7,7 +7,7 @@ const decisionSchema = z.object({ action: z.enum(["approve", "reject"]) });
 
 // PATCH /api/admin/wallet-withdrawals/:id
 export async function PATCH(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
   if (denied) return denied;
 

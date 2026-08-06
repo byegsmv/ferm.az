@@ -63,7 +63,7 @@ function getCategoryIcon(c) {
   return "sprout";
 }
 
-// Pixels per frame for the continuous auto-scroll (roughly ~30px/sec at 60fps)
+// Pixels per frame for auto-scroll (~30px/sec at 60fps)
 const AUTO_SPEED = 0.5;
 
 export default function CategoriesSlider({ categories = [], title, subtitle }) {
@@ -71,19 +71,14 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Auto-scroll / drag state kept in refs so the RAF loop always reads fresh values
-  // without needing to be re-created on every render.
+  // Auto-scroll / drag state in refs (RAF loop reads fresh values without re-creation)
   const pausedRef = useRef(false);
   const draggingRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragStartScrollRef = useRef(0);
   const dragMovedRef = useRef(false);
   const rafRef = useRef(null);
-  const halfWidthRef = useRef(0);
-
-  // Duplicate the list so the strip can loop seamlessly (scrolling past the
-  // first copy lands exactly on the identical second copy).
-  const loopCategories = categories && categories.length > 0 ? [...categories, ...categories] : [];
+  const directionRef = useRef(1); // 1 = scroll right, -1 = scroll left (ping-pong)
 
   const checkScroll = useCallback(() => {
     if (!scrollRef.current) return;
@@ -92,39 +87,38 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
     setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
   }, []);
 
-  // Measure the width of a single copy of the list (half of the full doubled scrollWidth)
-  const measureHalfWidth = useCallback(() => {
-    if (!scrollRef.current) return;
-    halfWidthRef.current = scrollRef.current.scrollWidth / 2;
-  }, []);
-
   useEffect(() => {
     checkScroll();
-    measureHalfWidth();
     const el = scrollRef.current;
     if (el) {
       el.addEventListener("scroll", checkScroll, { passive: true });
-      window.addEventListener("resize", measureHalfWidth);
+      window.addEventListener("resize", checkScroll);
     }
     return () => {
       if (el) el.removeEventListener("scroll", checkScroll);
-      window.removeEventListener("resize", measureHalfWidth);
+      window.removeEventListener("resize", checkScroll);
     };
-  }, [categories, checkScroll, measureHalfWidth]);
+  }, [categories, checkScroll]);
 
-  // Continuous auto-scroll loop (pauses on hover/drag, resumes automatically)
+  // Continuous auto-scroll with ping-pong (bounce at edges, no duplication)
   useEffect(() => {
-    if (!scrollRef.current || loopCategories.length === 0) return;
+    if (!scrollRef.current || !categories || categories.length === 0) return;
 
     const step = () => {
       const el = scrollRef.current;
       if (el && !pausedRef.current && !draggingRef.current) {
-        el.scrollLeft += AUTO_SPEED;
-        // Seamless loop: once we've scrolled past one full copy of the list,
-        // jump back by that same width — since the content is duplicated,
-        // this jump is visually invisible.
-        if (halfWidthRef.current > 0 && el.scrollLeft >= halfWidthRef.current) {
-          el.scrollLeft -= halfWidthRef.current;
+        el.scrollLeft += AUTO_SPEED * directionRef.current;
+
+        const { scrollLeft, scrollWidth, clientWidth } = el;
+        const maxScroll = scrollWidth - clientWidth;
+
+        // Bounce at right edge
+        if (scrollLeft >= maxScroll - 1) {
+          directionRef.current = -1;
+        }
+        // Bounce at left edge
+        if (scrollLeft <= 1) {
+          directionRef.current = 1;
         }
       }
       rafRef.current = requestAnimationFrame(step);
@@ -133,7 +127,7 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [loopCategories.length]);
+  }, [categories?.length]);
 
   if (!categories || categories.length === 0) {
     return null;
@@ -151,17 +145,9 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
     }
   };
 
-  // Pause auto-scroll while the mouse is hovering the strip
-  const handleMouseEnter = () => {
-    pausedRef.current = true;
-  };
-  const handleMouseLeave = () => {
-    pausedRef.current = false;
-    // stop any in-progress drag if the cursor leaves the strip
-    draggingRef.current = false;
-  };
+  const handleMouseEnter = () => { pausedRef.current = true; };
+  const handleMouseLeave = () => { pausedRef.current = false; draggingRef.current = false; };
 
-  // Click-and-drag support so users can manually swipe the strip with the mouse
   const handleMouseDown = (e) => {
     if (!scrollRef.current) return;
     draggingRef.current = true;
@@ -175,10 +161,8 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
     if (Math.abs(delta) > 3) dragMovedRef.current = true;
     scrollRef.current.scrollLeft = dragStartScrollRef.current - delta;
   };
-  const handleMouseUp = () => {
-    draggingRef.current = false;
-  };
-  // Prevent the click navigation from firing right after a real drag
+  const handleMouseUp = () => { draggingRef.current = false; };
+
   const handleClickCapture = (e) => {
     if (dragMovedRef.current) {
       e.preventDefault();
@@ -211,7 +195,7 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
       </div>
 
       <div className="relative group/slider">
-        {/* Left Arrow Button — always visible so users always know they can scroll */}
+        {/* Left Arrow — always visible */}
         <button
           onClick={scrollLeftBtn}
           aria-label="Əvvəlki"
@@ -220,7 +204,7 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
           <Icon name="arrowLeft" size={20} />
         </button>
 
-        {/* Scroll Container */}
+        {/* Scroll Container — no duplication, each category appears once */}
         <div
           ref={scrollRef}
           onMouseEnter={handleMouseEnter}
@@ -231,13 +215,13 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
           onClickCapture={handleClickCapture}
           className="flex gap-3.5 overflow-x-auto no-scrollbar py-2 px-1 scroll-smooth cursor-grab active:cursor-grabbing select-none"
         >
-          {loopCategories.map((c, i) => {
+          {categories.map((c, i) => {
             const theme = CATEGORY_THEMES[c.slug] || PALETTES[i % PALETTES.length];
             const iconName = getCategoryIcon(c);
 
             return (
               <Link
-                key={`${c.id || c.slug || i}-${i}`}
+                key={c.id || c.slug || i}
                 href={`/products?category=${c.slug}`}
                 draggable={false}
                 className={`shrink-0 w-60 sm:w-64 group/card flex items-center gap-3.5 p-4 rounded-2xl border bg-gradient-to-br ${theme.bg} ${theme.border} hover:shadow-md hover:-translate-y-0.5 transition-all duration-300`}
@@ -257,7 +241,7 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
           })}
         </div>
 
-        {/* Right Arrow Button — always visible so users always know they can scroll */}
+        {/* Right Arrow — always visible */}
         <button
           onClick={scrollRightBtn}
           aria-label="Növbəti"

@@ -85,22 +85,43 @@ export function verifyRefreshToken(token) {
  * Extracts and verifies the bearer token from a Next.js Request.
  * Returns the decoded payload or null.
  */
-export function getAuthUser(request) {
+export async function getAuthUser(request) {
   // 1. Try Authorization: Bearer header (client-side apiFetch)
   const authHeader = request.headers.get("authorization") || "";
   const [scheme, token] = authHeader.split(" ");
+  let payload = null;
   if (scheme === "Bearer" && token) {
-    return verifyAccessToken(token);
+    payload = verifyAccessToken(token);
   }
 
   // 2. Fallback: try HttpOnly cookie (set by server on login/refresh)
-  const cookieHeader = request.headers.get("cookie") || "";
-  const match = cookieHeader.match(/(?:^|;\s*)fmk_access_token=([^;]+)/);
-  if (match) {
-    return verifyAccessToken(match[1]);
+  if (!payload) {
+    const cookieHeader = request.headers.get("cookie") || "";
+    const match = cookieHeader.match(/(?:^|;\s*)fmk_access_token=([^;]+)/);
+    if (match) {
+      payload = verifyAccessToken(match[1]);
+    }
   }
 
-  return null;
+  if (!payload) return null;
+
+  // Always look up the user's current role from the DB — the JWT's role
+  // field is a snapshot from sign time and can be stale if an admin changed
+  // the role since the token was issued. This ensures role changes take
+  // effect on the user's very next API call, no logout needed.
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { role: true, email: true, status: true, isBanned: true },
+    });
+    if (!user) return null;
+    if (user.status === "BANNED" || user.isBanned) return null;
+    return { ...payload, role: user.role, email: user.email };
+  } catch {
+    // If DB is unreachable, fall back to JWT payload (better than blocking all APIs)
+    return payload;
+  }
 }
 
 export function generatePasswordResetToken() {

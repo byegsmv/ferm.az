@@ -4,7 +4,7 @@ import { getAuthUser, requireRole } from "@/lib/auth";
 
 // PATCH /api/reviews/:id  { isApproved: true/false }  — admin moderation
 export async function PATCH(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN", "MODERATOR"]);
   if (denied) return denied;
 
@@ -32,7 +32,7 @@ export async function PATCH(request, { params }) {
 
 // DELETE /api/reviews/:id — admin deletion
 export async function DELETE(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN", "MODERATOR"]);
   if (denied) return denied;
 

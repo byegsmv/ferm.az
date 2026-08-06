@@ -10,7 +10,7 @@ const PLATFORM_COMMISSION_RATE = 0.05; // 5% default — could be per-category/s
 // selling — orders that contain at least one of the caller's own products (FARMER/STORE)
 // all — every order in the system (ADMIN/SUPER_ADMIN only)
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
@@ -52,7 +52,7 @@ export async function GET(request) {
 
 // POST /api/orders — checkout: validates stock, locks price, computes commission/discount
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   let body;

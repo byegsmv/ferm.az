@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 // POST /api/wallet/withdraw/approve — admin approves a pending withdrawal
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ['ADMIN', 'SUPER_ADMIN']);
   if (denied) return denied;
 

@@ -4,7 +4,7 @@ import { walletWithdrawSchema } from "@/lib/validators";
 
 // POST /api/wallet/withdraw — request a withdrawal (goes to PENDING, admin approves)
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   let body;

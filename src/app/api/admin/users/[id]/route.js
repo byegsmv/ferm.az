@@ -3,7 +3,7 @@ import { getAuthUser, requireRole, hashPassword } from "@/lib/auth";
 import { adminUserUpdateSchema } from "@/lib/validators";
 
 export async function PATCH(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
   if (denied) return denied;
 
@@ -51,6 +51,16 @@ export async function PATCH(request, { params }) {
     select: { id: true, email: true, role: true, status: true, isBanned: true, fullName: true, phone: true, username: true },
   });
 
+  // If role or status was changed, revoke all existing refresh tokens so the
+  // user's next API call (after access token expires) gets a fresh token with
+  // the updated role. This makes admin role changes take effect within ~15min.
+  if (parsed.data.role || parsed.data.status || parsed.data.isBanned) {
+    await prisma.refreshToken.updateMany({
+      where: { userId: id, revoked: false },
+      data: { revoked: true },
+    });
+  }
+
   await prisma.auditLog.create({
     data: {
       userId: authUser.sub,
@@ -67,7 +77,7 @@ export async function PATCH(request, { params }) {
 
 // DELETE /api/admin/users/[id] — delete a user profile (ADMIN/SUPER_ADMIN only)
 export async function DELETE(request, { params }) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);

@@ -34,7 +34,7 @@ export async function GET(request) {
     const inStock = searchParams.get("inStock") === "true";
     const isOrganic = searchParams.get("isOrganic") === "true";
 
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     const isAdminLevel = authUser && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(authUser.role);
 
     let statusFilter = { status: "ACTIVE" };
@@ -271,7 +271,7 @@ export async function GET(request) {
 // an admin (or staff they've set up) approves it.
 export async function POST(request) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     const canPostAsSeller = !!authUser;
 
     let body;

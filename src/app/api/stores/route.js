@@ -15,7 +15,7 @@ export async function GET(request) {
 
   let isAdminView = false;
   if (wantsAll) {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUser(request);
     if (authUser && ["ADMIN", "SUPER_ADMIN"].includes(authUser.role)) isAdminView = true;
   }
 
@@ -62,7 +62,7 @@ export async function GET(request) {
 // First store: isActive = true (auto-active)
 // Additional stores: isActive = false (needs admin approval)
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   // Count how many ACTIVE stores the user already has

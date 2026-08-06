@@ -6,7 +6,7 @@ const addSchema = z.object({ productId: z.string().min(1) });
 
 // GET /api/favorites — current user's favorited products
 export async function GET(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const favorites = await prisma.favorite.findMany({
@@ -32,7 +32,7 @@ export async function GET(request) {
 
 // POST /api/favorites — toggle product in favorites (if exists, delete; otherwise, add)
 export async function POST(request) {
-  const authUser = getAuthUser(request);
+  const authUser = await getAuthUser(request);
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   let body;
