@@ -119,10 +119,10 @@ export default function Header() {
 
   const changeLanguage = (newLocale) => {
     if (locale === newLocale) return;
-    // Strip the locale prefix to get the path without it
+    
     const currentPath = window.location.pathname;
     const pathWithoutLocale = currentPath.replace(/^\/(az|en|ru)(?=\/|$)/, '') || '/';
-    // Use next-intl router with locale option — it handles prefixing automatically
+
     router.push(pathWithoutLocale + window.location.search, { locale: newLocale });
   };
 
@@ -187,7 +187,7 @@ export default function Header() {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-2">
-          {/* Language Switcher */}
+          {/* Language  */}
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowLang((v) => !v)}
@@ -286,11 +286,11 @@ export default function Header() {
           )}
         </div>
 
-        {/* Mobile right icons */}
+        {/* Mobile  icons */}
         <div className="md:hidden flex items-center gap-2 ml-auto">
           {user && <NotificationBell />}
           
-          {/* Mobile Cart Icon */}
+          {/* Mobile Cart  */}
           <Link href="/cart" className="relative w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm active:scale-95 transition-transform">
             <Icon name="cart" size={20} strokeWidth={2} />
             {count > 0 && (
@@ -300,7 +300,7 @@ export default function Header() {
             )}
           </Link>
           
-          {/* Mobile Lang Switch */}
+          {/* Mobile Lang  */}
           <button
             onClick={() => {
               const next = locale === "az" ? "en" : locale === "en" ? "ru" : "az";
@@ -313,7 +313,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Desktop Bottom Menu Row */}
+      {/* Desktop Menyu */}
       <div className="hidden md:block border-t border-gray-100 bg-white">
         <div className="max-w-6xl mx-auto px-4 h-11 flex items-center justify-between">
           <nav className="flex items-center gap-2">
@@ -346,7 +346,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile search bar (Only visible on small screens) */}
+      {/* Mobile search bar */}
       <div className="md:hidden w-full pb-3 px-3 mt-1 bg-white">
         <form onSubmit={handleSearch} className="flex h-11 shadow-sm rounded-xl overflow-hidden border border-gray-200 focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-50 transition-all bg-gray-50">
           <div className="flex items-center justify-center w-11 text-gray-400">
@@ -364,8 +364,6 @@ export default function Header() {
     <CitySelectModal 
       isOpen={showCityModal} 
       onClose={() => {
-        // If they close without selecting, we can just close it or force them. 
-        // We'll allow closing, but if we want to force, we could check if selectedCity exists.
         if (selectedCity) setShowCityModal(false);
       }} 
       onSelect={handleCitySelect} 
