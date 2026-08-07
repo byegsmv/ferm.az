@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Icon from "@/components/ui/Icon";
 
@@ -7,13 +7,16 @@ const ICONS = { success:"checkCircle", error:"closeCircle", warning:"alert", inf
 
 export function useToast() {
   const [toasts, setToasts] = useState([]);
-  function toast(msg, type="success", duration=3500) {
+
+  const toast = useCallback((msg, type="success", duration=3500) => {
     const id = Date.now();
     setToasts(p=>[...p,{id,msg,type}]);
     setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)), duration);
-  }
+  }, []);
+
   // Alias for compatibility with new admin components
   const showToast = toast;
+
   function ToastContainer() {
     const [mounted, setMounted] = useState(false);
     useEffect(() => {

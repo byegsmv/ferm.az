@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Icon from "@/components/ui/Icon";
 import { apiFetch } from "@/lib/apiClient";
 import { useToast } from "@/components/ui/Toast";
@@ -27,20 +27,42 @@ export default function SiteTextsManager() {
   const [newText, setNewText] = useState({ key: "", group: "general", label: "", valueAz: "", valueEn: "", valueRu: "" });
   const [edited, setEdited] = useState(new Set());
 
-  const fetchTexts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = activeGroup !== "all" ? `?group=${activeGroup}` : "";
-      const data = await apiFetch(`/api/admin/site-texts${params}`);
-      setTexts(data.siteTexts || []);
-    } catch {
-      showToast("Mətnlər yüklənmədi", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [activeGroup, showToast]);
+  // Controller reference to cancel pending fetches when activeGroup changes
+  const abortControllerRef = useRef(null);
 
-  useEffect(() => { fetchTexts(); }, [fetchTexts]);
+  useEffect(() => {
+    // Abort previous in-flight request if any
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    let isCurrent = true;
+    setLoading(true);
+
+    const params = activeGroup !== "all" ? `?group=${encodeURIComponent(activeGroup)}` : "";
+
+    apiFetch(`/api/admin/site-texts${params}`, { signal: controller.signal })
+      .then((data) => {
+        if (isCurrent) {
+          setTexts(data.siteTexts || []);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isCurrent && err.name !== "AbortError" && err.name !== "CanceledError") {
+          showToast("Mətnlər yüklənmədi", "error");
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+      controller.abort();
+    };
+  }, [activeGroup, showToast]);
 
   const filtered = texts.filter((t) => {
     if (!search) return true;
@@ -86,7 +108,7 @@ export default function SiteTextsManager() {
       setTexts((prev) => prev.filter((t) => t.id !== id));
       showToast("Mətn silindi", "success");
     } catch {
-      showToast("Silme xətası", "error");
+      showToast("Silmə xətası", "error");
     }
   };
 

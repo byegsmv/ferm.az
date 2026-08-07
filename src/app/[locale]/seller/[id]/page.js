@@ -6,7 +6,8 @@ import Icon from "@/components/ui/Icon";
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const seller = await prisma.user.findUnique({
-    where: { id, status: "ACTIVE" },
+    where: { id },
+    select: { id: true, fullName: true, status: true },
   });
   if (!seller) return { title: "Satıcı Tapılmadı" };
   return { title: `${seller.fullName} - FermerMarket` };
@@ -16,7 +17,7 @@ export default async function SellerProfilePage({ params }) {
   const { id } = await params;
 
   const seller = await prisma.user.findUnique({
-    where: { id, status: "ACTIVE" },
+    where: { id },
     include: {
       store: true,
       products: {
@@ -28,6 +29,9 @@ export default async function SellerProfilePage({ params }) {
   });
 
   if (!seller) notFound();
+
+  // If user is banned, show a deactivation notice instead of their listings
+  const isBanned = seller.status === "BANNED";
 
   const isVerified = seller.emailVerified || (seller.store && seller.store.isVerified);
   const initials = seller.fullName?.split(" ").map(n => n[0]).join("").toUpperCase().substring(0,2) || "S";
@@ -69,38 +73,48 @@ export default async function SellerProfilePage({ params }) {
                  </div>
               </div>
               <div className="shrink-0 flex gap-3 w-full md:w-auto">
-                 {seller.phone && (
+                 {seller.phone && !isBanned && (
                    <a href={`tel:${seller.phone}`} className="flex-1 md:flex-none flex justify-center items-center gap-2 px-5 py-2.5 bg-brand-50 text-brand-700 font-bold rounded-xl hover:bg-brand-100 transition">
                      Zəng et
                    </a>
                  )}
               </div>
            </div>
-           {seller.store?.description && (
+           {seller.store?.description && !isBanned && (
              <p className="mt-6 text-gray-600 text-sm leading-relaxed max-w-3xl">
                {seller.store.description}
              </p>
            )}
         </div>
 
-        {/* Seller's Products */}
-        <div>
-           <div className="flex items-center justify-between mb-4">
-             <h2 className="text-xl font-bold text-gray-900">Bütün Elanlar ({seller.products.length})</h2>
-           </div>
-           
-           {seller.products.length === 0 ? (
-             <div className="bg-white rounded-3xl p-10 text-center border border-gray-100 shadow-sm">
+        {/* Banned notice */}
+        {isBanned && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+            <Icon name="alert" size={32} className="mx-auto text-red-400 mb-2" />
+            <p className="font-bold text-red-700">Bu satçının hesabı bloklanıb</p>
+            <p className="text-sm text-red-600 mt-1">Hal-hazırda bu satçının elanları mövcud deyil.</p>
+          </div>
+        )}
+
+        {/* Seller's Products (only if not banned) */}
+        {!isBanned && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Bütün Elanlar ({seller.products.length})</h2>
+            </div>
+            
+            {seller.products.length === 0 ? (
+              <div className="bg-white rounded-3xl p-10 text-center border border-gray-100 shadow-sm">
                 <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto">
                   <Icon name="package" size={30} strokeWidth={1.6} />
                 </div>
                 <p className="mt-3 font-semibold text-gray-900">Hələlik elan yoxdur</p>
                 <p className="text-sm text-gray-500">Bu satıcının aktiv elanı yoxdur.</p>
-             </div>
-           ) : (
-             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
-               {seller.products.map(p => (
-                 <ProductCard 
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+                {seller.products.map(p => (
+                  <ProductCard 
                     key={p.id} 
                     tier={p.listing?.tier}
                     product={{
@@ -112,11 +126,12 @@ export default async function SellerProfilePage({ params }) {
                       region: p.region,
                       city: p.city
                     }} 
-                 />
-               ))}
-             </div>
-           )}
-        </div>
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         
       </div>
     </div>

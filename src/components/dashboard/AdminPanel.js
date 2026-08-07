@@ -244,7 +244,7 @@ function PendingProducts() {
 // ─── Users Manager ────────────────────────────────────────────────────────────
 function UsersManager() {
   const [users,setUsers]=useState([]); const [loading,setLoading]=useState(true);
-  const [search,setSearch]=useState(""); const [roleFilter,setRoleFilter]=useState("");
+  const [search,setSearch]=useState(""); const [roleFilter,setRoleFilter]=useState(""); const [statusFilter,setStatusFilter]=useState("");
   const [editUser,setEditUser]=useState(null);
   const [pwUser,setPwUser]=useState(null);
   const [pwValue,setPwValue]=useState("");
@@ -254,9 +254,9 @@ function UsersManager() {
   const { toast, ToastContainer } = useToast();
   useEffect(()=>{
     setLoading(true);
-    const q=new URLSearchParams({pageSize:100, ...(search&&{search}), ...(roleFilter&&{role:roleFilter})});
+    const q=new URLSearchParams({pageSize:100, ...(search&&{search}), ...(roleFilter&&{role:roleFilter}), ...(statusFilter&&{status:statusFilter})});
     apiFetch(`/api/admin/users?${q}`).then(d=>setUsers(d.users||[])).catch(e=>toast(e.message,"error")).finally(()=>setLoading(false));
-  },[search,roleFilter]);
+  },[search,roleFilter,statusFilter]);
   async function updateUser(id,data){
     try{ await apiFetch(`/api/admin/users/${id}`,{method:"PATCH",body:JSON.stringify(data)}); toast("Güncəlləndi"); setUsers(p=>p.map(u=>u.id===id?{...u,...data}:u)); }catch(e){toast(e.message,"error");}
   }
@@ -328,6 +328,13 @@ function UsersManager() {
           <option value="">Bütün rollar</option>
           {ROLES.map(r=><option key={r} value={r}>{r}</option>)}
         </select>
+        <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} className="select-field w-auto text-xs py-2">
+          <option value="">Bütün statuslar</option>
+          <option value="ACTIVE">Aktiv</option>
+          <option value="PENDING_VERIFICATION">Gözləyir</option>
+          <option value="SUSPENDED">Dondurulub</option>
+          <option value="BANNED">Banlı</option>
+        </select>
       </div>
       {loading ? <SkeletonList count={6}/> : !users.length ? <EmptyState icon="user" title="İstifadəçi tapılmadı"/> : (
         <div className="card overflow-x-auto">
@@ -352,7 +359,14 @@ function UsersManager() {
                       {ROLES.map(r=><option key={r} value={r}>{r}</option>)}
                     </select>
                   </td>
-                  <td className="table-cell w-32 whitespace-nowrap"><span className={`badge ${STATUS_COLOR[u.status]||"badge-gray"}`}>{u.status}</span></td>
+                  <td className="table-cell w-32 whitespace-nowrap">
+                    <select defaultValue={u.status} onChange={e=>updateUser(u.id,{status:e.target.value})} className={`text-xs border rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-400 ${u.status==="ACTIVE"?"bg-green-50 border-green-200 text-green-700":u.status==="BANNED"?"bg-red-50 border-red-200 text-red-700":u.status==="SUSPENDED"?"bg-orange-50 border-orange-200 text-orange-700":"bg-yellow-50 border-yellow-200 text-yellow-700"}`}>
+                      <option value="ACTIVE">Aktiv</option>
+                      <option value="PENDING_VERIFICATION">Gözləyir</option>
+                      <option value="SUSPENDED">Dondurulub</option>
+                      <option value="BANNED">Banlı</option>
+                    </select>
+                  </td>
                   <td className="table-cell text-right whitespace-nowrap">
                     <div className="flex items-center gap-1.5 justify-end">
                       <button onClick={()=>setEditUser({...u})} className="btn-secondary btn-xs flex items-center gap-1 shrink-0" title="Profil Redaktə"><Icon name="edit" size={12}/>Redaktə</button>

@@ -309,10 +309,10 @@ export default async function ProductDetailPage({ params }) {
             <div className="flex items-center gap-1.5 mt-2">
               <span className="text-sm text-gray-600"> Satıcı:</span>
               {product.store.slug ? (
-                <a href={`/stores/${product.store.slug}`} className="font-bold text-brand-700 hover:underline text-sm flex items-center gap-1">
+                <Link href={`/stores/${product.store.slug}`} className="font-bold text-brand-700 hover:underline text-sm flex items-center gap-1">
                   {product.store.name}
                   {product.store.isVerified && <Icon name="checkCircle" size={16} className="text-blue-500 inline" />}
-                </a>
+                </Link>
               ) : (
                 <strong className="text-sm flex items-center gap-1">
                   {product.store.name}
@@ -582,7 +582,7 @@ export default async function ProductDetailPage({ params }) {
             <div className="card p-5 mt-6 border border-gray-100 rounded-2xl">
               <div className="flex items-center justify-between mb-3">
                  <h3 className="font-bold text-sm">Satıcı haqqında</h3>
-                 <a href={`/seller/${seller.id}`} className="text-[11px] text-brand-600 font-bold hover:underline bg-brand-50 px-2 py-1 rounded-md"><span className="inline-flex items-center gap-1">Profilə bax <Icon name="arrowRight" size={12} /></span></a>
+                 <Link href={`/seller/${seller.id}`} className="text-[11px] text-brand-600 font-bold hover:underline bg-brand-50 px-2 py-1 rounded-md"><span className="inline-flex items-center gap-1">Profilə bax <Icon name="arrowRight" size={12} /></span></Link>
               </div>
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-12 h-12 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center text-xl font-bold">
