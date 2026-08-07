@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { routing } from './i18n/routing';
 import { verifyAccessTokenEdge as verifyAccessToken } from '@/lib/jwtEdge';
 
-const intlMiddleware = createMiddleware(routing, { localeDetection: false });
+const intlMiddleware = createMiddleware(routing);
 
 export default function middleware(request) {
   const { pathname } = request.nextUrl;
