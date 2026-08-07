@@ -2,6 +2,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Link } from "@/i18n/routing";
 import Icon from "@/components/ui/Icon";
+import { useSiteTexts } from "@/lib/siteTexts";
 
 const CATEGORY_ICONS = {
   "bitki-muhafize-vasiteleri": "bug",
@@ -67,6 +68,7 @@ function getCategoryIcon(c) {
 const AUTO_SPEED = 0.5;
 
 export default function CategoriesSlider({ categories = [], title, subtitle }) {
+  const { t } = useSiteTexts();
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -190,16 +192,16 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
           <span className="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center">
             <Icon name="layers" size={18} />
           </span>
-          {title || "Kateqoriyalar"}
+          {title || t('homepage.categoriesTitle', 'Kateqoriyalar')}
         </h2>
         <p className="text-sm text-gray-500 font-medium">
-          {subtitle || "Məhsul növünü seçin"}
+          {subtitle || t('homepage.categoriesSubtitle', 'Məhsul növünü seçin')}
         </p>
         <Link
           href="/products"
           className="text-sm text-brand-600 font-semibold hover:text-brand-700 flex items-center gap-1 group transition-colors mt-1"
         >
-          <span>Bütün kateqoriyalar</span>
+          <span>{t('homepage.allCategoriesLink', 'Bütün kateqoriyalar')}</span>
           <Icon name="arrowRight" size={14} className="group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </div>
@@ -210,7 +212,7 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
           onClick={scrollLeftBtn}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          aria-label="Əvvəlki"
+          aria-label={t('homepage.prevBtn', 'Əvvəlki')}
           className="absolute -left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 opacity-100"
         >
           <Icon name="arrowLeft" size={20} />
@@ -258,7 +260,7 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
           onClick={scrollRightBtn}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          aria-label="Növbəti"
+          aria-label={t('homepage.nextBtn', 'Növbəti')}
           className="absolute -right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 opacity-100"
         >
           <Icon name="arrowRight" size={20} />

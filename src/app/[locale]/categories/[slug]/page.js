@@ -19,20 +19,23 @@ export default async function CategorySubcategoryPage({ params }) {
   const p = await params;
   const { slug, locale } = p;
 
-  const category = await prisma.category.findUnique({
-    where: { slug },
-    include: {
-      children: {
-        where: { isActive: true },
-        orderBy: { sortOrder: 'asc' },
-        include: {
-          _count: {
-            select: { products: true }
+  const [category, siteTextsList] = await Promise.all([
+    prisma.category.findUnique({
+      where: { slug },
+      include: {
+        children: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' },
+          include: {
+            _count: {
+              select: { products: true }
+            }
           }
         }
       }
-    }
-  });
+    }),
+    prisma.siteText.findMany({ where: { isActive: true } }).catch(() => []),
+  ]);
 
   if (!category) {
     redirect("/categories");
@@ -42,6 +45,12 @@ export default async function CategorySubcategoryPage({ params }) {
   if (category.children.length === 0) {
     redirect(`/products?category=${slug}`);
   }
+
+  const siteTextsMap = {};
+  for (const item of siteTextsList || []) {
+    siteTextsMap[item.key] = item.valueAz;
+  }
+  const st = (key, fallback) => siteTextsMap[key] || fallback;
 
   const iconMap = {
     'Bitki Mühafizə': 'bug',
@@ -60,10 +69,10 @@ export default async function CategorySubcategoryPage({ params }) {
           <div className="container mx-auto max-w-6xl">
             <div className="mb-8">
               <Link href="/categories" className="text-sm text-brand-600 hover:underline mb-2 inline-block">
-                <span className="flex items-center gap-1.5"><Icon name="arrowLeft" size={16} /> Bütün Kateqoriyalar</span>
+                <span className="flex items-center gap-1.5"><Icon name="arrowLeft" size={16} /> {st('products.allCategories', 'Bütün Kateqoriyalar')}</span>
               </Link>
               <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-4">
-                {category.nameAz} <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-green-400">Alt Kateqoriyaları</span>
+                {category.nameAz} <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-green-400">{st('products.subcategoriesSuffix', 'Alt Kateqoriyaları')}</span>
               </h1>
             </div>
             
@@ -100,7 +109,7 @@ export default async function CategorySubcategoryPage({ params }) {
                       </div>
                       <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-brand-600 transition-colors">{child.nameAz}</h3>
                       <div className="flex items-center justify-between text-gray-500 text-sm">
-                        <span className="flex items-center gap-1"><Icon name="package" size={16} /> {child._count?.products || 0} məhsul</span>
+                        <span className="flex items-center gap-1"><Icon name="package" size={16} /> {child._count?.products || 0} {st('products.productsCountLabel', 'məhsul')}</span>
                         <span className="text-brand-600 font-bold group-hover:translate-x-1 transition-transform"><Icon name="arrowRight" size={16} /></span>
                       </div>
                     </div>

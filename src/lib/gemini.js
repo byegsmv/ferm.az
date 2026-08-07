@@ -124,3 +124,17 @@ export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOu
     return offlineGenerate(prompt);
   }
 }
+
+// Check if an AI module is active (DB setting)
+export async function isModuleActive(moduleId) {
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    const setting = await prisma.setting.findUnique({
+      where: { key: `module.${moduleId}.active` },
+    });
+    // Default active if no setting exists
+    return !setting || setting.value !== "false";
+  } catch (e) {
+    return true; // Default active on error
+  }
+}

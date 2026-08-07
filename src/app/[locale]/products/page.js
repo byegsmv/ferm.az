@@ -119,11 +119,11 @@ export default async function ProductsPage({ searchParams }) {
     ...(tags ? { tags: { hasSome: tags.split(',').map(t => t.trim()).filter(Boolean) } } : {}),
   };
 
-  let total = 0, products = [], categories = [], topAd = null, infeedAd = null;
+  let total = 0, products = [], categories = [], topAd = null, infeedAd = null, siteTextsList = [];
   let isFallback = false;
 
   try {
-    [total, products, categories, topAd, infeedAd] = await Promise.all([
+    [total, products, categories, topAd, infeedAd, siteTextsList] = await Promise.all([
       prisma.product.count({ where }),
       prisma.product.findMany({
         where,
@@ -150,6 +150,7 @@ export default async function ProductsPage({ searchParams }) {
       }),
       getAdSlotContent("PRODUCT_LIST_TOP", { region }),
       getAdSlotContent("PRODUCT_LIST_INFEED", { region }),
+      prisma.siteText.findMany({ where: { isActive: true } }).catch(() => []),
     ]);
 
     // Fallback logic
@@ -176,6 +177,12 @@ export default async function ProductsPage({ searchParams }) {
     console.error("ProductsPage DB error:", err.message);
   }
 
+  const siteTextsMap = {};
+  for (const st of siteTextsList || []) {
+    siteTextsMap[st.key] = st.valueAz;
+  }
+  const t = (key, fallback) => siteTextsMap[key] || fallback;
+
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const showFallbackBanner = isFallback;
 
@@ -194,17 +201,17 @@ export default async function ProductsPage({ searchParams }) {
 
           {showFallbackBanner && (
             <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-800 mb-6">
-              <Icon name="alert" size={18} className="shrink-0 text-amber-600" /> Bu kateqoriyada dəqiq uyğun elan tapılmadı. Sizin üçün oxşar kateqoriyaların elanlarını göstəririk.
+              <Icon name="alert" size={18} className="shrink-0 text-amber-600" /> {t('products.fallbackCategoryNotice', 'Bu kateqoriyada dəqiq uyğun elan tapılmadı. Sizin üçün oxşar kateqoriyaların elanlarını göstəririk.')}
             </div>
           )}
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 gap-4">
             <h1 className="text-xl font-bold text-gray-900">
-              {search ? `"${search}" üzrə nəticələr` : "Bütün Elanlar"}
+              {search ? `"${search}" ${t('products.searchResultsSuffix', 'üzrə nəticələr')}` : t('products.allListings', 'Bütün Elanlar')}
             </h1>
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-xl border border-brand-100">
-                {total} elan tapıldı
+                {total} {t('products.listingsFound', 'elan tapıldı')}
               </span>
             </div>
           </div>
@@ -214,9 +221,9 @@ export default async function ProductsPage({ searchParams }) {
               <div className="w-20 h-20 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mb-4">
                 <Icon name="search" size={32} strokeWidth={1.6} />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Heç bir elan tapılmadı</h2>
-              <p className="text-gray-500 max-w-sm mb-6">Axtarış şərtlərinizə uyğun nəticə yoxdur. Zəhmət olmasa filtrləri dəyişərək yenidən yoxlayın.</p>
-              <a href="/products" className="btn-primary px-8">Filtrləri Sıfırla</a>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">{t('products.noProductsFound', 'Heç bir elan tapılmadı')}</h2>
+              <p className="text-gray-500 max-w-sm mb-6">{t('products.noProductsFoundDesc', 'Axtarış şərtlərinizə uyğun nəticə yoxdur. Zəhmət olmasa filtrləri dəyişərək yenidən yoxlayın.')}</p>
+              <a href="/products" className="btn-primary px-8">{t('products.resetFilters', 'Filtrləri Sıfırla')}</a>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
@@ -225,7 +232,7 @@ export default async function ProductsPage({ searchParams }) {
                   <ProductCard product={{ id: p.id, slug: p.slug, title: p.titleAz, titleAz: p.titleAz, price: Number(p.price), coverImage: p.images[0]?.url || p.images?.[0]?.url, region: p.region, city: p.city, isCorporate: p.isCorporate, tags: p.tags }} />
                   {infeedAd && i === 7 && (
                     <div key="infeed-ad" className="col-span-2 md:col-span-2 lg:col-span-3 xl:col-span-4">
-                      <AdBanner content={infeedAd} label="Sponsorlu" imgClassName="w-full h-40 md:h-48 object-cover rounded-2xl" />
+                      <AdBanner content={infeedAd} label={t('products.sponsoredLabel', 'Sponsorlu')} imgClassName="w-full h-40 md:h-48 object-cover rounded-2xl" />
                     </div>
                   )}
                 </Fragment>

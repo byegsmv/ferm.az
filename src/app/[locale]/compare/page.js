@@ -6,9 +6,11 @@ import { apiFetch } from "@/lib/apiClient";
 import SafeImage from "@/components/SafeImage";
 import Icon from "@/components/ui/Icon";
 import { getCompareList, removeFromCompare } from "@/lib/compareUtils";
+import { useSiteTexts } from "@/lib/siteTexts";
 
 function CompareContent() {
   const searchParams = useSearchParams();
+  const { t } = useSiteTexts();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,12 +39,12 @@ function CompareContent() {
             setError(data.error);
           }
         })
-        .catch((e) => setError("Məhsulları yükləmək mümkün olmadı."))
+        .catch((e) => setError(t('products.errorLoadingProducts', 'Məhsulları yükləmək mümkün olmadı.')))
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   const removeProduct = (id) => {
     const updatedProducts = products.filter(p => p.id !== id);
@@ -53,7 +55,7 @@ function CompareContent() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500 font-medium">Yüklənir...</div>;
+    return <div className="p-8 text-center text-gray-500 font-medium">{t('products.loading', 'Yüklənir...')}</div>;
   }
 
   if (error) {
@@ -66,12 +68,12 @@ function CompareContent() {
         <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 mb-6">
           <Icon name="tag" size={48} strokeWidth={1} />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Müqayisə siyahısı boşdur</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('products.emptyCompareTitle', 'Müqayisə siyahısı boşdur')}</h2>
         <p className="text-gray-500 max-w-sm mx-auto mb-8">
-          Müqayisə etmək üçün məhsul səhifəsindən "Müqayisə et" düyməsinə klikləyin.
+          {t('products.emptyCompareDesc', 'Müqayisə etmək üçün məhsul səhifəsindən "Müqayisə et" düyməsinə klikləyin.')}
         </p>
         <Link href="/products" className="bg-brand-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-brand-700 transition-colors">
-          Məhsullara bax
+          {t('products.viewProductsBtn', 'Məhsullara bax')}
         </Link>
       </div>
     );
@@ -84,15 +86,15 @@ function CompareContent() {
           <thead>
             <tr>
               <th className="p-6 bg-gray-50 border-b border-r border-gray-100 w-1/4 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-                <h2 className="text-xl font-extrabold text-gray-900">Məhsul Müqayisəsi</h2>
-                <p className="text-sm text-gray-500 mt-1">{products.length} məhsul</p>
+                <h2 className="text-xl font-extrabold text-gray-900">{t('products.compareTableTitle', 'Məhsul Müqayisəsi')}</h2>
+                <p className="text-sm text-gray-500 mt-1">{products.length} {t('products.productsCountLabel', 'məhsul')}</p>
               </th>
               {products.map((p) => (
                 <th key={p.id} className="p-6 border-b border-gray-100 min-w-[250px] w-[250px] align-top relative">
                   <button 
                     onClick={() => removeProduct(p.id)}
                     className="absolute top-4 right-4 w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"
-                    title="Müqayisədən sil"
+                    title={t('products.removeFromCompareTitle', 'Müqayisədən sil')}
                   >
                     <Icon name="close" size={16} />
                   </button>
@@ -118,7 +120,7 @@ function CompareContent() {
           <tbody className="divide-y divide-gray-100 text-sm">
             {/* Mağaza */}
             <tr>
-              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">Mağaza / Satıcı</td>
+              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t('products.compareStoreSeller', 'Mağaza / Satıcı')}</td>
               {products.map((p) => (
                 <td key={p.id} className="p-4">
                   {p.store ? (
@@ -126,7 +128,7 @@ function CompareContent() {
                       {p.store.name}
                     </Link>
                   ) : (
-                    <span className="text-gray-400">Qeyd edilməyib</span>
+                    <span className="text-gray-400">{t('products.notSpecified', 'Qeyd edilməyib')}</span>
                   )}
                 </td>
               ))}
@@ -134,13 +136,13 @@ function CompareContent() {
             
             {/* Stok */}
             <tr>
-              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">Stok Vəziyyəti</td>
+              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t('products.compareStockStatus', 'Stok Vəziyyəti')}</td>
               {products.map((p) => (
                 <td key={p.id} className="p-4">
                   {p.stock > 0 ? (
-                    <span className="text-green-600 font-medium">Anbarda var ({p.stock})</span>
+                    <span className="text-green-600 font-medium">{t('products.inStock', 'Anbarda var')} ({p.stock})</span>
                   ) : (
-                    <span className="text-red-500 font-medium">Bitib</span>
+                    <span className="text-red-500 font-medium">{t('products.outOfStock', 'Bitib')}</span>
                   )}
                 </td>
               ))}
@@ -148,7 +150,7 @@ function CompareContent() {
 
             {/* İstehsalçı */}
             <tr>
-              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">İstehsalçı</td>
+              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t('products.compareManufacturer', 'İstehsalçı')}</td>
               {products.map((p) => (
                 <td key={p.id} className="p-4 text-gray-900">{p.manufacturer || "-"}</td>
               ))}
@@ -156,7 +158,7 @@ function CompareContent() {
 
             {/* İstehsalçı ölkə */}
             <tr>
-              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">İstehsalçı Ölkə</td>
+              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t('products.compareCountryOfOrigin', 'İstehsalçı Ölkə')}</td>
               {products.map((p) => (
                 <td key={p.id} className="p-4 text-gray-900">{p.countryOfOrigin || "-"}</td>
               ))}
@@ -164,7 +166,7 @@ function CompareContent() {
 
             {/* Aktiv Maddələr */}
             <tr>
-              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">Aktiv Maddələr</td>
+              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t('products.compareActiveIngredients', 'Aktiv Maddələr')}</td>
               {products.map((p) => (
                 <td key={p.id} className="p-4 text-gray-900">
                   {p.activeIngredients?.length > 0 ? (
@@ -184,7 +186,7 @@ function CompareContent() {
 
             {/* Preparativ forma */}
             <tr>
-              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">Preparativ Forma</td>
+              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t('products.comparePreparativeForm', 'Preparativ Forma')}</td>
               {products.map((p) => (
                 <td key={p.id} className="p-4 text-gray-900">{p.preparativeForm || "-"}</td>
               ))}
@@ -192,7 +194,7 @@ function CompareContent() {
 
             {/* Tətbiq norması */}
             <tr>
-              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">Tətbiq Norması</td>
+              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t('products.compareUseNorm', 'Tətbiq Norması')}</td>
               {products.map((p) => (
                 <td key={p.id} className="p-4 text-gray-900 font-medium">{p.useNorm || "-"}</td>
               ))}
@@ -201,8 +203,8 @@ function CompareContent() {
             {/* Hektar xərci (Avtomatik hesablama) */}
             <tr>
               <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-                Təxmini Hektar Xərci
-                <span className="block text-xs font-normal text-gray-500 mt-0.5">Norma × Qiymət</span>
+                {t('products.compareEstHectareCost', 'Təxmini Hektar Xərci')}
+                <span className="block text-xs font-normal text-gray-500 mt-0.5">{t('products.compareNormTimesPrice', 'Norma × Qiymət')}</span>
               </td>
               {products.map((p) => (
                 <td key={p.id} className="p-4">
@@ -219,17 +221,17 @@ function CompareContent() {
 
             {/* Gözləmə müddəti */}
             <tr>
-              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">Gözləmə Müddəti (gün)</td>
+              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t('products.compareWaitingPeriodDays', 'Gözləmə Müddəti (gün)')}</td>
               {products.map((p) => (
                 <td key={p.id} className="p-4 text-gray-900">
-                  {p.waitingPeriod ? <span className="font-semibold">{p.waitingPeriod} gün</span> : "-"}
+                  {p.waitingPeriod ? <span className="font-semibold">{p.waitingPeriod} {t('products.unitDays', 'gün')}</span> : "-"}
                 </td>
               ))}
             </tr>
 
             {/* Maksimum tətbiq */}
             <tr>
-              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">Maks. Tətbiq Sayı</td>
+              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t('products.compareMaxApplications', 'Maks. Tətbiq Sayı')}</td>
               {products.map((p) => (
                 <td key={p.id} className="p-4 text-gray-900">{p.maxApplications || "-"}</td>
               ))}
@@ -237,11 +239,11 @@ function CompareContent() {
             
             {/* Orqanik */}
             <tr>
-              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">Orqanik Məhsul?</td>
+              <td className="p-4 bg-gray-50 border-r border-gray-100 font-bold text-gray-700 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t('products.compareIsOrganic', 'Orqanik Məhsul?')}</td>
               {products.map((p) => (
                 <td key={p.id} className="p-4">
                   {p.isOrganic ? (
-                    <span className="text-green-600 font-bold flex items-center gap-1"><Icon name="check" size={16} /> Bəli</span>
+                    <span className="text-green-600 font-bold flex items-center gap-1"><Icon name="check" size={16} /> {t('products.yesLabel', 'Bəli')}</span>
                   ) : (
                     <span className="text-gray-400">-</span>
                   )}
@@ -256,13 +258,14 @@ function CompareContent() {
 }
 
 export default function ComparePage() {
+  const { t } = useSiteTexts();
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Müqayisə Cədvəli</h1>
-        <p className="text-gray-500">Məhsulların xüsusiyyətlərini yan-yana müqayisə edin və ən uyğununu seçin.</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{t('products.comparePageTitle', 'Müqayisə Cədvəli')}</h1>
+        <p className="text-gray-500">{t('products.comparePageDesc', 'Məhsulların xüsusiyyətlərini yan-yana müqayisə edin və ən uyğununu seçin.')}</p>
       </div>
-      <Suspense fallback={<div className="p-12 text-center text-gray-500">Müqayisə məlumatları yüklənir...</div>}>
+      <Suspense fallback={<div className="p-12 text-center text-gray-500">{t('products.loadingCompareData', 'Müqayisə məlumatları yüklənir...')}</div>}>
         <CompareContent />
       </Suspense>
     </main>

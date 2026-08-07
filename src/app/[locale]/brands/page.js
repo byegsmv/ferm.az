@@ -5,10 +5,12 @@ import { apiFetch } from "@/lib/apiClient";
 import Icon from "@/components/ui/Icon";
 import SafeImage from "@/components/SafeImage";
 import ProductCard from "@/components/ProductCard";
+import { useSiteTexts } from "@/lib/siteTexts";
 
 export default function BrandsPage() {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useSiteTexts();
 
   useEffect(() => {
     apiFetch("/api/brands?withProducts=true")
@@ -35,9 +37,9 @@ export default function BrandsPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-black text-gray-900 mb-2 flex items-center gap-2">
-        <Icon name="tag" size={28} /> Brendlər
+        <Icon name="tag" size={28} /> {t('products.brandsTitle', 'Brendlər')}
       </h1>
-      <p className="text-gray-500 mb-6">Rəsmi distribütor brendləri və istehsalçılar</p>
+      <p className="text-gray-500 mb-6">{t('products.brandsSubtitle', 'Rəsmi distribütor brendləri və istehsalçılar')}</p>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {brands.map((brand) => (
@@ -56,7 +58,7 @@ export default function BrandsPage() {
             <h3 className="font-bold text-gray-900 group-hover:text-brand-600 transition-colors text-sm">{brand.name}</h3>
             {brand.country && <p className="text-xs text-gray-400 mt-1">{brand.country}</p>}
             {brand._count?.products > 0 && (
-              <p className="text-xs text-brand-600 font-medium mt-2">{brand._count.products} məhsul</p>
+              <p className="text-xs text-brand-600 font-medium mt-2">{brand._count.products} {t('products.productsCountLabel', 'məhsul')}</p>
             )}
           </Link>
         ))}

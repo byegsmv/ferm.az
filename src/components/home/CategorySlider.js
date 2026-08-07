@@ -8,8 +8,10 @@ import 'swiper/css/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useSiteTexts } from '@/lib/siteTexts';
 
 export default function CategorySlider({ categories = [] }) {
+  const { t } = useSiteTexts();
   const [isPaused, setIsPaused] = useState(false);
   const swiperRef = useState(null)[0];
 
@@ -23,8 +25,8 @@ export default function CategorySlider({ categories = [] }) {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-slate-900">Kateqoriyalar</h2>
-            <p className="text-slate-600 mt-1">Bütün məhsulları kəşf edin</p>
+            <h2 className="text-3xl font-bold text-slate-900">{t('homepage.catSliderTitle', 'Kateqoriyalar')}</h2>
+            <p className="text-slate-600 mt-1">{t('homepage.catSliderSubtitle', 'Bütün məhsulları kəşf edin')}</p>
           </div>
         </div>
 
@@ -103,7 +105,7 @@ export default function CategorySlider({ categories = [] }) {
                       {/* Məhsul Sayısı */}
                       {category.productCount && (
                         <p className="text-xs text-slate-500 mt-2">
-                          {category.productCount} məhsul
+                          {category.productCount} {t('homepage.productUnit', 'məhsul')}
                         </p>
                       )}
 
@@ -119,7 +121,7 @@ export default function CategorySlider({ categories = [] }) {
           {/* Öncəki Buton */}
           <button
             className="category-swiper-prev absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 z-10 bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-400 rounded-full p-3 shadow-md hover:shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:-translate-x-14"
-            aria-label="Əvvəlki kategoriya"
+            aria-label={t('homepage.catSliderPrev', 'Əvvəlki kategoriya')}
           >
             <ChevronLeft className="w-5 h-5 text-slate-700 hover:text-emerald-600" />
           </button>
@@ -127,7 +129,7 @@ export default function CategorySlider({ categories = [] }) {
           {/* Sonrakı Buton */}
           <button
             className="category-swiper-next absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 z-10 bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-400 rounded-full p-3 shadow-md hover:shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-14"
-            aria-label="Sonrakı kategoriya"
+            aria-label={t('homepage.catSliderNext', 'Sonrakı kategoriya')}
           >
             <ChevronRight className="w-5 h-5 text-slate-700 hover:text-emerald-600" />
           </button>
@@ -135,7 +137,7 @@ export default function CategorySlider({ categories = [] }) {
           {/* Slider Göstəricisi */}
           <div className="mt-6 flex justify-center items-center gap-2">
             <div className="text-sm text-slate-600">
-              Üzərinə gəlin - slider dayanacaq
+              {t('homepage.catSliderPauseHint', 'Üzərinə gəlin - slider dayanacaq')}
             </div>
           </div>
         </div>

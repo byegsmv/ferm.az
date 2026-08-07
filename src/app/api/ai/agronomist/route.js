@@ -1,125 +1,143 @@
 import { prisma } from "@/lib/prisma";
+import { geminiGenerate, isModuleActive } from "@/lib/gemini";
 
-// POST /api/ai/agronomist — AI disease detection + product recommendation
+// POST /api/ai/agronomist — AI disease detection + product recommendation via Gemini
 export async function POST(req) {
   try {
+    if (!(await isModuleActive("agronomist"))) {
+      return Response.json({ error: "Bu modul deaktiv edilib" }, { status: 403 });
+    }
     const formData = await req.formData();
     const text = formData.get("text") || "";
     const image = formData.get("image");
 
     const isImage = !!image && image !== "null";
-    const query = text.toLowerCase();
 
-    // 1. Determine issue type based on text/image
-    let issueType = "unknown";
-    let diseaseName = "Naməlum problem";
-    let confidence = "85%";
-    let recommendation = "";
+    // Build Gemini prompt
+    let prompt = `Sən peşəkar aqronomsan. Azərbaycan dilində cavab ver.\n`;
+    prompt += `İstifadəçinin təsviri: "${text || "Təsvir verilməyib"}"\n`;
+    prompt += `Şəkil yüklənib: ${isImage ? "Bəli" : "Xeyr"}\n`;
+    prompt += `\nJSON formatında cavab ver:\n`;
+    prompt += `{\n  "diagnosis": "Xəstəlik/zərərverici adı Azərbaycanca",\n`;
+    prompt += `  "confidencePercent": 85,\n`;
+    prompt += `  "causes": ["Səbəb 1", "Səbəb 2"],\n`;
+    prompt += `  "treatment": ["Müalicə 1", "Müalicə 2"],\n`;
+    prompt += `  "recommendedProducts": ["Məhsul adı 1", "Məhsul adı 2"],\n`;
+    prompt += `  "needsExpertConsult": false,\n`;
+    prompt += `  "summary": "Qısa tövsiyə Azərbaycanca"\n}\n`;
+    prompt += `Yalnız JSON cavab ver, başqa mətn yazma.`;
 
-    // Disease keywords → matching disease in DB
-    if (query.includes("göbələk") || query.includes("ləkə") || query.includes("xəstə") || isImage) {
-      issueType = "fungal";
-      diseaseName = isImage ? "Göbələk xəstəliyi (Müəyyən edilir...)" : "Göbələk xəstəliyi";
-      confidence = isImage ? "92%" : "80%";
-      recommendation = "Fungisidlərdən istifadə edin. Bitkinin zədələnmiş hissələrini çıxarın.";
-    } else if (query.includes("zarar") || query.includes("böcək") || query.includes("süru") || query.includes("qurd")) {
-      issueType = "insect";
-      diseaseName = "Zərərverici böcək müəyyən edildi";
-      confidence = "88%";
-      recommendation = "İnsektisidlərdən istifadə edin. Bioloji mübarizə üçün feromon tələlərindən istifadə edə bilərsiniz.";
-    } else if (query.includes("sarı") || query.includes("çatış") || query.includes("qida") || query.includes("saral")) {
-      issueType = "nutrient";
-      diseaseName = "Qida çatışmazlığı (Sarı yarpaqlar)";
-      confidence = "85%";
-      recommendation = "Kompleks gübrə və ya mikroelement məhsullarından istifadə edin. Yarpaq gübrəsi sürətli nəticə verir.";
-    } else if (query.includes("alcaq") || query.includes("böyümür") || query.includes("zəif")) {
-      issueType = "nutrient_deficiency";
-      diseaseName = "Bitki inkişafı zəif — qida çatışmazlığı";
-      confidence = "82%";
-      recommendation = "Azot (N) və ya kompleks NPK gübrəsi tətbiq edin. Torpaq analizi tövsiyə olunur.";
-    } else {
-      diseaseName = isImage ? "Bitki vəziyyəti analiz edilir..." : "Ümumi məsləhət";
-      confidence = "75%";
-      recommendation = "Bitkinizin vəziyyətini daha ətraflı təsvir edin və ya şəkil yükləyin.";
+    // Call Gemini (with image if available)
+    let imageBase64 = null;
+    let imageMimeType = null;
+    if (isImage) {
+      const buffer = Buffer.from(await image.arrayBuffer());
+      imageBase64 = buffer.toString("base64");
+      imageMimeType = image.type || "image/jpeg";
     }
 
-    // 2. Find matching products from DB based on issue type
-    let productWhere = { status: "ACTIVE", stock: { gt: 0 } };
-
-    if (issueType === "fungal") {
-      // Fungicides category
-      productWhere = {
-        ...productWhere,
-        OR: [
-          { category: { nameAz: { contains: "Fungisid" } } },
-          { titleAz: { contains: "fungisid", mode: "insensitive" } },
-        ],
-      };
-    } else if (issueType === "insect") {
-      productWhere = {
-        ...productWhere,
-        OR: [
-          { category: { nameAz: { contains: "İnsektisid" } } },
-          { titleAz: { contains: "insektisid", mode: "insensitive" } },
-        ],
-      };
-    } else if (issueType === "nutrient" || issueType === "nutrient_deficiency") {
-      productWhere = {
-        ...productWhere,
-        OR: [
-          { category: { nameAz: { contains: "gübrə" } } },
-          { category: { nameAz: { contains: "Maye" } } },
-          { category: { nameAz: { contains: "Yarpaq" } } },
-          { category: { nameAz: { contains: "Mikroelement" } } },
-          { category: { nameAz: { contains: "Azot" } } },
-          { titleAz: { contains: "NPK", mode: "insensitive" } },
-        ],
-      };
-    }
-
-    const products = await prisma.product.findMany({
-      where: productWhere,
-      take: 4,
-      orderBy: { viewCount: "desc" },
-      include: {
-        images: { take: 1, orderBy: { sortOrder: "asc" } },
-        store: { select: { name: true, slug: true } },
-      },
+    const aiResponse = await geminiGenerate({
+      prompt,
+      imageBase64,
+      imageMimeType,
+      maxOutputTokens: 1024,
     });
 
-    // 3. Spray timing recommendation
+    // Parse AI response
+    let diagnosis = null;
+    try {
+      // Extract JSON from response
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        diagnosis = JSON.parse(jsonMatch[0]);
+      }
+    } catch (e) {
+      // JSON parse failed, use raw text
+    }
+
+    // If AI gave a proper diagnosis, find matching products from DB
+    let products = [];
+    if (diagnosis && diagnosis.recommendedProducts) {
+      const productNames = diagnosis.recommendedProducts.map(p => p.toLowerCase());
+      const orConditions = productNames.flatMap(name => [
+        { titleAz: { contains: name, mode: "insensitive" } },
+        { titleEn: { contains: name, mode: "insensitive" } },
+        { description: { contains: name, mode: "insensitive" } },
+      ]);
+
+      if (orConditions.length > 0) {
+        products = await prisma.product.findMany({
+          where: {
+            status: "ACTIVE",
+            stock: { gt: 0 },
+            OR: orConditions,
+          },
+          take: 4,
+          orderBy: { viewCount: "desc" },
+          include: {
+            images: { take: 1, orderBy: { sortOrder: "asc" } },
+            store: { select: { name: true, slug: true } },
+          },
+        });
+      }
+    }
+
+    // Fallback: if no products found via AI names, try category-based search
+    if (products.length === 0 && diagnosis) {
+      const diagText = (diagnosis.diagnosis || "").toLowerCase();
+      let categoryFilter = {};
+      if (diagText.includes("göbələk") || diagText.includes("fung")) {
+        categoryFilter = { OR: [{ category: { nameAz: { contains: "Fungisid" } } }, { titleAz: { contains: "fungisid", mode: "insensitive" } }] };
+      } else if (diagText.includes("böcək") || diagText.includes("zərər") || diagText.includes("insekt")) {
+        categoryFilter = { OR: [{ category: { nameAz: { contains: "İnsektisid" } } }, { titleAz: { contains: "insektisid", mode: "insensitive" } }] };
+      } else if (diagText.includes("qida") || diagText.includes("çatış") || diagText.includes("gübrə")) {
+        categoryFilter = { OR: [{ category: { nameAz: { contains: "gübrə" } } }, { category: { nameAz: { contains: "Maye" } } }, { titleAz: { contains: "NPK", mode: "insensitive" } }] };
+      }
+
+      if (Object.keys(categoryFilter).length > 0) {
+        products = await prisma.product.findMany({
+          where: { status: "ACTIVE", stock: { gt: 0 }, ...categoryFilter },
+          take: 4,
+          orderBy: { viewCount: "desc" },
+          include: {
+            images: { take: 1, orderBy: { sortOrder: "asc" } },
+            store: { select: { name: true, slug: true } },
+          },
+        });
+      }
+    }
+
+    // Final fallback: just show popular products
+    if (products.length === 0) {
+      products = await prisma.product.findMany({
+        where: { status: "ACTIVE", stock: { gt: 0 } },
+        take: 4,
+        orderBy: { viewCount: "desc" },
+        include: {
+          images: { take: 1, orderBy: { sortOrder: "asc" } },
+          store: { select: { name: true, slug: true } },
+        },
+      });
+    }
+
+    // Spray timing recommendation
     const now = new Date();
     const hour = now.getHours();
     let sprayTime = "Səhər tezdən (06:00-08:00) və ya axşam üzeri (18:00-20:00)";
-    if (hour >= 6 && hour < 10) {
-      sprayTime = "İndi çiləmə üçün əlverişli vaxtdır (səhər)";
-    } else if (hour >= 18 && hour < 21) {
-      sprayTime = "İndi çiləmə üçün əlverişli vaxtdır (axşam)";
-    } else if (hour >= 10 && hour < 18) {
-      sprayTime = "Çiləmə üçün əlverişsiz vaxt — günəş yanığı riski. Axşam 18:00-dan sonra çiləyin.";
-    } else {
-      sprayTime = "Gecə çiləmək tövsiyə olunmur. Səhər 06:00-08:00 çiləyin.";
-    }
-
-    // 4. Dose calculation if useNorm exists
-    let doseInfo = null;
-    if (products.length > 0 && products[0].useNorm) {
-      doseInfo = {
-        product: products[0].titleAz,
-        norm: products[0].useNorm,
-        perHectare: products[0].useNorm,
-      };
-    }
-
-    // Slight delay to simulate AI reasoning
-    await new Promise(r => setTimeout(r, 1200));
+    if (hour >= 6 && hour < 10) sprayTime = "İndi çiləmə üçün əlverişli vaxtdır (səhər)";
+    else if (hour >= 18 && hour < 21) sprayTime = "İndi çiləmə üçün əlverişli vaxtdır (axşam)";
+    else if (hour >= 10 && hour < 18) sprayTime = "Çiləmə üçün əlverişsiz vaxt — günəş yanığı riski. Axşam 18:00-dan sonra çiləyin.";
+    else sprayTime = "Gecə çiləmək tövsiyə olunmur. Səhər 06:00-08:00 çiləyin.";
 
     return Response.json({
-      disease: diseaseName,
-      confidence,
-      recommendation,
+      disease: diagnosis?.diagnosis || "Analiz tamamlandı",
+      confidence: diagnosis?.confidencePercent ? `${diagnosis.confidencePercent}%` : "—",
+      recommendation: diagnosis?.summary || diagnosis?.treatment?.join(". ") || aiResponse.slice(0, 300),
+      causes: diagnosis?.causes || [],
+      treatment: diagnosis?.treatment || [],
       sprayTime,
-      doseInfo,
+      needsExpertConsult: diagnosis?.needsExpertConsult || false,
+      rawAiResponse: aiResponse.slice(0, 500),
       products: products.map(p => ({
         id: p.id,
         slug: p.slug,

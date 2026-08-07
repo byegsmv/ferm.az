@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import Icon from "@/components/ui/Icon";
+import { useSiteTexts } from "@/lib/siteTexts";
 
 export default function WeatherWidget() {
+  const { t } = useSiteTexts();
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -38,7 +40,7 @@ export default function WeatherWidget() {
       <Icon name="sun" size={20} className="text-amber-500" />
       <div className="flex flex-col">
         <span className="text-xs font-bold text-blue-900 leading-tight">{weather.temperature}°C</span>
-        <span className="text-[10px] text-blue-600 font-medium leading-tight">külək: {weather.windspeed} km/s</span>
+        <span className="text-[10px] text-blue-600 font-medium leading-tight">{t('homepage.weatherWind', 'külək')}: {weather.windspeed} km/s</span>
       </div>
     </div>
   );

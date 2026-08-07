@@ -10,7 +10,7 @@ export const revalidate = 300;
 export default async function CategoriesPage() {
   const t = await getTranslations('Home');
 
-  const [categories, brands, stores] = await Promise.all([
+  const [categories, brands, stores, siteTextsList] = await Promise.all([
     prisma.category.findMany({
       where: { parentId: null, isActive: true },
       orderBy: { sortOrder: 'asc' },
@@ -31,7 +31,14 @@ export default async function CategoriesPage() {
         isVerified: true, _count: { select: { products: true } }
       }
     }),
+    prisma.siteText.findMany({ where: { isActive: true } }).catch(() => []),
   ]);
+
+  const siteTextsMap = {};
+  for (const item of siteTextsList || []) {
+    siteTextsMap[item.key] = item.valueAz;
+  }
+  const st = (key, fallback) => siteTextsMap[key] || fallback;
 
   const gradients = [
     "from-emerald-500 to-green-600",
@@ -67,7 +74,7 @@ export default async function CategoriesPage() {
           <div className="max-w-4xl mx-auto">
             <h1 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
               <Icon name="grid" size={24} className="text-green-600" />
-              {t('allCategories')}
+              {st('products.allCategories', 'Bütün Kateqoriyalar')}
             </h1>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {categories.map((cat, i) => (
@@ -81,7 +88,7 @@ export default async function CategoriesPage() {
                   </div>
                   <div>
                     <p className="font-bold text-gray-800 text-sm leading-tight">{cat.nameAz || cat.name}</p>
-                    <p className="text-xs text-gray-400 mt-1">{cat._count.products} {t('products')}</p>
+                    <p className="text-xs text-gray-400 mt-1">{cat._count.products} {st('products.productsCountLabel', 'məhsul')}</p>
                   </div>
                 </Link>
               ))}
@@ -96,9 +103,9 @@ export default async function CategoriesPage() {
           {brands.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-gray-900 text-sm">{t('popularBrands')}</h3>
+                <h3 className="font-bold text-gray-900 text-sm">{st('products.popularBrands', 'Məşhur Brendlər')}</h3>
                 <Link href="/brands" className="text-xs text-green-600 font-semibold hover:underline flex items-center gap-0.5">
-                  {t('viewAll')} <Icon name="arrowRight" size={12} />
+                  {st('products.viewAll', 'Hamısına bax')} <Icon name="arrowRight" size={12} />
                 </Link>
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -115,7 +122,7 @@ export default async function CategoriesPage() {
                       }
                     </div>
                     <span className="text-xs font-semibold text-gray-700 truncate w-full text-center leading-tight">{brand.name}</span>
-                    <span className="text-[10px] text-gray-400">{brand._count.products} {t('products')}</span>
+                    <span className="text-[10px] text-gray-400">{brand._count.products} {st('products.productsCountLabel', 'məhsul')}</span>
                   </Link>
                 ))}
               </div>
@@ -126,9 +133,9 @@ export default async function CategoriesPage() {
           {stores.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-gray-900 text-sm">{t('popularStores')}</h3>
+                <h3 className="font-bold text-gray-900 text-sm">{st('products.popularStores', 'Məşhur Mağazalar')}</h3>
                 <Link href="/stores" className="text-xs text-green-600 font-semibold hover:underline flex items-center gap-0.5">
-                  {t('viewAll')} <Icon name="arrowRight" size={12} />
+                  {st('products.viewAll', 'Hamısına bax')} <Icon name="arrowRight" size={12} />
                 </Link>
               </div>
               <div className="space-y-1.5">
@@ -155,7 +162,7 @@ export default async function CategoriesPage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-400">{store._count.products} {t('products')}</div>
+                      <div className="text-xs text-gray-400">{store._count.products} {st('products.productsCountLabel', 'məhsul')}</div>
                     </div>
                     <Icon name="arrowRight" size={14} className="text-gray-300 group-hover:text-green-500 transition-colors flex-shrink-0" />
                   </Link>
