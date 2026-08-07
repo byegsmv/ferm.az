@@ -611,6 +611,7 @@ function CategoriesManager() {
   useEffect(()=>{ apiFetch("/api/categories?all=true").then(d=>setItems(d.categories||[])).finally(()=>setLoading(false)); },[]);
   async function create(e){ e.preventDefault(); setErr(""); try{ const d=await apiFetch("/api/categories",{method:"POST",body:JSON.stringify(form)}); setItems(p=>[...p,d.category]); setForm({nameAz:"",slug:"",icon:"",isActive:true,parentId:""}); toast("Kateqoriya əlavə edildi"); }catch(e){setErr(e.message);} }
   async function toggleActive(id,val){ try{ await apiFetch(`/api/categories/${id}`,{method:"PATCH",body:JSON.stringify({isActive:val})}); setItems(p=>p.map(c=>c.id===id?{...c,isActive:val}:c)); toast("Yeniləndi"); }catch(e){toast(e.message,"error");} }
+  async function deleteCategory(id,name){ if(!confirm(`"${name}" kateqoriyasını silmək istədiyinizə əminsiniz?`))return; try{ const d=await apiFetch(`/api/categories/${id}`,{method:"DELETE"}); setItems(p=>p.filter(c=>c.id!==id)); if(d.note){toast(d.note,"error");}else{toast("Kateqoriya silindi");} }catch(e){toast(e.message,"error");} }
   const parents=items.filter(c=>!c.parentId);
   return (
     <div className="space-y-5">
@@ -631,7 +632,7 @@ function CategoriesManager() {
       </form>
       {loading?<SkeletonList count={4}/>:(
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[500px] text-left"><thead className="table-header"><tr><th className="table-cell text-left min-w-[180px]">Kateqoriya</th><th className="table-cell text-left hidden sm:table-cell w-40">Slug</th><th className="table-cell text-left hidden md:table-cell w-28">Tip</th><th className="table-cell text-right w-28">Status</th></tr></thead>
+          <table className="w-full min-w-[500px] text-left"><thead className="table-header"><tr><th className="table-cell text-left min-w-[180px]">Kateqoriya</th><th className="table-cell text-left hidden sm:table-cell w-40">Slug</th><th className="table-cell text-left hidden md:table-cell w-28">Tip</th><th className="table-cell text-right w-28">Status</th><th className="table-cell text-center w-20">Əməliyyat</th></tr></thead>
           <tbody>{items.map(c=>(
             <tr key={c.id} className="table-row">
               <td className="table-cell min-w-[180px] font-medium">{c.icon} {c.nameAz}</td>
@@ -639,6 +640,9 @@ function CategoriesManager() {
               <td className="table-cell hidden md:table-cell w-28"><span className={`badge ${c.parentId?"badge-blue":"badge-purple"}`}>{c.parentId?"Alt":"Ana"}</span></td>
               <td className="table-cell text-right w-28">
                 <button onClick={()=>toggleActive(c.id,!c.isActive)} className={`badge cursor-pointer ${c.isActive?"badge-green":"badge-gray"}`}>{c.isActive ? "Aktiv" : "Deaktiv"}</button>
+              </td>
+              <td className="table-cell text-center w-20">
+                <button onClick={()=>deleteCategory(c.id,c.nameAz)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="Sil"><Icon name="trash" size={16}/></button>
               </td>
             </tr>
           ))}</tbody></table>
@@ -893,7 +897,7 @@ function CouponsManager() {
       {loading?<SkeletonList count={3}/>:!items.length?<EmptyState icon="tag" title="Kupon yoxdur"/>:(
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[440px] text-left">
-            <thead className="table-header"><tr><th className="table-cell text-left w-36">Kod</th><th className="table-cell text-left w-28">Endirim</th><th className="table-cell text-left hidden sm:table-cell w-28">İstifadə</th><th className="table-cell text-right w-28">Status</th></tr></thead>
+            <thead className="table-header"><tr><th className="table-cell text-left w-36">Kod</th><th className="table-cell text-left w-28">Endirim</th><th className="table-cell text-left hidden sm:table-cell w-28">İstifadə</th><th className="table-cell text-right w-28">Status</th><th className="table-cell text-center w-20">Əməliyyat</th></tr></thead>
             <tbody>{items.map(c=>(
               <tr key={c.id} className="table-row">
                 <td className="table-cell w-36"><code className="font-mono font-bold">{c.code}</code></td>
