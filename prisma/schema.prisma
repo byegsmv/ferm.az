@@ -300,7 +300,6 @@ model User {
   username           String?    @unique
   passwordHash       String
   fullName           String
-  avatarUrl          String?
   role               UserRole   @default(BUYER)
   status             UserStatus @default(PENDING_VERIFICATION)
   locale             Locale     @default(AZ)

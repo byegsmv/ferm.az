@@ -56,7 +56,7 @@ export default function StoreSidebar({
   }
 
   const storeName = store?.name || user?.fullName || "Mağazam";
-  const storeLogo = store?.logoUrl || user?.avatarUrl;
+  const storeLogo = store?.logoUrl || user?.avatarUrl || null;
 
   const sidebarContent = (
     <div className="space-y-6">
