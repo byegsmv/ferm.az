@@ -849,8 +849,9 @@ model HomepageSlide {
   subtitle  String
   cta       String   @default("Bax")
   href      String
-  bg        String   @default("from-brand-700 to-brand-500") // Tailwind gradient classes
+  bg        String   @default("from-brand-700 to-brand-500") // Tailwind gradient classes (used as overlay when imageUrl set, or as background when not)
   emoji     String   @default("🌾")
+  imageUrl  String? // optional background photo uploaded by admin — takes priority over the gradient
   sortOrder Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())

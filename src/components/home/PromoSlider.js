@@ -35,7 +35,7 @@ export default function PromoSlider() {
   useEffect(() => {
     fetch("/api/slides")
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.slides?.length) setSlides(d.slides); })
+      .then(d => { if (d?.slides?.length) setSlides(d.slides.map(s => ({ ...s, iconName: s.iconName || "flame" }))); })
       .catch(() => {});
   }, []);
 
@@ -68,9 +68,15 @@ export default function PromoSlider() {
           className={`absolute inset-0 flex items-center px-8 md:px-12 transition-all duration-500 ${
             i === current ? "opacity-100 translate-x-0" : i < current ? "opacity-0 -translate-x-full" : "opacity-0 translate-x-full"
           }`}
-          style={getBgStyle(s.bg)}
+          style={s.imageUrl ? undefined : getBgStyle(s.bg)}
         >
-          <div className="flex-1 text-white">
+          {s.imageUrl && (
+            <>
+              <img src={s.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/40" />
+            </>
+          )}
+          <div className="flex-1 text-white relative">
             <span className="text-xs font-bold bg-white/20 px-2.5 py-1 rounded-full text-white">{s.tag}</span>
             <h3 className="text-xl md:text-2xl font-extrabold mt-2 mb-1 leading-tight text-white">{s.title}</h3>
             <p className="text-white/95 text-sm max-w-sm font-medium">{s.subtitle}</p>

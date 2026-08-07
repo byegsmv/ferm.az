@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import Icon from "@/components/ui/Icon";
-import { apiFetch } from "@/lib/apiClient";
+import { apiFetch, getToken } from "@/lib/apiClient";
 import StatCard from "@/components/ui/StatCard";
 import AnalyticsPanel from "@/components/dashboard/AnalyticsPanel";
 import NoCodeAdminStudio from "@/components/dashboard/NoCodeAdminStudio";
@@ -1273,11 +1273,26 @@ function AdSlotsManager() {
 function SliderManager() {
   const [slides, setSlides] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ tag: "", title: "", subtitle: "", cta: "Bax", href: "/products", bg: "from-brand-700 to-brand-500", emoji: "sprout" });
+  const [form, setForm] = useState({ tag: "", title: "", subtitle: "", cta: "Bax", href: "/products", bg: "from-brand-700 to-brand-500", emoji: "sprout", imageUrl: "" });
   const [saving, setSaving] = useState(false);
+  const [uploadingImg, setUploadingImg] = useState(false);
   const [dragIdx, setDragIdx] = useState(null);
   const [overIdx, setOverIdx] = useState(null);
   const { toast, ToastContainer } = useToast();
+
+  async function uploadSlideImage(file, onDone) {
+    setUploadingImg(true);
+    try {
+      const fd = new FormData();
+      fd.append("files", file);
+      const token = getToken();
+      const res = await fetch("/api/upload", { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : undefined, body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Yükləmə xətası");
+      onDone(data.images[0].url);
+    } catch (err) { toast(err.message, "error"); }
+    finally { setUploadingImg(false); }
+  }
 
   useEffect(() => { load(); }, []);
 
@@ -1297,7 +1312,7 @@ function SliderManager() {
     setSaving(true);
     try {
       await apiFetch("/api/slides", { method: "POST", body: JSON.stringify(form) });
-      setForm({ tag: "", title: "", subtitle: "", cta: "Bax", href: "/products", bg: "from-brand-700 to-brand-500", emoji: "sprout" });
+      setForm({ tag: "", title: "", subtitle: "", cta: "Bax", href: "/products", bg: "from-brand-700 to-brand-500", emoji: "sprout", imageUrl: "" });
       await load();
       toast("Slide əlavə edildi", "success");
     } catch (err) { toast(err.message, "error"); }
@@ -1318,6 +1333,16 @@ function SliderManager() {
       await load();
       toast("Slide silindi", "success");
     } catch (err) { toast(err.message, "error"); }
+  }
+
+  function updateSlideImage(slideId, file) {
+    uploadSlideImage(file, async (url) => {
+      try {
+        await apiFetch(`/api/slides/${slideId}`, { method: "PATCH", body: JSON.stringify({ imageUrl: url }) });
+        await load();
+        toast("Şəkil yeniləndi", "success");
+      } catch (err) { toast(err.message, "error"); }
+    });
   }
 
   // Drag-drop handlers
@@ -1373,6 +1398,27 @@ function SliderManager() {
           <select className="input-field" value={form.bg} onChange={e=>setForm(f=>({...f,bg:e.target.value}))}>
             {BG_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
+
+          <div className="md:col-span-2">
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">Slide Şəkli (istəyə bağlı — əlavə etsəniz rəngli fon yerinə şəkil göstərilir)</label>
+            <div className="flex items-center gap-3">
+              {form.imageUrl ? (
+                <div className="relative">
+                  <img src={form.imageUrl} alt="" className="w-24 h-16 object-cover rounded-lg border border-gray-200" />
+                  <button type="button" onClick={()=>setForm(f=>({...f,imageUrl:""}))}
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">×</button>
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 cursor-pointer hover:border-brand-400 hover:text-brand-600 transition-colors">
+                  <Icon name="upload" size={16}/>
+                  {uploadingImg ? "Yüklənir..." : "Şəkil seç"}
+                  <input type="file" accept="image/*" className="hidden" disabled={uploadingImg}
+                    onChange={e => { const f=e.target.files?.[0]; if(f) uploadSlideImage(f, url=>setForm(fm=>({...fm,imageUrl:url}))); e.target.value=""; }} />
+                </label>
+              )}
+            </div>
+          </div>
+
           <button type="submit" disabled={saving} className="btn-primary md:col-span-2">{saving?"Əlavə olunur...":"Slide əlavə et"}</button>
         </form>
       </div>
@@ -1398,9 +1444,18 @@ function SliderManager() {
               } ${dragIdx === idx ? "opacity-40" : ""}`}
             >
               <span className="text-gray-300 text-lg select-none" title="Sürüklə"><Icon name="grid" size={16} /></span>
-              <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${slide.bg} flex items-center justify-center text-xl shrink-0`}>
-                {slide.emoji}
-              </div>
+              <label className={`relative w-10 h-10 rounded-lg bg-gradient-to-br ${slide.bg} flex items-center justify-center text-xl shrink-0 cursor-pointer overflow-hidden group`} title="Şəkli dəyişmək üçün klikləyin">
+                {slide.imageUrl ? (
+                  <img src={slide.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  slide.emoji
+                )}
+                <span className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                  <Icon name="upload" size={12} className="text-white opacity-0 group-hover:opacity-100" />
+                </span>
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={e => { const f=e.target.files?.[0]; if(f) updateSlideImage(slide.id, f); e.target.value=""; }} />
+              </label>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm truncate">{slide.title}</p>
                 <p className="text-xs text-gray-400 truncate">{slide.href} · {slide.cta}</p>

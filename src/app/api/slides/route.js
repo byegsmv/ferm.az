@@ -22,12 +22,12 @@ export async function POST(request) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await request.json().catch(() => null);
-  const { tag, title, subtitle, cta, href, bg, emoji } = body;
+  const { tag, title, subtitle, cta, href, bg, emoji, imageUrl } = body;
   if (!title || !href) return Response.json({ error: "title və href tələb olunur" }, { status: 422 });
 
   const maxOrder = await prisma.homepageSlide.findFirst({ orderBy: { sortOrder: "desc" }, select: { sortOrder: true } });
   const slide = await prisma.homepageSlide.create({
-    data: { tag: tag || "", title, subtitle: subtitle || "", cta: cta || "Bax", href, bg: bg || "from-brand-700 to-brand-500", emoji: emoji || "🌾", sortOrder: (maxOrder?.sortOrder ?? -1) + 1 },
+    data: { tag: tag || "", title, subtitle: subtitle || "", cta: cta || "Bax", href, bg: bg || "from-brand-700 to-brand-500", emoji: emoji || "🌾", imageUrl: imageUrl || null, sortOrder: (maxOrder?.sortOrder ?? -1) + 1 },
   });
   return Response.json({ slide }, { status: 201 });
 }

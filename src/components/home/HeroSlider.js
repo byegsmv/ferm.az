@@ -52,6 +52,7 @@ export default function HeroSlider() {
             text: s.subtitle,
             iconName: "flame",
             bg: getHeroBg(s.bg),
+            imageUrl: s.imageUrl || null,
             href: s.href || "/products",
             btn: s.cta || "İndi Bax"
           }));
@@ -85,15 +86,23 @@ export default function HeroSlider() {
       {slides.map((slide, idx) => (
         <div
           key={idx}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out bg-gradient-to-br ${slide.bg} flex items-center justify-center text-center px-4 pt-4 pb-12 md:pb-14 ${
+          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${slide.imageUrl ? "bg-gray-900" : `bg-gradient-to-br ${slide.bg}`} flex items-center justify-center text-center px-4 pt-4 pb-12 md:pb-14 ${
             current === idx ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
           }`}
         >
+           {slide.imageUrl && (
+             <>
+               <img src={slide.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+               <div className="absolute inset-0 bg-black/45" />
+             </>
+           )}
            {/* Decorative circles */}
-           <div className="absolute inset-0 pointer-events-none" aria-hidden>
-             <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 blur-3xl" />
-             <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
-           </div>
+           {!slide.imageUrl && (
+             <div className="absolute inset-0 pointer-events-none" aria-hidden>
+               <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 blur-3xl" />
+               <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+             </div>
+           )}
 
            <div className="relative max-w-2xl mx-auto flex flex-col items-center">
               <span className="flex h-16 w-16 md:h-20 md:w-20 items-center justify-center rounded-[2rem] bg-white/20 text-3xl md:text-4xl shadow-lg backdrop-blur-md mb-5 animate-fade-in-up">
