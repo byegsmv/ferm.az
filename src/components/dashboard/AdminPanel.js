@@ -606,7 +606,7 @@ function CategoriesManager() {
   const [form,setForm]=useState({nameAz:"",slug:"",icon:"",isActive:true,parentId:""});
   const [msg,setMsg]=useState(""); const [err,setErr]=useState("");
   const { toast, ToastContainer } = useToast();
-  useEffect(()=>{ apiFetch("/api/categories").then(d=>setItems(d.categories||[])).finally(()=>setLoading(false)); },[]);
+  useEffect(()=>{ apiFetch("/api/categories?all=true").then(d=>setItems(d.categories||[])).finally(()=>setLoading(false)); },[]);
   async function create(e){ e.preventDefault(); setErr(""); try{ const d=await apiFetch("/api/categories",{method:"POST",body:JSON.stringify(form)}); setItems(p=>[...p,d.category]); setForm({nameAz:"",slug:"",icon:"",isActive:true,parentId:""}); toast("Kateqoriya əlavə edildi"); }catch(e){setErr(e.message);} }
   async function toggleActive(id,val){ try{ await apiFetch(`/api/categories/${id}`,{method:"PATCH",body:JSON.stringify({isActive:val})}); setItems(p=>p.map(c=>c.id===id?{...c,isActive:val}:c)); toast("Yeniləndi"); }catch(e){toast(e.message,"error");} }
   const parents=items.filter(c=>!c.parentId);

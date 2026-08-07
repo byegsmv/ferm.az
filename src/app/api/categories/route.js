@@ -14,6 +14,9 @@ export async function GET(request) {
       orderBy: [{ sortOrder: "asc" }, { nameAz: "asc" }],
     });
     const localizeAdmin = (cat) => ({
+      nameAz: cat.nameAz,
+      nameEn: cat.nameEn,
+      nameRu: cat.nameRu,
       id: cat.id,
       slug: cat.slug,
       name: locale === "en" ? cat.nameEn || cat.nameAz : locale === "ru" ? cat.nameRu || cat.nameAz : cat.nameAz,
