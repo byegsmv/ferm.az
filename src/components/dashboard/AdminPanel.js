@@ -10,6 +10,7 @@ import MessagingPanel from "@/components/chat/MessagingPanel";
 import AdminProfile from "@/components/dashboard/AdminProfile";
 import SiteTextsManager from "@/components/dashboard/SiteTextsManager";
 import AdminSupport from "@/components/dashboard/AdminSupport";
+import AISettingsManager from "@/components/dashboard/AISettingsManager";
 import EmptyState from "@/components/ui/EmptyState";
 import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
@@ -54,6 +55,7 @@ const SIDEBAR_GROUPS = [
     { id:"site-texts", icon:"edit", label:"Mətn İdarəsi" },
   ]},
   { label:"Sistem", items:[
+    { id:"ai-settings", icon:"bot", label:"AI Modulları" },
     { id:"emails", icon:"mail", label:"E-poçt" },
     { id:"user-modules", icon:"settings", label:"Rol Modulları" },
     { id:"studio", icon:"component", label:"No-Code Studio" },
@@ -1540,6 +1542,7 @@ export default function AdminPanel() {
       case "profile":    return <AdminProfile />;
       case "support":    return <AdminSupport />;
       case "site-texts": return <SiteTextsManager />;
+      case "ai-settings": return <AISettingsManager />;
       default:            return <EmptyState icon="clock" title="Gəlir..."/>;
     }
   }

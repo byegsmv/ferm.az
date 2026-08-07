@@ -4,11 +4,13 @@ import toast from "react-hot-toast";
 import { Link, useRouter } from "@/i18n/routing";
 import Icon from "@/components/ui/Icon";
 import { getCompareList, addToCompare, removeFromCompare } from "@/lib/compareUtils";
+import { useSiteTexts } from "@/lib/siteTexts";
 
 export default function CompareButton({ productId, iconOnly = false, className = "" }) {
   const [inCompare, setInCompare] = useState(false);
   const [count, setCount] = useState(0);
   const router = useRouter();
+  const { t } = useSiteTexts();
 
   useEffect(() => {
     const ids = getCompareList();
@@ -24,17 +26,17 @@ export default function CompareButton({ productId, iconOnly = false, className =
       removeFromCompare(productId);
       setInCompare(false);
       setCount(getCompareList().length);
-      toast.success("Müqayisədən çıxarıldı");
+      toast.success(t('products.removedFromCompare', 'Müqayisədən çıxarıldı'));
     } else {
       if (currentIds.length >= 5) {
-        toast.error("Maksimum 5 məhsul müqayisə edilə bilər");
+        toast.error(t('products.maxCompareLimit', 'Maksimum 5 məhsul müqayisə edilə bilər'));
         return;
       }
       addToCompare(productId);
       setInCompare(true);
       const newCount = getCompareList().length;
       setCount(newCount);
-      toast.success("Müqayisəyə əlavə edildi");
+      toast.success(t('products.addedToCompare', 'Müqayisəyə əlavə edildi'));
 
       if (newCount >= 2) {
         setTimeout(() => router.push(`/compare?ids=${getCompareList().join(",")}`), 400);
@@ -51,8 +53,8 @@ export default function CompareButton({ productId, iconOnly = false, className =
             ? "bg-brand-50 text-brand-600 border-brand-200"
             : "bg-white/90 text-gray-500 border-gray-200 hover:bg-gray-50 backdrop-blur-sm"
         } ${className}`}
-        title={inCompare ? "Müqayisədən çıxar" : "Müqayisə et"}
-        aria-label={inCompare ? "Müqayisədən çıxar" : "Müqayisə et"}
+        title={inCompare ? t('products.removeFromCompare', 'Müqayisədən çıxar') : t('products.compare', 'Müqayisə et')}
+        aria-label={inCompare ? t('products.removeFromCompare', 'Müqayisədən çıxar') : t('products.compare', 'Müqayisə et')}
       >
         <Icon name="search" size={16} strokeWidth={2} />
       </button>
@@ -70,14 +72,14 @@ export default function CompareButton({ productId, iconOnly = false, className =
         }`}
       >
         <Icon name="search" size={16} strokeWidth={2} />
-        {inCompare ? "Müqayisədən çıxar" : "Müqayisə et"}
+        {inCompare ? t('products.removeFromCompare', 'Müqayisədən çıxar') : t('products.compare', 'Müqayisə et')}
       </button>
       {inCompare && count > 0 && (
         <Link
           href={`/compare?ids=${getCompareList().join(",")}`}
           className="text-sm font-bold text-brand-600 hover:underline"
         >
-          <span className="flex items-center gap-1">Bax <Icon name="arrowRight" size={14} /> ({count})</span>
+          <span className="flex items-center gap-1">{t('products.view', 'Bax')} <Icon name="arrowRight" size={14} /> ({count})</span>
         </Link>
       )}
     </div>

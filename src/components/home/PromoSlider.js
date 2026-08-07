@@ -2,13 +2,7 @@
 import Icon from "@/components/ui/Icon";
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "@/i18n/routing";
-
-// Fallback slides when DB is empty
-const FALLBACK_SLIDES = [
-  { id: "1", tag: "Kampaniya", iconName: "flame", title: "Yaz Mövsümü Endirimləri", subtitle: "Toxum, gübrə və aqrar avadanlıqlarda 30%-ə qədər endirim", cta: "İndi Bax", href: "/products", bg: "from-brand-700 to-brand-500" },
-  { id: "2", tag: "Premium", iconName: "star", title: "Premium Elanlar", subtitle: "Seçilmiş satıcıların keyfiyyətli məhsulları bir yerdə", cta: "Kəşf Et", href: "/products", bg: "from-amber-600 to-amber-400" },
-  { id: "3", tag: "Yeni Xüsusiyyət", iconName: "bot", title: "AI Aqronom", subtitle: "Bitkinizdəki xəstəlikləri şəkil göndərərək analiz etdirin", cta: "Sınayın", href: "/agronom", bg: "from-sky-700 to-sky-500" },
-];
+import { useSiteTexts } from "@/lib/siteTexts";
 
 const getBgStyle = (bg) => {
   if (!bg) return { background: "linear-gradient(90deg, #047857 0%, #10B981 100%)" };
@@ -26,7 +20,15 @@ const getBgStyle = (bg) => {
 };
 
 export default function PromoSlider() {
-  const [slides, setSlides] = useState(FALLBACK_SLIDES);
+  const { t } = useSiteTexts();
+
+  const fallbackSlides = [
+    { id: "1", tag: t('homepage.promoTag1', 'Kampaniya'), iconName: "flame", title: t('homepage.promoTitle1', 'Yaz Mövsümü Endirimləri'), subtitle: t('homepage.promoSubtitle1', 'Toxum, gübrə və aqrar avadanlıqlarda 30%-ə qədər endirim'), cta: t('homepage.promoCta1', 'İndi Bax'), href: "/products", bg: "from-brand-700 to-brand-500" },
+    { id: "2", tag: t('homepage.promoTag2', 'Premium'), iconName: "star", title: t('homepage.promoTitle2', 'Premium Elanlar'), subtitle: t('homepage.promoSubtitle2', 'Seçilmiş satıcıların keyfiyyətli məhsulları bir yerdə'), cta: t('homepage.promoCta2', 'Kəşf Et'), href: "/products", bg: "from-amber-600 to-amber-400" },
+    { id: "3", tag: t('homepage.promoTag3', 'Yeni Xüsusiyyət'), iconName: "bot", title: t('homepage.promoTitle3', 'AI Aqronom'), subtitle: t('homepage.promoSubtitle3', 'Bitkinizdəki xəstəlikləri şəkil göndərərək analiz etdirin'), cta: t('homepage.promoCta3', 'Sınayın'), href: "/agronom", bg: "from-sky-700 to-sky-500" },
+  ];
+
+  const [slides, setSlides] = useState(fallbackSlides);
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -77,7 +79,7 @@ export default function PromoSlider() {
               className="inline-block mt-4 bg-white text-gray-900 text-xs font-bold px-5 py-2 rounded-xl hover:bg-gray-100 active:scale-95 transition-all shadow-sm"
               onClick={(e) => e.stopPropagation()}
             >
-              <>{s.cta || "Bax"} <Icon name="arrowRight" size={14} className="inline ml-1" /></>
+              <>{s.cta || t('homepage.promoViewBtn', 'Bax')} <Icon name="arrowRight" size={14} className="inline ml-1" /></>
             </Link>
           </div>
           <div className="opacity-20"><Icon name={s.iconName || "flame"} size={80} className="text-white" strokeWidth={1.5} /></div>

@@ -1,13 +1,7 @@
 "use client";
 import Icon from "@/components/ui/Icon";
 import { useEffect, useRef, useState } from "react";
-
-const STATS = [
-  { value: 15000, suffix: "+", label: "Aktiv Elan", iconName: "clipboard" },
-  { value: 4500,  suffix: "+", label: "Fermer",     iconName: "sprout" },
-  { value: 1200,  suffix: "+", label: "Mağaza",     iconName: "store" },
-  { value: 98,    suffix: "%", label: "Məmnun İstifadəçi", iconName: "star" },
-];
+import { useSiteTexts } from "@/lib/siteTexts";
 
 function useCountUp(target, started) {
   const [count, setCount] = useState(0);
@@ -46,8 +40,16 @@ function StatCard({ stat, started, index }) {
 }
 
 export default function StatsSection() {
+  const { t } = useSiteTexts();
   const [started, setStarted] = useState(false);
   const ref = useRef(null);
+
+  const stats = [
+    { value: 15000, suffix: "+", label: t('homepage.statActiveListings', 'Aktiv Elan'), iconName: "clipboard" },
+    { value: 4500,  suffix: "+", label: t('homepage.statFarmers', 'Fermer'), iconName: "sprout" },
+    { value: 1200,  suffix: "+", label: t('homepage.statStores', 'Mağaza'), iconName: "store" },
+    { value: 98,    suffix: "%", label: t('homepage.statSatisfiedUsers', 'Məmnun İstifadəçi'), iconName: "star" },
+  ];
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -61,11 +63,11 @@ export default function StatsSection() {
   return (
     <section ref={ref} className="animate-fade-in-up" style={{ animationDelay: "0.35s" }}>
       <div className="mb-4 md:mb-5">
-        <h2 className="section-title">Niyə FermerMarket?</h2>
-        <p className="section-subtitle">Azərbaycanlı fermerlər bizi seçir</p>
+        <h2 className="section-title">{t('homepage.statsTitle', 'Niyə FermerMarket?')}</h2>
+        <p className="section-subtitle">{t('homepage.statsSubtitle', 'Azərbaycanlı fermerlər bizi seçir')}</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4">
-        {STATS.map((s, i) => <StatCard key={s.label} stat={s} started={started} index={i} />)}
+        {stats.map((s, i) => <StatCard key={s.label} stat={s} started={started} index={i} />)}
       </div>
     </section>
   );

@@ -1,11 +1,42 @@
-// Thin wrapper around Google's Gemini REST API. Server-side only — never
-// expose GOOGLE_API_KEY to the client.
+// Thin wrapper around Google's Gemini REST API. Server-side only.
+// Reads API key from: 1) DB Setting table (admin-managed), 2) env var, 3) offline fallback.
 const MODEL = "gemini-2.5-flash";
+
+let cachedKey = null;
+let cacheExpiry = 0;
+
+async function getApiKey() {
+  // Check cache (valid for 60 seconds)
+  if (cachedKey !== null && Date.now() < cacheExpiry) return cachedKey;
+
+  try {
+    // Dynamic import to avoid circular dependencies
+    const { prisma } = await import("@/lib/prisma");
+    const setting = await prisma.setting.findUnique({ where: { key: "geminiApiKey" } });
+    if (setting && setting.value) {
+      cachedKey = setting.value;
+      cacheExpiry = Date.now() + 60000;
+      return cachedKey;
+    }
+  } catch (e) {
+    // DB not available, fall through to env
+  }
+
+  // Fall back to env var
+  cachedKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+  cacheExpiry = Date.now() + 60000;
+  return cachedKey;
+}
+
+// Clear cache when admin updates the key (called from the API route)
+export function clearGeminiKeyCache() {
+  cachedKey = null;
+  cacheExpiry = 0;
+}
 
 function offlineGenerate(prompt) {
   const promptLower = prompt.toLowerCase();
 
-  // 1. AI Agronomist Request (Expecting JSON)
   if (promptLower.includes("json formatında") || promptLower.includes("diagnosis")) {
     if (promptLower.includes("mənənə") || promptLower.includes("aphid")) {
       return JSON.stringify({
@@ -29,7 +60,6 @@ function offlineGenerate(prompt) {
         summary: "Hörmətli fermer, sahənizdə Kolorado böcəyi yayılmışdır. Sürətli inkişafın qarşısını almaq üçün dərhal insektisid çiləməsi tövsiyə olunur."
       });
     }
-    // General fallback
     return JSON.stringify({
       diagnosis: "Bitki stressi və ya qida çatışmazlığı",
       confidencePercent: 80,
@@ -41,45 +71,33 @@ function offlineGenerate(prompt) {
     });
   }
 
-  // 2. AI Description Request
   if (promptLower.includes("təsvir") || promptLower.includes("description") || promptLower.includes("yaz")) {
     return "Bu məhsul kənd təsərrüfatı standartlarına tam uyğun olaraq yüksək məhsuldarlıq və bitki mühafizəsini təmin etmək üçün istehsal olunmuşdur. Həm ekoloji təmizliyi qoruyur, həm də sahənizi zərərvericilərdən səmərəli şəkildə müdafiə edir.";
   }
 
-  // 3. AI Price Index / Forecast Request
   if (promptLower.includes("qiymət") || promptLower.includes("price") || promptLower.includes("forecasting")) {
     return JSON.stringify([
-      { month: "Yanvar", price: 1.20 },
-      { month: "Fevral", price: 1.40 },
-      { month: "Mart", price: 1.50 },
-      { month: "Aprel", price: 1.10 },
-      { month: "May", price: 0.90 },
-      { month: "İyun", price: 0.70 }
+      { month: "Yanvar", price: 1.20 }, { month: "Fevral", price: 1.40 },
+      { month: "Mart", price: 1.50 }, { month: "Aprel", price: 1.10 },
+      { month: "May", price: 0.90 }, { month: "İyun", price: 0.70 }
     ]);
   }
 
-  // Default Fallback
   return "Lokal simulyasiya cavabı: Kənd təsərrüfatı layihəsi uğurla işləyir.";
 }
 
 export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOutputTokens = 2048 }) {
-  const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  const key = await getApiKey();
 
-  // Local Offline Fallback Mode (If no API key is set)
   if (!key) {
-    console.log("⚠️ AI bağlantı açarı tapılmadı. Sistem yerli (offline) simulyasiya rejimində işləyir.");
+    console.log("⚠️ AI bağlantı açarı tapılmadı. Offline simulyasiya rejimində işləyir.");
     return offlineGenerate(prompt);
   }
 
   try {
     const parts = [{ text: prompt }];
     if (imageBase64) {
-      parts.push({
-        inline_data: {
-          mime_type: imageMimeType || "image/jpeg",
-          data: imageBase64,
-        },
-      });
+      parts.push({ inline_data: { mime_type: imageMimeType || "image/jpeg", data: imageBase64 } });
     }
 
     const res = await fetch(
@@ -95,18 +113,14 @@ export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOu
     );
 
     const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data?.error?.message || "AI sorğusu uğursuz oldu");
-    }
+    if (!res.ok) throw new Error(data?.error?.message || "AI sorğusu uğursuz oldu");
 
     const candidate = data?.candidates?.[0];
     const text = candidate?.content?.parts?.map((p) => p.text).join("\n") || "";
-    if (candidate?.finishReason === "MAX_TOKENS" && !text) {
-      throw new Error("AI cavabı çox uzun oldu, yenidən cəhd edin");
-    }
+    if (candidate?.finishReason === "MAX_TOKENS" && !text) throw new Error("AI cavabı çox uzun oldu, yenidən cəhd edin");
     return text.trim();
   } catch (err) {
-    console.log("⚠️ AI bağlantı və ya şəbəkə xətası baş verdi. Lokal simulyasiya rejiminə keçilir:", err.message);
+    console.log("⚠️ AI xətası, offline rejimə keçilir:", err.message);
     return offlineGenerate(prompt);
   }
 }

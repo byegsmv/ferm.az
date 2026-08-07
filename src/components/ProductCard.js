@@ -7,6 +7,7 @@ import { apiFetch } from "@/lib/apiClient";
 import { getToken } from "@/lib/apiClient";
 import Icon from "@/components/ui/Icon";
 import CompareButton from "@/components/CompareButton";
+import { useSiteTexts } from "@/lib/siteTexts";
 
 const TIER_CONFIG = {
   VIP:      { label: "VIP",      bg: "bg-purple-600 text-white" },
@@ -18,6 +19,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
   const router = useRouter();
   const isLoggedIn = !!getToken();
   const productId = product?.id || product?.slug || product?.title;
+  const { t } = useSiteTexts();
 
   const [favorited, setFavorited] = useState(initialFavorited);
 
@@ -167,7 +169,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
         {/* Tier badge */}
         {badge && (
           <span className={`absolute top-2 left-2 text-[10px] font-extrabold px-2 py-0.5 rounded-lg ${badge.bg}`}>
-            {badge.label}
+            {badge.label === "ÖNE ÇIXAN" ? t('products.featuredBadge', 'ÖNE ÇIXAN') : badge.label}
           </span>
         )}
       </div>
@@ -179,7 +181,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
         className={`absolute top-2 right-2 w-9 h-9 sm:w-10 sm:h-10 z-10 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm transition-all duration-300 hover:bg-white hover:scale-110 active:scale-95 ${
           favorited ? "opacity-100" : "opacity-100 md:opacity-0 group-hover:opacity-100"
         }`}
-        aria-label={favorited ? "Sevimlilərə əlavə edilib" : "Sevimlilərə əlavə et"}
+        aria-label={favorited ? t('products.inFavorites', 'Sevimlilərə əlavə edilib') : t('products.addToFavorites', 'Sevimlilərə əlavə et')}
       >
         {loading ? (
           <span className="block w-4 h-4 rounded-full border-2 border-gray-200 border-t-brand-500 animate-spin" />
@@ -203,18 +205,18 @@ export default function ProductCard({ product, tier, compact = false, initialFav
         </h3>
         {product.isCorporate && (
           <span className="self-start text-[10px] font-semibold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-md">
-            <Icon name="building" size={11} /> Korporativ
+            <Icon name="building" size={11} /> {t('products.corporateBadge', 'Korporativ')}
           </span>
         )}
         <p className={`font-extrabold text-brand-700 mt-auto ${compact ? "text-sm" : "text-base"}`}>
-          {Number(product.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} <span className="font-semibold text-xs">{product.currency || "AZN"}</span>
+          {Number(product.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} <span className="font-semibold text-xs">{product.currency || t('products.currencyAzn', 'AZN')}</span>
         </p>
         {product.isCorporate && product.minOrderQty && (
-          <p className="text-[10px] text-orange-600 font-medium">Min: {product.minOrderQty} ədəd</p>
+          <p className="text-[10px] text-orange-600 font-medium">{t('products.minOrderLabel', 'Min:')} {product.minOrderQty} {t('products.unitPiece', 'ədəd')}</p>
         )}
         {product.allowInstallment && (
           <p className="text-[10px] text-blue-600 font-medium flex items-center gap-1">
-            <Icon name="creditCard" size={12} /> Hissəli ödəniş
+            <Icon name="creditCard" size={12} /> {t('products.installmentLabel', 'Hissəli ödəniş')}
           </p>
         )}
         {(product.region || product.city) && (
