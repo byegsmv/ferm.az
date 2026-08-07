@@ -148,10 +148,11 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-200 pt-6 text-xs text-gray-500 sm:flex-row">
-          <p>© {new Date().getFullYear()} {st("footer.copyright", "FermerMarket. Bütün hüquqlar qorunur.")}</p>
+          {/* Bu 2 mətn qəsdən CMS-dən çıxarılıb və sərt kodlaşdırılıb — admin panelindən dəyişdirilə bilməz */}
+          <p>© {new Date().getFullYear()} FermerMarket. Bütün hüquqlar qorunur.</p>
           <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white/70 px-3 py-1.5">
             <Icon name="globe" size={16} className="text-gray-400" />
-            <span>{st("footer.developedBy", "Developed By Gsmv")}</span>
+            <span>Developed By Gsmv</span>
           </div>
         </div>
       </div>

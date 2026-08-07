@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, requireRole } from "@/lib/auth";
 
+// Bu açarlar Footer.js-də sərt kodlaşdırılıb — CMS vasitəsilə heç kim (admin daxil)
+// dəyişə/silə/yenidən yarada bilməz.
+const PROTECTED_KEYS = ["footer.copyright", "footer.developedBy"];
+
 export async function GET(request) {
   const authUser = await getAuthUser(request);
   const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
@@ -19,7 +23,11 @@ export async function GET(request) {
     orderBy: [{ group: "asc" }, { key: "asc" }],
   });
 
-  return Response.json({ siteTexts });
+  // footer.copyright / footer.developedBy are hardcoded in Footer.js and
+  // must never appear in the CMS editing UI.
+  const visible = siteTexts.filter((t) => !PROTECTED_KEYS.includes(t.key));
+
+  return Response.json({ siteTexts: visible });
 }
 
 export async function POST(request) {
@@ -38,6 +46,10 @@ export async function POST(request) {
 
   if (!key || valueAz === undefined) {
     return Response.json({ error: "Açar (key) və Azərbaycan dili dəyəri (valueAz) tələb olunur" }, { status: 400 });
+  }
+
+  if (PROTECTED_KEYS.includes(key.trim())) {
+    return Response.json({ error: "Bu açar qorunur və CMS-də yaradıla bilməz" }, { status: 403 });
   }
 
   const existing = await prisma.siteText.findUnique({ where: { key: key.trim() } });
@@ -77,9 +89,19 @@ export async function PUT(request) {
     return Response.json({ error: "Yeniləmək üçün məzmun tapılmadı" }, { status: 400 });
   }
 
+  // Resolve ids to keys up front so protected rows can't be edited via id either
+  const idsToCheck = items.filter((i) => i.id && !i.key).map((i) => i.id);
+  let idKeyMap = {};
+  if (idsToCheck.length > 0) {
+    const rows = await prisma.siteText.findMany({ where: { id: { in: idsToCheck } }, select: { id: true, key: true } });
+    idKeyMap = Object.fromEntries(rows.map((r) => [r.id, r.key]));
+  }
+
   let updatedCount = 0;
   for (const item of items) {
     if (!item.id && !item.key) continue;
+    const resolvedKey = item.key || idKeyMap[item.id];
+    if (resolvedKey && PROTECTED_KEYS.includes(resolvedKey)) continue;
 
     const data = {};
     if (item.valueAz !== undefined) data.valueAz = item.valueAz;
@@ -126,6 +148,15 @@ export async function DELETE(request) {
 
   if (!id && !key) {
     return Response.json({ error: "id və ya key parametri tələb olunur" }, { status: 400 });
+  }
+
+  let targetKey = key;
+  if (!targetKey && id) {
+    const row = await prisma.siteText.findUnique({ where: { id }, select: { key: true } });
+    targetKey = row?.key;
+  }
+  if (targetKey && PROTECTED_KEYS.includes(targetKey)) {
+    return Response.json({ error: "Bu açar qorunur və silinə bilməz" }, { status: 403 });
   }
 
   if (id) {
