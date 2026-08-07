@@ -34,7 +34,6 @@ export default async function SellerProfilePage({ params }) {
   const isBanned = seller.status === "BANNED";
 
   const isVerified = seller.emailVerified || (seller.store && seller.store.isVerified);
-  const initials = seller.fullName?.split(" ").map(n => n[0]).join("").toUpperCase().substring(0,2) || "S";
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen pb-24 md:pb-12 pt-6">
@@ -45,8 +44,8 @@ export default async function SellerProfilePage({ params }) {
            <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-brand-600 to-green-500 opacity-90" />
            <div className="relative z-10 flex flex-col md:flex-row gap-6 items-start md:items-end mt-8">
               <div className="w-24 h-24 rounded-2xl bg-white p-1 shadow-md shrink-0">
-                 <div className="w-full h-full bg-brand-100 rounded-xl flex items-center justify-center text-3xl font-black text-brand-700">
-                    {initials}
+                 <div className="w-full h-full bg-brand-100 rounded-xl flex items-center justify-center overflow-hidden">
+                    <img src="/logo.png" alt={seller.store?.name || seller.fullName} className="w-3/4 h-3/4 object-contain" />
                  </div>
               </div>
               <div className="flex-1">

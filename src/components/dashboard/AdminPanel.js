@@ -1093,7 +1093,7 @@ function CampaignsManager() {
     <div className="space-y-5">
       <ToastContainer/>
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="section-title">Kampaniyalar</h2>
+        <h2 className="section-title">{t("admin.title.campaigns","Kampaniyalar")}</h2>
         <button onClick={()=>setShowForm(p=>!p)} className="btn-primary btn-sm">{showForm ? <span className="flex items-center gap-1"><Icon name="close" size={14}/>Bağla</span> : <span className="flex items-center gap-1"><Icon name="plus" size={14}/>Yeni Kampaniya</span>}</button>
       </div>
       {showForm&&(
@@ -1260,7 +1260,7 @@ function AdSlotsManager() {
     <div className="space-y-5">
       <ToastContainer/>
       <div>
-        <h2 className="section-title">Reklam Yerləri</h2>
+        <h2 className="section-title">{t("admin.title.adSlots","Reklam Yerləri")}</h2>
         <p className="caption text-gray-500">Hər bir reklam yerini klikləyərək daxili kampaniya, xarici kod (AdSense və s.) təyin edin və ya deaktiv edin.</p>
       </div>
       {loading?<SkeletonList count={7}/>:(
