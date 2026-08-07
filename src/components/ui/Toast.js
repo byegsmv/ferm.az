@@ -5,9 +5,8 @@ import Icon from "@/components/ui/Icon";
 
 const ICONS = { success:"checkCircle", error:"closeCircle", warning:"alert", info:"info" };
 
-// Extract ToastContainer as a STABLE component — NOT a function declared inside the hook.
-// This prevents React from remounting it on every parent re-render.
-const ToastContainerComponent = memo(function ToastContainerComponent({ toasts }) {
+// Inner rendering component — memoized, stable, receives toasts as a prop.
+const ToastContainerInner = memo(function ToastContainerInner({ toasts }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -40,10 +39,17 @@ export function useToast() {
   // showToast is the same stable reference as toast (useCallback with [])
   const showToast = toast;
 
-  // Return a memoized JSX element, not a function component
-  // This prevents React from seeing a "new component type" on every render
-  const ToastContainer = (
-    <ToastContainerComponent toasts={toasts} />
+  // ToastContainer MUST be an actual function component (callers use it as
+  // JSX: <ToastContainer/>). We memoize it with useCallback keyed on
+  // `toasts` so its identity only changes when toast content actually
+  // changes (rare) — not on every unrelated parent re-render. This is
+  // stable enough to prevent remount cascades while staying a valid
+  // component (fixes the "objects are not valid as react child" crash
+  // from an earlier attempt that returned a JSX element instead of a
+  // component function).
+  const ToastContainer = useCallback(
+    () => <ToastContainerInner toasts={toasts} />,
+    [toasts]
   );
 
   return { toast, showToast, ToastContainer };
