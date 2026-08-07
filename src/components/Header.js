@@ -55,7 +55,8 @@ export default function Header() {
     const savedCity = localStorage.getItem("fmk-selected-city");
     if (savedCity) {
       setSelectedCity(savedCity);
-    } else {
+    } else if (!sessionStorage.getItem("fmk-city-modal-shown")) {
+      sessionStorage.setItem("fmk-city-modal-shown", "1");
       setShowCityModal(true);
     }
 
@@ -363,9 +364,7 @@ export default function Header() {
 
     <CitySelectModal 
       isOpen={showCityModal} 
-      onClose={() => {
-        if (selectedCity) setShowCityModal(false);
-      }} 
+      onClose={() => setShowCityModal(false)}
       onSelect={handleCitySelect} 
       currentCity={selectedCity} 
     />
