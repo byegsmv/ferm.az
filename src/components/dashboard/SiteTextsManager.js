@@ -27,18 +27,16 @@ export default function SiteTextsManager() {
   const [newText, setNewText] = useState({ key: "", group: "general", label: "", valueAz: "", valueEn: "", valueRu: "" });
   const [edited, setEdited] = useState(new Set());
 
-  // Controller reference to cancel pending fetches when activeGroup changes
-  const abortControllerRef = useRef(null);
+  // Store showToast in a ref so it's NEVER a useEffect dependency.
+  // This completely eliminates any possibility of an infinite re-render loop
+  // caused by showToast reference changing between renders.
+  const showToastRef = useRef(showToast);
+  showToastRef.current = showToast;
 
+  // Only depends on [activeGroup] — never on showToast or any function.
+  // This effect runs ONLY on mount and when activeGroup changes. Period.
   useEffect(() => {
-    // Abort previous in-flight request if any
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
     const controller = new AbortController();
-    abortControllerRef.current = controller;
-
     let isCurrent = true;
     setLoading(true);
 
@@ -53,7 +51,7 @@ export default function SiteTextsManager() {
       })
       .catch((err) => {
         if (isCurrent && err.name !== "AbortError" && err.name !== "CanceledError") {
-          showToast("Mətnlər yüklənmədi", "error");
+          showToastRef.current("Mətnlər yüklənmədi", "error");
           setLoading(false);
         }
       });
@@ -62,7 +60,8 @@ export default function SiteTextsManager() {
       isCurrent = false;
       controller.abort();
     };
-  }, [activeGroup, showToast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGroup]);
 
   const filtered = texts.filter((t) => {
     if (!search) return true;
@@ -136,7 +135,7 @@ export default function SiteTextsManager() {
 
   return (
     <div className="space-y-4">
-      <ToastContainer />
+      {ToastContainer}
 
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -247,88 +246,86 @@ export default function SiteTextsManager() {
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                 activeGroup === g.id
                   ? "bg-brand-600 text-white"
-                  : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
               }`}
             >
               {g.label}
             </button>
           ))}
         </div>
-        <div className="relative flex-1 min-w-[200px]">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Axtar..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:border-brand-500 outline-none"
-          />
-          <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        </div>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Axtar..."
+          className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm flex-1 min-w-[150px] outline-none focus:border-brand-500"
+        />
       </div>
 
       {/* Texts List */}
       {loading ? (
         <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />
+          {[1,2,3].map(i => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4 animate-pulse">
+              <div className="h-4 bg-gray-100 rounded w-1/4 mb-2"></div>
+              <div className="h-8 bg-gray-100 rounded"></div>
+            </div>
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12">
-          <Icon name="fileText" size={40} className="mx-auto text-gray-300 mb-2" />
-          <p className="text-sm text-gray-500">Mətn tapılmadı</p>
+        <div className="text-center py-12 text-gray-400">
+          <Icon name="fileText" size={48} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm">Mətn tapılmadı</p>
         </div>
       ) : (
         <div className="space-y-2">
           {filtered.map((t) => (
-            <div
-              key={t.id}
-              className={`bg-white rounded-2xl border p-3 transition ${
-                edited.has(t.id) ? "border-brand-300 bg-brand-50/30" : "border-gray-100"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-gray-900 truncate">{t.label || t.key}</p>
-                  <p className="text-[10px] text-gray-400 font-mono truncate">{t.key}</p>
+            <div key={t.id} className="bg-white rounded-2xl border border-gray-100 p-3 hover:border-gray-200 transition">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono bg-gray-100 px-2 py-0.5 rounded">{t.key}</span>
+                  {t.group && <span className="text-xs text-gray-400">{t.group}</span>}
+                  {t.label && <span className="text-xs text-gray-400">— {t.label}</span>}
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md uppercase">{t.group}</span>
-                  <button
-                    onClick={() => handleDelete(t.id, t.key)}
-                    className="p-1 text-gray-400 hover:text-red-500 transition"
-                    aria-label="Sil"
-                  >
-                    <Icon name="trash" size={14} />
-                  </button>
-                </div>
+                <button
+                  onClick={() => handleDelete(t.id, t.key)}
+                  className="text-red-400 hover:text-red-600 transition"
+                >
+                  <Icon name="trash2" size={16} />
+                </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <div>
-                  <label className="text-[9px] font-bold text-gray-400 uppercase">AZ</label>
-                  <textarea
+                  <label className="text-xs text-gray-400 mb-1 block">AZ</label>
+                  <input
+                    type="text"
                     value={t.valueAz || ""}
                     onChange={(e) => handleFieldChange(t.id, "valueAz", e.target.value)}
-                    rows={2}
-                    className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs focus:border-brand-500 outline-none resize-none"
+                    className={`w-full px-2 py-1.5 rounded-lg border text-sm outline-none ${
+                      edited.has(t.id) ? "border-amber-300 bg-amber-50" : "border-gray-200"
+                    }`}
                   />
                 </div>
                 <div>
-                  <label className="text-[9px] font-bold text-gray-400 uppercase">EN</label>
+                  <label className="text-xs text-gray-400 mb-1 block">EN</label>
                   <input
                     type="text"
                     value={t.valueEn || ""}
                     onChange={(e) => handleFieldChange(t.id, "valueEn", e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs focus:border-brand-500 outline-none"
+                    className={`w-full px-2 py-1.5 rounded-lg border text-sm outline-none ${
+                      edited.has(t.id) ? "border-amber-300 bg-amber-50" : "border-gray-200"
+                    }`}
                   />
                 </div>
                 <div>
-                  <label className="text-[9px] font-bold text-gray-400 uppercase">RU</label>
+                  <label className="text-xs text-gray-400 mb-1 block">RU</label>
                   <input
                     type="text"
                     value={t.valueRu || ""}
                     onChange={(e) => handleFieldChange(t.id, "valueRu", e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs focus:border-brand-500 outline-none"
+                    className={`w-full px-2 py-1.5 rounded-lg border text-sm outline-none ${
+                      edited.has(t.id) ? "border-amber-300 bg-amber-50" : "border-gray-200"
+                    }`}
                   />
                 </div>
               </div>
