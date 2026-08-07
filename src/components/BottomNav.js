@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { apiFetch, getUser } from "@/lib/apiClient";
 import Icon from "@/components/ui/Icon";
+import { useSiteTexts } from "@/lib/siteTexts";
 
 function NavItem({ href, label, icon, active, badge }) {
   return (
@@ -30,6 +31,7 @@ function NavItem({ href, label, icon, active, badge }) {
 }
 
 export default function BottomNav() {
+  const { t: st } = useSiteTexts();
   const pathname = usePathname();
   const [unreadMsg, setUnreadMsg] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -56,17 +58,17 @@ export default function BottomNav() {
   if (!mounted) return null;
 
   const leftItems = [
-    { href: "/",           label: "Əsas",     icon: "home" },
-    { href: "/favorites",  label: "Seçilmiş",  icon: "heart" },
+    { href: "/",           label: st("nav.home", "Əsas"),        icon: "home" },
+    { href: "/favorites",  label: st("nav.favorites", "Seçilmiş"), icon: "heart" },
   ];
   const rightItems = isLoggedIn
     ? [
-        { href: "/messages",  label: "Mesajlar", icon: "message", badge: unreadMsg },
-        { href: "/dashboard", label: "Profil",   icon: "user" },
+        { href: "/messages",  label: st("nav.messages", "Mesajlar"), icon: "message", badge: unreadMsg },
+        { href: "/dashboard", label: st("nav.profile", "Profil"),   icon: "user" },
       ]
     : [
-        { href: "/products",  label: "Kataloq",  icon: "dashboard" },
-        { href: "/login",     label: "Giriş",    icon: "user" },
+        { href: "/products",  label: st("nav.catalog", "Kataloq"),  icon: "dashboard" },
+        { href: "/login",     label: st("nav.login", "Giriş"),    icon: "user" },
       ];
 
   return (
@@ -90,12 +92,12 @@ export default function BottomNav() {
         <div className="flex-shrink-0 w-[68px] flex flex-col items-center justify-center relative">
           <Link
             href="/elan-yerlesdir"
-            aria-label="Elan yerləşdir"
+            aria-label={st("nav.postAdAria", "Elan yerləşdir")}
             className="w-[52px] h-[52px] rounded-full bg-gradient-to-br from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 active:scale-95 text-white flex items-center justify-center shadow-lg shadow-brand-500/30 border-[3px] border-white transition-all duration-200 -mt-6"
           >
             <Icon name="plus" size={24} strokeWidth={2.8} />
           </Link>
-          <span className="text-[9px] font-bold text-brand-600 leading-none mt-1">Sat</span>
+          <span className="text-[9px] font-bold text-brand-600 leading-none mt-1">{st("nav.sell", "Sat")}</span>
         </div>
 
         {/* Sağ 2 buton — bərabər flex-1 */}

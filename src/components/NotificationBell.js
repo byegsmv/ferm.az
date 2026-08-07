@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
 import Icon from "@/components/ui/Icon";
+import { useSiteTexts } from "@/lib/siteTexts";
 
 const TYPE_ICONS = {
   order_update: "package",
@@ -12,6 +13,7 @@ const TYPE_ICONS = {
 };
 
 export default function NotificationBell() {
+  const { t: st } = useSiteTexts();
   const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [unread, setUnread] = useState(0);
@@ -76,7 +78,7 @@ export default function NotificationBell() {
 
   return (
     <div ref={ref} className="relative">
-      <button onClick={toggle} className="btn-icon relative" aria-label="Bildirişlər">
+      <button onClick={toggle} className="btn-icon relative" aria-label={st("nav.notificationsAria", "Bildirişlər")}>
         <Icon name="bell" size={18} />
         {unread > 0 && (
           <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
@@ -88,10 +90,10 @@ export default function NotificationBell() {
       {open && (
         <div className="absolute right-0 top-11 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <p className="font-bold text-sm">Bildirişlər</p>
+            <p className="font-bold text-sm">{st("nav.notificationsTitle", "Bildirişlər")}</p>
             {unread > 0 && (
               <button onClick={markAllRead} className="text-xs text-brand-600 hover:underline">
-                Hamısını oxu
+                {st("nav.notificationsMarkAllRead", "Hamısını oxu")}
               </button>
             )}
           </div>
@@ -104,7 +106,7 @@ export default function NotificationBell() {
             ) : notifs.length === 0 ? (
               <div className="text-center py-10">
                 <Icon name="bellOff" size={28} className="mx-auto mb-2 text-gray-300" />
-                <p className="text-sm text-gray-400">Bildiriş yoxdur</p>
+                <p className="text-sm text-gray-400">{st("nav.notificationsEmpty", "Bildiriş yoxdur")}</p>
               </div>
             ) : (
               notifs.map((n) => (
@@ -126,7 +128,7 @@ export default function NotificationBell() {
                   <button
                     onClick={(e) => { e.stopPropagation(); removeNotif(n.id); }}
                     className="text-gray-300 hover:text-gray-500 text-lg leading-none flex-shrink-0"
-                    aria-label="Sil"
+                    aria-label={st("nav.notificationsDeleteAria", "Sil")}
                   ><Icon name="close" size={16} /></button>
                 </div>
               ))

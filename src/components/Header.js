@@ -9,23 +9,25 @@ import { LOCALE_LABELS } from "@/lib/i18n";
 import Icon from "@/components/ui/Icon";
 import WeatherWidget from "@/components/home/WeatherWidget";
 import CitySelectModal from "@/components/CitySelectModal";
-
-const ROLE_LABELS = {
-  SUPER_ADMIN: "Super Admin",
-  ADMIN: "Admin",
-  MODERATOR: "Moderator",
-  FARMER: "Fermer",
-  STORE: "Mağaza",
-  AGRONOMIST: "Aqronom",
-  BUYER: "Alıcı",
-  DELIVERY_PARTNER: "Çatdırılma",
-};
+import { useSiteTexts } from "@/lib/siteTexts";
 
 export default function Header() {
+  const { t: st } = useSiteTexts();
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
   const t = useTranslations('Navigation');
+
+  const ROLE_LABELS = {
+    SUPER_ADMIN: st("role.superAdmin", "Super Admin"),
+    ADMIN: st("role.admin", "Admin"),
+    MODERATOR: st("role.moderator", "Moderator"),
+    FARMER: st("role.farmer", "Fermer"),
+    STORE: st("role.store", "Mağaza"),
+    AGRONOMIST: st("role.agronomist", "Aqronom"),
+    BUYER: st("role.buyer", "Alıcı"),
+    DELIVERY_PARTNER: st("role.deliveryPartner", "Çatdırılma"),
+  };
 
   const [user, setUser] = useState(null);
   const [count, setCount] = useState(0);
@@ -41,13 +43,13 @@ export default function Header() {
   const [wallet, setWallet] = useState(null);
 
   const NAV_LINKS = [
-    { href: "/products", label: t("products") },
-    { href: "/categories", label: t("categories") },
-    { href: "/brands", label: t("brands") },
-    { href: "/campaigns", label: t("campaigns") },
-    { href: "/stores", label: t("stores") },
-    { href: "/agronom", label: t("agronom") },
-    { href: "/blog", label: t("blog") },
+    { href: "/products", label: st("nav.products", "Məhsullar") },
+    { href: "/categories", label: st("nav.categories", "Kateqoriyalar") },
+    { href: "/brands", label: st("nav.brands", "Brendlər") },
+    { href: "/campaigns", label: st("nav.campaigns", "Kampaniyalar") },
+    { href: "/stores", label: st("nav.stores", "Mağazalar") },
+    { href: "/agronom", label: st("nav.agronom", "Aqronom") },
+    { href: "/blog", label: st("nav.blog", "Bloq") },
   ];
 
   useEffect(() => {
@@ -157,7 +159,7 @@ export default function Header() {
         {/* Logo and City */}
         <div className="flex items-center gap-4 shrink-0">
           <Link href="/" className="flex items-center group">
-            <img src="/logo.png" alt="FermerMarket Logo" className="h-10 md:h-24 w-auto object-contain group-hover:scale-105 transition-transform duration-200" />
+            <img src="/logo.png" alt={st("header.logoAlt", "FermerMarket Logo")} className="h-10 md:h-24 w-auto object-contain group-hover:scale-105 transition-transform duration-200" />
           </Link>
           
           <button 
@@ -165,7 +167,7 @@ export default function Header() {
             className="hidden md:flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-brand-600 transition"
           >
             <Icon name="mapPin" size={18} />
-            <span>Şəhər: <span className="font-bold text-gray-900">{mounted && selectedCity ? selectedCity : "Seçilməyib"}</span></span>
+            <span>{st("header.cityLabel", "Şəhər:")} <span className="font-bold text-gray-900">{mounted && selectedCity ? selectedCity : st("header.notSelected", "Seçilməyib")}</span></span>
           </button>
         </div>
 
@@ -174,7 +176,7 @@ export default function Header() {
           <div className="flex w-full rounded-2xl border border-gray-200 overflow-hidden focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100 transition-all">
             <input
               name="search"
-              placeholder={t("search_placeholder")}
+              placeholder={st("header.searchPlaceholder", "Məhsul, şirkət, gübrə, texnika axtar...")}
               className="flex-1 min-w-0 h-full px-4 text-sm bg-gray-50 focus:outline-none focus:bg-white transition-colors"
             />
             <button
@@ -219,7 +221,7 @@ export default function Header() {
             className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all active:scale-95 shadow-sm"
           >
             <Icon name="plus" size={16} strokeWidth={2.3} />
-            {locale === "az" ? "Yeni Elan" : locale === "ru" ? "Новое Обьявление" : "New Listing"}
+            {st("header.newListing", "Yeni Elan")}
           </Link>
 
           {user && (
@@ -243,14 +245,14 @@ export default function Header() {
           </Link>
 
           {user ? (
-            <div className="relative ml-2" ref={menuRef}>
+            <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}
-                className="flex items-center gap-2 h-10 px-3 rounded-2xl border border-gray-200 hover:border-brand-300 bg-white text-sm font-medium transition-all shadow-sm"
+                className="flex items-center gap-2 h-11 px-3.5 rounded-[14px] border border-gray-200 bg-white shadow-sm hover:border-brand-300 hover:bg-brand-50/50 text-sm font-semibold text-gray-800 transition-all duration-300"
               >
-                <span className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">
-                  {user.fullName?.[0] || "U"}
-                </span>
+                <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs">
+                  {user.fullName?.[0]?.toUpperCase() || "U"}
+                </div>
                 <span className="max-w-[80px] truncate">{user.fullName?.split(" ")[0]}</span>
                 <Icon name="chevronDown" size={13} className={`text-gray-400 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
               </button>
@@ -268,22 +270,22 @@ export default function Header() {
                   </div>
                   {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
                     <Link href="/admin" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-brand-50 hover:text-brand-700 font-medium transition" onClick={() => setMenuOpen(false)}>
-                      <Icon name="layoutDashboard" size={16} /> Admin Panel
+                      <Icon name="layoutDashboard" size={16} /> {st("header.adminPanel", "Admin Panel")}
                     </Link>
                   )}
                   {user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && user.role !== 'MODERATOR' && (
                     <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-brand-50 hover:text-brand-700 font-medium transition" onClick={() => setMenuOpen(false)}>
-                      <Icon name="dashboard" size={16} /> {t("dashboard")}
+                      <Icon name="dashboard" size={16} /> {st("header.dashboard", "İdarə paneli")}
                     </Link>
                   )}
                   <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 font-medium mt-1 transition">
-                    <Icon name="logout" size={16} /> {t("logout")}
+                    <Icon name="logout" size={16} /> {st("header.logout", "Çıxış")}
                   </button>
                 </div>
               )}
             </div>
           ) : (
-            <Link href="/login" className="ml-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold text-sm px-5 py-2 rounded-xl transition">{t("login")}</Link>
+            <Link href="/login" className="ml-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold text-sm px-5 py-2 rounded-xl transition">{st("header.loginButton", "Giriş")}</Link>
           )}
         </div>
 
@@ -355,7 +357,7 @@ export default function Header() {
           </div>
           <input
             name="search"
-            placeholder={t("search_placeholder")}
+            placeholder={st("header.searchPlaceholder", "Məhsul, şirkət, gübrə, texnika axtar...")}
             className="flex-1 min-w-0 h-full text-sm bg-transparent focus:outline-none text-gray-800 pr-4"
           />
         </form>

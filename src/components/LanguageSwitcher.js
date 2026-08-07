@@ -4,8 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter, useLocale } from '@/i18n/routing';
 import { LOCALES, LOCALE_LABELS } from '@/lib/i18n';
 import Icon from '@/components/ui/Icon';
+import { useSiteTexts } from '@/lib/siteTexts';
 
 export default function LanguageSwitcher() {
+  const { t: st } = useSiteTexts();
   const router = useRouter();
   const pathname = usePathname();
   const activeLocale = useLocale();
@@ -33,6 +35,7 @@ export default function LanguageSwitcher() {
     <div className="relative z-50" ref={ref}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={st("nav.selectLanguage", "Dili seçin")}
         className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-brand-600 transition-colors bg-gray-50 hover:bg-brand-50 px-3 py-1.5 rounded-lg border border-gray-200"
       >
         <span>{activeLocale.toUpperCase()}</span>

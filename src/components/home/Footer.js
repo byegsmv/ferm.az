@@ -1,28 +1,7 @@
+"use client";
 import Icon from "@/components/ui/Icon";
 import { Link } from "@/i18n/routing";
-
-const LINKS = {
-  Məhsullar: [
-    { href: "/products", label: "Bütün elanlar" },
-    { href: "/stores", label: "Mağazalar" },
-    { href: "/products?category=heyvandarliq", label: "Heyvandarlıq" },
-    { href: "/products?category=texnika", label: "Texnika" },
-    { href: "/products?category=gubre", label: "Gübrə & Kimya" },
-  ],
-  Şirkət: [
-    { href: "/blog", label: "Bloq" },
-    { href: "/leaderboard", label: "Liderlər" },
-    { href: "/agronom", label: "AI Aqronom" },
-    { href: "/elan-yerlesdir", label: "Elan yerləşdir" },
-    { href: "/register", label: "Qeydiyyat" },
-  ],
-  Dəstək: [
-    { href: "/dashboard", label: "Hesabım" },
-    { href: "/messages", label: "Mesajlar" },
-    { href: "/cart", label: "Səbət" },
-    { href: "/login", label: "Giriş" },
-  ],
-};
+import { useSiteTexts } from "@/lib/siteTexts";
 
 const SOCIAL_LINKS = [
   {
@@ -64,6 +43,40 @@ const SOCIAL_LINKS = [
 ];
 
 export default function Footer() {
+  const { t: st } = useSiteTexts();
+
+  const sections = [
+    {
+      title: st("footer.sectionProducts", "Məhsullar"),
+      links: [
+        { href: "/products", label: st("footer.allListings", "Bütün elanlar") },
+        { href: "/stores", label: st("footer.stores", "Mağazalar") },
+        { href: "/products?category=heyvandarliq", label: st("footer.livestock", "Heyvandarlıq") },
+        { href: "/products?category=texnika", label: st("footer.machinery", "Texnika") },
+        { href: "/products?category=gubre", label: st("footer.fertilizer", "Gübrə & Kimya") },
+      ],
+    },
+    {
+      title: st("footer.sectionCompany", "Şirkət"),
+      links: [
+        { href: "/blog", label: st("footer.blog", "Bloq") },
+        { href: "/leaderboard", label: st("footer.leaders", "Liderlər") },
+        { href: "/agronom", label: st("footer.aiAgronomist", "AI Aqronom") },
+        { href: "/elan-yerlesdir", label: st("footer.postAd", "Elan yerləşdir") },
+        { href: "/register", label: st("footer.register", "Qeydiyyat") },
+      ],
+    },
+    {
+      title: st("footer.sectionSupport", "Dəstək"),
+      links: [
+        { href: "/dashboard", label: st("footer.myAccount", "Hesabım") },
+        { href: "/messages", label: st("footer.messages", "Mesajlar") },
+        { href: "/cart", label: st("footer.cart", "Səbət") },
+        { href: "/login", label: st("footer.login", "Giriş") },
+      ],
+    },
+  ];
+
   return (
     <footer className="mt-4 border-t border-gray-100 bg-gradient-to-br from-white via-gray-50/70 to-emerald-50/50">
       <div className="mx-auto max-w-6xl px-4 py-10">
@@ -76,12 +89,12 @@ export default function Footer() {
               </span>
             </Link>
             <p className="max-w-sm text-sm leading-7 text-gray-600">
-              Azərbaycanın kənd təsərrüfatı üçün premium rəqəmsal bazarı. Fermerlər, mağazalar və alıcıları bir platformada birləşdiririk.
+              {st("footer.aboutDescription", "Azərbaycanın kənd təsərrüfatı üçün premium rəqəmsal bazarı. Fermerlər, mağazalar və alıcıları bir platformada birləşdiririk.")}
             </p>
 
             {/* Sosial Media */}
             <div className="mt-5">
-              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">Bizi izləyin</p>
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">{st("footer.followUs", "Bizi izləyin")}</p>
               <div className="flex flex-wrap gap-2">
                 {SOCIAL_LINKS.map((s) => (
                   <a
@@ -102,14 +115,14 @@ export default function Footer() {
                   </a>
                 ))}
               </div>
-              <p className="mt-2 text-[10px] text-gray-400 italic">Digər linklər tezliklə əlavə ediləcək</p>
+              <p className="mt-2 text-[10px] text-gray-400 italic">{st("footer.moreLinksSoon", "Digər linklər tezliklə əlavə ediləcək")}</p>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-3">
               {[
-                { label: "Premium", tone: "bg-emerald-50 text-emerald-700" },
-                { label: "AI dəstəyi", tone: "bg-sky-50 text-sky-700" },
-                { label: "Mobil optimizasiya", tone: "bg-amber-50 text-amber-700" },
+                { label: st("footer.chipPremium", "Premium"), tone: "bg-emerald-50 text-emerald-700" },
+                { label: st("footer.chipAiSupport", "AI dəstəyi"), tone: "bg-sky-50 text-sky-700" },
+                { label: st("footer.chipMobileOptimization", "Mobil optimizasiya"), tone: "bg-amber-50 text-amber-700" },
               ].map((chip) => (
                 <span key={chip.label} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${chip.tone}`}>
                   {chip.label}
@@ -118,12 +131,12 @@ export default function Footer() {
             </div>
           </div>
 
-          {Object.entries(LINKS).map(([title, links]) => (
-            <div key={title}>
-              <h4 className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-gray-500">{title}</h4>
+          {sections.map((sec) => (
+            <div key={sec.title}>
+              <h4 className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-gray-500">{sec.title}</h4>
               <ul className="space-y-2">
-                {links.map((l) => (
-                  <li key={l.href}>
+                {sec.links.map((l, idx) => (
+                  <li key={l.href + idx}>
                     <Link href={l.href} className="text-sm text-gray-600 transition-colors hover:text-emerald-700">
                       {l.label}
                     </Link>
@@ -135,10 +148,10 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-200 pt-6 text-xs text-gray-500 sm:flex-row">
-          <p>© {new Date().getFullYear()} FermerMarket. Bütün hüquqlar qorunur.</p>
+          <p>© {new Date().getFullYear()} {st("footer.copyright", "FermerMarket. Bütün hüquqlar qorunur.")}</p>
           <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white/70 px-3 py-1.5">
             <Icon name="globe" size={16} className="text-gray-400" />
-            <span>Developed By Gsmv</span>
+            <span>{st("footer.developedBy", "Developed By Gsmv")}</span>
           </div>
         </div>
       </div>

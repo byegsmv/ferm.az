@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Icon from "@/components/ui/Icon";
+import { useSiteTexts } from "@/lib/siteTexts";
 
 const CITIES = [
   "Bakı", "Ağcabədi", "Ağdam", "Ağdaş", "Ağdərə", "Ağstafa", "Ağsu", "Astara", 
@@ -15,6 +16,7 @@ const CITIES = [
 ];
 
 export default function CitySelectModal({ isOpen, onClose, onSelect, currentCity }) {
+  const { t: st } = useSiteTexts();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -31,9 +33,10 @@ export default function CitySelectModal({ isOpen, onClose, onSelect, currentCity
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900 mx-auto w-full text-center">Şəhərinizi seçin</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mx-auto w-full text-center">{st("city.modalTitle", "Şəhərinizi seçin")}</h2>
           <button 
             onClick={onClose}
+            aria-label={st("nav.closeModal", "Bağla")}
             className="absolute right-6 top-6 p-2 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
           >
             <Icon name="close" size={24} />
