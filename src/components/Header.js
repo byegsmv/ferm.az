@@ -319,9 +319,9 @@ export default function Header() {
       {/* Desktop Menyu */}
       <div className="hidden md:block border-t border-gray-100 bg-white">
         <div className="max-w-6xl mx-auto px-4 h-11 flex items-center justify-between">
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-1 shrink-0">
             {NAV_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} className="text-[15px] px-4 py-2 rounded-[14px] font-bold text-gray-600 hover:text-brand-700 hover:bg-brand-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300">
+              <Link key={l.href} href={l.href} className="text-[15px] px-3 py-2 rounded-[14px] font-bold text-gray-600 whitespace-nowrap shrink-0 hover:text-brand-700 hover:bg-brand-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300">
                 {l.label}
               </Link>
             ))}
