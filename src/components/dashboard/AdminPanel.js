@@ -1140,35 +1140,127 @@ function CampaignsManager() {
   );
 }
 
+const AD_SLOT_LABELS = {
+  HOMEPAGE_TOP: "Ana Səhifə — Yuxarı Banner",
+  LIST_TOP: "Elan Siyahısı — Yuxarı Banner",
+  INFEED_SPONSORED: "Elan Axını — Sponsorlu Kart",
+  DETAIL_SIDEBAR: "Məhsul Detalı — Yan Panel",
+  FOOTER_STRIP: "Footer — Zolaq Banner",
+  SIDEBAR_LEFT: "Ana Səhifə — Sol Yan Banner",
+  SIDEBAR_RIGHT: "Ana Səhifə — Sağ Yan Banner",
+};
+const CAMPAIGN_TYPES = ["HOMEPAGE_BANNER","CATEGORY_BANNER","STORE_PROMOTION","FLASH_SALE","DAILY_DEAL","SPONSORED_PRODUCT","REGIONAL"];
+
+function AdSlotEditor({ slotKey, slot, onSaved, toast }) {
+  const [mode, setMode] = useState(slot.mode || "off");
+  const [campaignType, setCampaignType] = useState(slot.campaignType || "HOMEPAGE_BANNER");
+  const [externalCode, setExternalCode] = useState(slot.externalCode || "");
+  const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState(false);
+  const hasCampaign = slot.hasLiveCampaign;
+
+  async function save() {
+    setSaving(true);
+    try {
+      const body = { mode, campaignType: mode === "internal" ? campaignType : null, externalCode: mode === "external" ? externalCode : null };
+      await apiFetch(`/api/ad-slots/${slotKey}`, { method: "PATCH", body: JSON.stringify(body) });
+      toast("Reklam yeri yeniləndi", "success");
+      setOpen(false);
+      onSaved();
+    } catch (e) { toast(e.message, "error"); }
+    finally { setSaving(false); }
+  }
+
+  return (
+    <div className="card p-4">
+      <div className="flex items-center justify-between mb-2 cursor-pointer" onClick={() => setOpen(!open)}>
+        <div>
+          <p className="font-semibold text-sm">{AD_SLOT_LABELS[slotKey] || slotKey.replace(/_/g," ")}</p>
+          <p className="caption text-gray-400">{slotKey}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`badge ${mode==="off"?"badge-gray":mode==="internal"?(hasCampaign?"badge-green":"badge-yellow"):"badge-blue"} inline-flex items-center gap-1`}>
+            {mode==="off" && <><Icon name="closeCircle" size={12}/>Deaktiv</>}
+            {mode==="internal" && (hasCampaign ? <><Icon name="checkCircle" size={12}/>Aktiv kampaniya</> : <><Icon name="alert" size={12}/>Kampaniya yoxdur</>)}
+            {mode==="external" && <><Icon name="checkCircle" size={12}/>Xarici kod</>}
+          </span>
+          <Icon name="chevronDown" size={16} className={`text-gray-400 transition-transform ${open?"rotate-180":""}`}/>
+        </div>
+      </div>
+      {mode==="internal" && hasCampaign && <p className="caption mb-2">Kampaniya: {slot.liveCampaignTitle}</p>}
+
+      {open && (
+        <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">Rejim</label>
+            <div className="flex gap-2">
+              {["off","internal","external"].map(m=>(
+                <button key={m} onClick={()=>setMode(m)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${mode===m?"bg-brand-600 text-white":"bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                  {m==="off"?"Deaktiv":m==="internal"?"Daxili Kampaniya":"Xarici Kod (AdSense və s.)"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {mode==="internal" && (
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">Kampaniya Tipi</label>
+              <select value={campaignType} onChange={e=>setCampaignType(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                {CAMPAIGN_TYPES.map(t=><option key={t} value={t}>{t.replace(/_/g," ")}</option>)}
+              </select>
+              <p className="text-xs text-gray-400 mt-1">Bu slotda göstərilməsi üçün "Kampaniyalar" bölməsində bu tipdə AKTİV bir kampaniya olmalıdır.</p>
+            </div>
+          )}
+
+          {mode==="external" && (
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">Embed Kodu (HTML/JS)</label>
+              <textarea value={externalCode} onChange={e=>setExternalCode(e.target.value)} rows={4}
+                placeholder="<script>...</script> və ya <img src=... />"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500/20" />
+            </div>
+          )}
+
+          <button onClick={save} disabled={saving}
+            className="px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 disabled:opacity-50 flex items-center gap-2">
+            {saving ? <Icon name="loader" size={14} className="animate-spin"/> : <Icon name="check" size={14}/>}
+            Saxla
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdSlotsManager() {
   const [slots,setSlots]=useState({}); const [loading,setLoading]=useState(true);
   const { toast, ToastContainer } = useToast();
-  const SLOT_KEYS=["HOMEPAGE_TOP","LIST_TOP","INFEED_SPONSORED","DETAIL_SIDEBAR","FOOTER_STRIP"];
-  useEffect(()=>{ apiFetch("/api/ad-slots?includeCode=1").then(d=>{
+  const SLOT_KEYS=["HOMEPAGE_TOP","SIDEBAR_LEFT","SIDEBAR_RIGHT","LIST_TOP","INFEED_SPONSORED","DETAIL_SIDEBAR","FOOTER_STRIP"];
+
+  function load(){
+    setLoading(true);
+    apiFetch("/api/ad-slots?includeCode=1").then(d=>{
       const arr=d.slots||[];
       const obj=Array.isArray(arr)?Object.fromEntries(arr.map(s=>[s.key,s])):arr;
       setSlots(obj);
-    }).finally(()=>setLoading(false)); },[]);
-  async function save(key,data){ try{ await apiFetch(`/api/ad-slots/${key}`,{method:"PATCH",body:JSON.stringify(data)}); toast("Reklam yeri yeniləndi"); }catch(e){toast(e.message,"error");} }
+    }).finally(()=>setLoading(false));
+  }
+  useEffect(()=>{ load(); },[]);
+
   return (
     <div className="space-y-5">
       <ToastContainer/>
-      <h2 className="section-title">Reklam Yerləri</h2>
-      {loading?<SkeletonList count={5}/>:(
+      <div>
+        <h2 className="section-title">Reklam Yerləri</h2>
+        <p className="caption text-gray-500">Hər bir reklam yerini klikləyərək daxili kampaniya, xarici kod (AdSense və s.) təyin edin və ya deaktiv edin.</p>
+      </div>
+      {loading?<SkeletonList count={7}/>:(
         <div className="space-y-3">
-          {SLOT_KEYS.map(key=>{
-            const slot=slots[key]||{};
-            const hasCampaign=slot.hasLiveCampaign;
-            return (
-              <div key={key} className="card p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-semibold text-sm">{key.replace(/_/g," ")}</p>
-                  <span className={`badge ${hasCampaign?"badge-green":"badge-yellow"} inline-flex items-center gap-1`}>{hasCampaign?<><Icon name="checkCircle" size={12}/>Aktiv kampaniya</>:<><Icon name="alert" size={12}/>Boş</>}</span>
-                </div>
-                {hasCampaign&&<p className="caption">Kampaniya: {slot.liveCampaignTitle}</p>}
-              </div>
-            );
-          })}
+          {SLOT_KEYS.map(key=>(
+            <AdSlotEditor key={key} slotKey={key} slot={slots[key]||{mode:"off"}} onSaved={load} toast={toast} />
+          ))}
         </div>
       )}
     </div>

@@ -4,20 +4,39 @@ import { Link } from "@/i18n/routing";
 
 export default function SideBanner({ position = "left" }) {
   const [ad, setAd] = useState(null);
+  const [slotExists, setSlotExists] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const slotKey = position === "left" ? "SIDEBAR_LEFT" : "SIDEBAR_RIGHT";
-    fetch(`/api/ad-slots?key=${slotKey}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (d?.content) setAd(d.content);
+    fetch(`/api/ad-slots/${slotKey}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) {
+          setAd(d.content || null);
+          setSlotExists(!!d.slotExists);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [position]);
 
-  // If we have a real ad from the system, render it
+  if (loading) return null;
+
+  // Admin explicitly configured this slot (off, or internal/external with no
+  // current match) — respect that and render nothing instead of the fallback.
+  if (slotExists && !ad) return null;
+
+  // Admin-configured external embed (e.g. AdSense)
+  if (ad?.mode === "external" && ad.externalCode) {
+    return (
+      <div className="hidden xl:block w-[160px] flex-shrink-0 sticky top-24 h-[600px] bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+        <div dangerouslySetInnerHTML={{ __html: ad.externalCode }} />
+      </div>
+    );
+  }
+
+  // Admin-configured internal campaign
   if (ad?.mode === "internal" && ad.campaign) {
     return (
       <div className="hidden xl:block w-[160px] flex-shrink-0 sticky top-24 h-[600px] bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
@@ -38,7 +57,8 @@ export default function SideBanner({ position = "left" }) {
     );
   }
 
-  // Fallback: hardcoded promo content
+  // Slot was never configured by admin at all — show the built-in default
+  // promo so the layout isn't empty before anyone touches "Reklam Yerləri".
   return (
     <div className="hidden xl:block w-[160px] flex-shrink-0 sticky top-24 h-[600px] bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
       <Link href="/campaigns" className="block w-full h-full relative group">
