@@ -14,6 +14,7 @@ const GROUPS = [
   { id: "blog", label: "Bloq", icon: "edit" },
   { id: "stores", label: "Mağazalar", icon: "store" },
   { id: "general", label: "Ümumi", icon: "settings" },
+    { id: "admin", label: "Admin Panel", icon: "shield" },
 ];
 
 export default function SiteTextsManager() {

@@ -14,59 +14,60 @@ import AISettingsManager from "@/components/dashboard/AISettingsManager";
 import EmptyState from "@/components/ui/EmptyState";
 import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { useSiteTexts } from "@/lib/siteTexts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ROLES = ["BUYER","FARMER","STORE","AGRONOMIST","DELIVERY_PARTNER","MODERATOR","ADMIN","SUPER_ADMIN"];
-const ORDER_STATUS_LABELS = { PENDING:"Gözləyir",PAID:"Ödənilib",PROCESSING:"Hazırlanır",SHIPPED:"Göndərilib",DELIVERED:"Çatdırılıb",CANCELLED:"Ləğv edilib",REFUNDED:"Geri qaytarılıb" };
+function getOrderStatusLabel(status, t) { const labels = { PENDING:"admin.order.pending",PAID:"admin.order.paid",PROCESSING:"admin.order.processing",SHIPPED:"admin.order.shipped",DELIVERED:"admin.order.delivered",CANCELLED:"admin.order.cancelled",REFUNDED:"admin.order.refunded" }; return t(labels[status]||status, status); }
 const ORDER_STATUS_COLORS = { PENDING:"badge-yellow",PAID:"badge-blue",PROCESSING:"badge-purple",SHIPPED:"badge-blue",DELIVERED:"badge-green",CANCELLED:"badge-red",REFUNDED:"badge-gray" };
 const PRODUCT_STATUS_COLORS = { PENDING_REVIEW:"badge-yellow",ACTIVE:"badge-green",REJECTED:"badge-red",SOLD:"badge-blue",DRAFT:"badge-gray",EXPIRED:"badge-gray" };
 
-const SIDEBAR_GROUPS = [
-  { label:"Əsas", items:[
-    { id:"stats",     icon:"dashboard", label:"İdarə Paneli" },
-    { id:"activity",  icon:"zap", label:"Son Fəaliyyət" },
+const SIDEBAR_GROUPS_DEF = [
+  { label:"admin.group.main", items:[
+    { id:"stats",     icon:"dashboard", label:"admin.tab.stats" },
+    { id:"activity",  icon:"zap", label:"admin.tab.activity" },
   ]},
-  { label:"Analitika", items:[
-    { id:"analytics", icon:"trendingUp", label:"Analitika Paneli" },
+  { label:"admin.group.analytics", items:[
+    { id:"analytics", icon:"trendingUp", label:"admin.tab.analytics" },
   ]},
-  { label:"Marketplace", items:[
-    { id:"pending",   icon:"clock", label:"Moderasiya", badge:"pending" },
-    { id:"all-listings",icon:"clipboard",label:"Bütün Elanlar" },
-    { id:"corporate", icon:"building", label:"Korporativ" },
-    { id:"categories",icon:"grid", label:"Kateqoriyalar" },
-    { id:"stores",    icon:"store", label:"Mağazalar" },
+  { label:"admin.group.marketplace", items:[
+    { id:"pending",   icon:"clock", label:"admin.tab.pending", badge:"pending" },
+    { id:"all-listings",icon:"clipboard",label:"admin.tab.allListings" },
+    { id:"corporate", icon:"building", label:"admin.tab.corporate" },
+    { id:"categories",icon:"grid", label:"admin.tab.categories" },
+    { id:"stores",    icon:"store", label:"admin.tab.stores" },
   ]},
-  { label:"Sifarişlər & Maliyyə", items:[
-    { id:"orders",    icon:"package", label:"Sifarişlər" },
-    { id:"wallet",    icon:"wallet", label:"Pul Kisəsi" },
-    { id:"coupons",   icon:"tag", label:"Kuponlar" },
+  { label:"admin.group.orders", items:[
+    { id:"orders",    icon:"package", label:"admin.tab.orders" },
+    { id:"wallet",    icon:"wallet", label:"admin.tab.wallet" },
+    { id:"coupons",   icon:"tag", label:"admin.tab.coupons" },
   ]},
-  { label:"İcma", items:[
-    { id:"users",     icon:"user", label:"İstifadəçilər" },
-    { id:"reviews",   icon:"star", label:"Rəylər", badge:"reviews" },
-    { id:"bundles",   icon:"gift", label:"Bağlamalar" },
+  { label:"admin.group.community", items:[
+    { id:"users",     icon:"user", label:"admin.tab.users" },
+    { id:"reviews",   icon:"star", label:"admin.tab.reviews", badge:"reviews" },
+    { id:"bundles",   icon:"gift", label:"admin.tab.bundles" },
   ]},
-  { label:"Məzmun & Reklam", items:[
-    { id:"blog",      icon:"fileText", label:"Bloq" },
-    { id:"campaigns", icon:"bell", label:"Kampaniyalar" },
-    { id:"adslots",   icon:"image", label:"Reklam Yerləri" },
-    { id:"notify",    icon:"bell", label:"Push Bildirişi" },
-    { id:"slider",    icon:"image", label:"Slider İdarəsi" },
-    { id:"site-texts", icon:"edit", label:"Mətn İdarəsi" },
+  { label:"admin.group.content", items:[
+    { id:"blog",      icon:"fileText", label:"admin.tab.blog" },
+    { id:"campaigns", icon:"bell", label:"admin.tab.campaigns" },
+    { id:"adslots",   icon:"image", label:"admin.tab.adslots" },
+    { id:"notify",    icon:"bell", label:"admin.tab.notify" },
+    { id:"slider",    icon:"image", label:"admin.tab.slider" },
+    { id:"site-texts", icon:"edit", label:"admin.tab.siteTexts" },
   ]},
-  { label:"Sistem", items:[
-    { id:"ai-settings", icon:"bot", label:"AI Modulları" },
-    { id:"emails", icon:"mail", label:"E-poçt" },
-    { id:"user-modules", icon:"settings", label:"Rol Modulları" },
-    { id:"studio", icon:"component", label:"No-Code Studio" },
-    { id:"messages", icon:"message", label:"Mesajlar" },
-    { id:"profile", icon:"user", label:"Profil & Təhlükəsizlik" },
-    { id:"support", icon:"info", label:"Dəstək" },
+  { label:"admin.group.system", items:[
+    { id:"ai-settings", icon:"bot", label:"admin.tab.aiSettings" },
+    { id:"emails", icon:"mail", label:"admin.tab.emails" },
+    { id:"user-modules", icon:"settings", label:"admin.tab.userModules" },
+    { id:"studio", icon:"component", label:"admin.tab.studio" },
+    { id:"messages", icon:"message", label:"admin.tab.messages" },
+    { id:"profile", icon:"user", label:"admin.tab.profile" },
+    { id:"support", icon:"info", label:"admin.tab.support" },
   ]},
 ];
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
-function AdminSidebar({ tab, setTab, badges, collapsed, setCollapsed }) {
+function AdminSidebar({ tab, setTab, badges, collapsed, setCollapsed, t }) {
   return (
     <aside className={`${collapsed?"w-16":"w-64"} hidden md:flex flex-col bg-white border-r border-gray-100 transition-all duration-200 shrink-0 h-screen sticky top-0 z-20 overflow-hidden`}>
       <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 shrink-0">
@@ -76,16 +77,16 @@ function AdminSidebar({ tab, setTab, badges, collapsed, setCollapsed }) {
         </button>
       </div>
       <nav className="flex-1 overflow-y-auto p-2 space-y-4 min-h-0">
-        {SIDEBAR_GROUPS.map(group=>(
+        {SIDEBAR_GROUPS_DEF.map(group=>(
           <div key={group.label}>
-            {!collapsed && <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 mb-1">{group.label}</p>}
+            {!collapsed && <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 mb-1">{t(group.label, group.label)}</p>}
             {group.items.map(item=>{
               const badgeNum = item.badge === "pending" ? badges?.pendingProducts : item.badge === "reviews" ? badges?.pendingReviews : 0;
               return (
                 <button key={item.id} onClick={()=>setTab(item.id)}
                   className={`w-full flex items-center ${collapsed?"justify-center":"gap-3"} px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 relative ${tab===item.id?"bg-brand-50 text-brand-700 font-semibold":"text-gray-600 hover:bg-gray-100 hover:text-gray-900"}`}>
                   <Icon name={item.icon} size={18} className="shrink-0" />
-                  {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
+                  {!collapsed && <span className="flex-1 text-left">{t(item.label, item.label)}</span>}
                   {!collapsed && badgeNum>0 && (
                     <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{badgeNum}</span>
                   )}
@@ -1048,12 +1049,14 @@ function CorporateListingsManager() {
 
 // ─── Campaigns & AdSlots (simple) ────────────────────────────────────────────
 function CampaignsManager() {
+  const { t } = useSiteTexts();
+  const CAMPAIGN_STATUS_LABELS = { ACTIVE: t('admin.campaign.active','Aktiv'),PAUSED: t('admin.campaign.paused','Dayandırılıb'),SCHEDULED: t('admin.campaign.scheduled','Planlanmış') };
   const [items,setItems]=useState([]); const [loading,setLoading]=useState(true);
   const [form,setForm]=useState({title:"",type:"HOMEPAGE_BANNER",targetUrl:"",imageUrl:"",startDate:"",endDate:"",status:"ACTIVE"});
   const [showForm,setShowForm]=useState(false);
   const { toast, ToastContainer } = useToast();
   const TYPES=["HOMEPAGE_BANNER","CATEGORY_BANNER","STORE_PROMOTION","FLASH_SALE","DAILY_DEAL","SPONSORED_PRODUCT","REGIONAL"];
-  const CAMPAIGN_STATUS_LABELS={"ACTIVE":"Aktiv","PAUSED":"Dayandırılıb","ENDED":"Bitib","SCHEDULED":"Planlanmış"};
+  function getCampaignStatusLabel(status, t) { const labels = { ACTIVE:"admin.campaign.active",PAUSED:"admin.campaign.paused",SCHEDULED:"admin.campaign.scheduled" }; return t(labels[status]||status, status); }
   useEffect(()=>{ apiFetch("/api/campaigns?all=1").then(d=>setItems(d.campaigns||[])).finally(()=>setLoading(false)); },[]);
   async function create(e){ 
     e.preventDefault(); 
@@ -1641,6 +1644,7 @@ function UserModulesPanel() {
   );
 }
 export default function AdminPanel() {
+  const { t } = useSiteTexts();
   const [tab, setTab] = useState("stats");
   const [stats, setStats] = useState(null);
   const [activity, setActivity] = useState([]);
