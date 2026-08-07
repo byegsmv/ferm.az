@@ -79,6 +79,7 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
   const dragMovedRef = useRef(false);
   const rafRef = useRef(null);
   const directionRef = useRef(1); // 1 = scroll right, -1 = scroll left (ping-pong)
+  const resumeTimeoutRef = useRef(null);
 
   const checkScroll = useCallback(() => {
     if (!scrollRef.current) return;
@@ -126,6 +127,7 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
     rafRef.current = requestAnimationFrame(step);
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
     };
   }, [categories?.length]);
 
@@ -133,14 +135,24 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
     return null;
   }
 
+  const pauseAutoplayThenResume = () => {
+    pausedRef.current = true;
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    resumeTimeoutRef.current = setTimeout(() => {
+      pausedRef.current = false;
+    }, 1500);
+  };
+
   const scrollLeftBtn = () => {
     if (scrollRef.current) {
+      pauseAutoplayThenResume();
       scrollRef.current.scrollBy({ left: -280, behavior: "smooth" });
     }
   };
 
   const scrollRightBtn = () => {
     if (scrollRef.current) {
+      pauseAutoplayThenResume();
       scrollRef.current.scrollBy({ left: 280, behavior: "smooth" });
     }
   };
@@ -196,6 +208,8 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
         {/* Left Arrow — always visible */}
         <button
           onClick={scrollLeftBtn}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           aria-label="Əvvəlki"
           className="absolute -left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 opacity-100"
         >
@@ -242,6 +256,8 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
         {/* Right Arrow — always visible */}
         <button
           onClick={scrollRightBtn}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           aria-label="Növbəti"
           className="absolute -right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 opacity-100"
         >

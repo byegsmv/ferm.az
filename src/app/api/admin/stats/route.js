@@ -35,7 +35,7 @@ export async function GET(request) {
     prisma.order.count({ where: { status: "PENDING" } }),
     prisma.order.count({ where: { status: "PAID" } }),
     prisma.order.count({ where: { status: "DELIVERED" } }),
-    prisma.order.aggregate({ _sum: { total: true } }),
+    prisma.order.aggregate({ _sum: { total: true }, where: { status: { not: "CANCELLED" } } }),
     prisma.order.aggregate({ _sum: { total: true }, where: { createdAt: { gte: thisMonth }, status: { not: "CANCELLED" } } }),
     prisma.order.aggregate({ _sum: { total: true }, where: { createdAt: { gte: lastMonth, lt: lastMonthEnd }, status: { not: "CANCELLED" } } }),
     prisma.store.count(),
