@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && (prisma migrate deploy || (echo 'retry 1/3 in 8s...' && sleep 8 && prisma migrate deploy) || (echo 'retry 2/3 in 15s...' && sleep 15 && prisma migrate deploy)) && next build",
     "start": "next start",
     "test": "jest",
     "prisma:migrate": "prisma migrate dev",
