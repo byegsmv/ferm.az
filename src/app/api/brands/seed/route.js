@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/auth";
+import { getAuthUser, requireRole } from "@/lib/auth";
 
 // POST /api/brands/seed — default brendləri əlavə edir (admin only)
 export async function POST(request) {
-  const user = await requireRole(request, ["ADMIN", "SUPER_ADMIN"]);
-  if (user.error) return Response.json({ error: user.error }, { status: user.status || 403 });
+  const authUser = await getAuthUser(request);
+  const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
+  if (denied) return denied;
 
   const DEFAULT_BRANDS = [
     { name: "BioOrganic", country: "Azərbaycan" },

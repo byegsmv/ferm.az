@@ -23,7 +23,7 @@ export async function GET(request) {
     prisma.product.count({ where: { storeId, status: "SOLD" } }),
     prisma.order.findMany({
       where: { items: { some: { product: { storeId } } } },
-      select: { id: true, status: true, totalAmount: true, createdAt: true },
+      select: { id: true, status: true, total: true, createdAt: true },
     }),
     prisma.storeFollow.count({ where: { storeId } }),
     prisma.store.findUnique({ where: { id: storeId }, select: { storeViewCount: true, totalSales: true } }),
@@ -31,7 +31,7 @@ export async function GET(request) {
 
   // Calculate revenue from DELIVERED orders
   const deliveredOrders = orders.filter(o => o.status === "DELIVERED");
-  const totalRevenue = deliveredOrders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+  const totalRevenue = deliveredOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
   const ordersCount = orders.length;
 
   // Recent orders (last 7 days)
@@ -51,7 +51,7 @@ export async function GET(request) {
     });
     dailyRevenue.push({
       date: dayStart.toISOString().split("T")[0],
-      revenue: dayOrders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0),
+      revenue: dayOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
       orders: dayOrders.length,
     });
   }

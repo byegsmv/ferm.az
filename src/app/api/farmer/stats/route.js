@@ -28,7 +28,7 @@ export async function GET(request) {
       take: 50,
       select: {
         id: true,
-        totalAmount: true,
+        total: true,
         status: true,
         createdAt: true,
         buyer: { select: { fullName: true } },
@@ -75,7 +75,7 @@ export async function GET(request) {
       const oc = new Date(o.createdAt);
       return oc >= d && oc < nextMonth && o.status === 'DELIVERED';
     });
-    const revenue = monthDelivered.reduce((s, o) => s + Number(o.totalAmount), 0);
+    const revenue = monthDelivered.reduce((s, o) => s + Number(o.total), 0);
     monthlyRevenue.push({ month, revenue, count: monthDelivered.length });
   }
 

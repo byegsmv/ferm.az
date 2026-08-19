@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser, requireRole } from "@/lib/auth";
 import slugify from "slugify";
 
 export async function GET() {
@@ -14,12 +15,16 @@ export async function GET() {
 }
 
 export async function POST(req) {
+  const authUser = await getAuthUser(req);
+  const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
+  if (denied) return denied;
+
   try {
     const body = await req.json();
     const { id, name, nameAz, symptoms, causes, prevention, treatment } = body;
 
     const baseSlug = slugify(nameAz || name, { lower: true, strict: true });
-    
+
     if (id) {
       const updated = await prisma.disease.update({
         where: { id },
@@ -38,6 +43,10 @@ export async function POST(req) {
 }
 
 export async function DELETE(req) {
+  const authUser = await getAuthUser(req);
+  const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
+  if (denied) return denied;
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

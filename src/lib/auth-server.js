@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
-const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || "dev-access-secret";
+const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
 
 /**
  * Server-component-safe auth helper.
@@ -16,7 +16,7 @@ export async function getServerAuthUser() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("fmk_access_token")?.value;
-    if (!token) return null;
+    if (!token || !ACCESS_SECRET) return null;
     return jwt.verify(token, ACCESS_SECRET);
   } catch {
     return null;

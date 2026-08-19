@@ -38,7 +38,7 @@ export async function GET(request, { params }) {
     prisma.orderItem.count({ where: { product: { storeId: store.id } } }),
     prisma.orderItem.aggregate({
       where: { product: { storeId: store.id }, order: { status: "DELIVERED" } },
-      _sum: { price: true },
+      _sum: { unitPrice: true },
     }),
     prisma.review.aggregate({
       where: { product: { storeId: store.id } },

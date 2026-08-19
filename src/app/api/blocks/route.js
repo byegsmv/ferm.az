@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { getAuthUser, requireRole } from "@/lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -8,12 +9,12 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const page = searchParams.get("page") || searchParams.get("pageName") || "home";
-    
+
     const blocks = await prisma.dynamicBlock.findMany({
       where: { page },
       orderBy: { sortOrder: "asc" }
     });
-    
+
     // Return in both formats for compatibility
     return NextResponse.json(blocks.length > 0 ? blocks : { components: [] });
   } catch (error) {
@@ -23,13 +24,16 @@ export async function GET(req) {
 
 // POST to save page layout
 export async function POST(req) {
+  const authUser = await getAuthUser(req);
+  const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
+  if (denied) return denied;
   try {
     const body = await req.json();
-    
+
     // Handle both formats: {blocks, page} (existing) and {pageName, components} (PageBuilder)
     const page = body.page || body.pageName || "home";
     const items = body.blocks || body.components || [];
-    
+
     // Transform components format to DynamicBlock format if needed
     const toCreate = items.map((b, i) => ({
       page,
@@ -38,7 +42,7 @@ export async function POST(req) {
       sortOrder: i,
       isActive: b.isActive ?? true
     }));
-    
+
     await prisma.$transaction(async (tx) => {
       await tx.dynamicBlock.deleteMany({ where: { page } });
       if (toCreate.length > 0) {
