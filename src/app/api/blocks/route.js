@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getAuthUser, requireRole } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 // GET blocks for a page
 export async function GET(req) {

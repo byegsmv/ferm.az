@@ -7,6 +7,9 @@ const config = {
   ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li', 'a', 'img', 'h1', 'h2', 'h3'],
   ALLOWED_ATTR: ['href', 'title', 'src', 'alt', 'class'],
   ALLOW_DATA_ATTR: false,
+  // Explicitly block these even if present in allowed tags
+  FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
+  FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange', 'onsubmit'],
 };
 
 // Server-side safe fallback: strip all HTML tags (no DOM available)

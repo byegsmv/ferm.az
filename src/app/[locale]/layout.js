@@ -9,8 +9,10 @@ import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
+import { routing } from "@/i18n/routing";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://fermermarket.az";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://fermermarket.az");
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -37,6 +39,15 @@ export const metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "FermerMarket",
+  },
+  alternates: {
+    canonical: SITE_URL,
+    languages: Object.fromEntries(
+      routing.locales.map((locale) => [
+        locale === 'az' ? 'x-default' : locale,
+        locale === routing.defaultLocale ? SITE_URL : `${SITE_URL}/${locale}`,
+      ])
+    ),
   },
 };
 
