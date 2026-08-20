@@ -14,6 +14,7 @@ export default function AdminCouponsPage() {
   const [form, setForm] = useState({
     code: '', discountType: 'PERCENTAGE', discountValue: 0,
     minOrderValue: '', maxUses: '', startsAt: '', expiresAt: '',
+    isActive: true,
   });
 
   useEffect(() => { loadCoupons(); }, []);
@@ -37,8 +38,9 @@ export default function AdminCouponsPage() {
         discountValue: Number(form.discountValue),
         minOrderValue: form.minOrderValue ? Number(form.minOrderValue) : undefined,
         maxUses: form.maxUses ? Number(form.maxUses) : undefined,
-        startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : undefined,
-        expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : undefined,
+        startsAt: form.startsAt || undefined,
+        expiresAt: form.expiresAt || undefined,
+        isActive: form.isActive,
       };
       if (editing) {
         await apiFetch(`/api/coupons/${editing}`, { method: "PATCH", body: JSON.stringify(body) });
@@ -55,7 +57,7 @@ export default function AdminCouponsPage() {
   }
 
   function resetForm() {
-    setForm({ code: '', discountType: 'PERCENTAGE', discountValue: 0, minOrderValue: '', maxUses: '', startsAt: '', expiresAt: '' });
+    setForm({ code: '', discountType: 'PERCENTAGE', discountValue: 0, minOrderValue: '', maxUses: '', startsAt: '', expiresAt: '', isActive: true });
     setShowForm(false);
     setEditing(null);
   }
@@ -70,6 +72,7 @@ export default function AdminCouponsPage() {
       maxUses: c.maxUses ?? '',
       startsAt: c.startsAt ? new Date(c.startsAt).toISOString().slice(0, 16) : '',
       expiresAt: c.expiresAt ? new Date(c.expiresAt).toISOString().slice(0, 16) : '',
+      isActive: c.isActive,
     });
     setShowForm(true);
   }
@@ -145,6 +148,13 @@ export default function AdminCouponsPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Bitmə Tarixi</label>
               <input type="datetime-local" value={form.expiresAt} onChange={e => setForm(f => ({...f, expiresAt: e.target.value}))} className="input-field" />
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" checked={form.isActive} onChange={e => setForm(f => ({...f, isActive: e.target.checked}))} className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+              </label>
+              <span className="text-sm font-medium text-gray-700">{form.isActive ? 'Aktiv' : 'Deaktiv'}</span>
             </div>
             <div className="sm:col-span-2 flex gap-2">
               <button type="submit" className="btn-primary flex-1">{editing ? 'Yenilə' : 'Yarat'}</button>

@@ -112,7 +112,7 @@ Sonra bütün əmrlər işləyəcək.`,
     const changes = [];
 
     for (const file of targetFiles) {
-      const fullPath = path.join(process.cwd(), file);
+      const fullPath = path.join(/* turbopackIgnore: true */process.cwd(), file);
       if (!fs.existsSync(fullPath)) continue;
 
       const content = fs.readFileSync(fullPath, "utf-8");

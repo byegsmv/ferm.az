@@ -41,28 +41,35 @@ export default function BrandsPage() {
       </h1>
       <p className="text-gray-500 mb-6">{t('products.brandsSubtitle', 'Rəsmi distribütor brendləri və istehsalçılar')}</p>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {brands.map((brand) => (
-          <Link
-            key={brand.id}
-            href={`/brands/${brand.slug}`}
-            className="group min-w-0 bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:border-brand-200 transition-all duration-200 flex flex-col items-center text-center"
-          >
-            <div className="relative w-16 h-16 shrink-0 rounded-2xl bg-brand-50 flex items-center justify-center mb-3 group-hover:bg-brand-100 transition-colors overflow-hidden">
-              {brand.logoUrl ? (
-                <SafeImage src={brand.logoUrl} alt={brand.name} fill sizes="64px" className="object-contain p-1" />
-              ) : (
-                <span className="text-2xl font-black text-brand-600">{brand.name[0]}</span>
+      {brands.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <Icon name="tag" size={48} strokeWidth={1} className="mx-auto mb-3" />
+          <p>{t('products.noBrands', 'Hələ brend əlavə edilməyib')}</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {brands.map((brand) => (
+            <Link
+              key={brand.id}
+              href={`/brands/${brand.slug}`}
+              className="group min-w-0 bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:border-brand-200 transition-all duration-200 flex flex-col items-center text-center"
+            >
+              <div className="relative w-16 h-16 shrink-0 rounded-2xl bg-brand-50 flex items-center justify-center mb-3 group-hover:bg-brand-100 transition-colors overflow-hidden">
+                {brand.logoUrl ? (
+                  <SafeImage src={brand.logoUrl} alt={brand.name} fill sizes="64px" className="object-contain p-1" />
+                ) : (
+                  <span className="text-2xl font-black text-brand-600">{brand.name[0]}</span>
+                )}
+              </div>
+              <h3 className="font-bold text-gray-900 group-hover:text-brand-600 transition-colors text-sm">{brand.name}</h3>
+              {brand.country && <p className="text-xs text-gray-400 mt-1">{brand.country}</p>}
+              {brand._count?.products > 0 && (
+                <p className="text-xs text-brand-600 font-medium mt-2">{brand._count.products} {t('products.productsCountLabel', 'məhsul')}</p>
               )}
-            </div>
-            <h3 className="font-bold text-gray-900 group-hover:text-brand-600 transition-colors text-sm">{brand.name}</h3>
-            {brand.country && <p className="text-xs text-gray-400 mt-1">{brand.country}</p>}
-            {brand._count?.products > 0 && (
-              <p className="text-xs text-brand-600 font-medium mt-2">{brand._count.products} {t('products.productsCountLabel', 'məhsul')}</p>
-            )}
-          </Link>
-        ))}
-      </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

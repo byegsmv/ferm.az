@@ -10,6 +10,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import { Toaster } from "react-hot-toast";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ||
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://fermermarket.az");
@@ -84,6 +85,7 @@ export default async function RootLayout({ children, params }) {
           <BottomNav />
           <Analytics />
         </NextIntlClientProvider>
+        <Toaster position="top-right" toastOptions={{ duration: 4000, style: { borderRadius: '12px', fontSize: '14px' } }} />
       </body>
     </html>
   );

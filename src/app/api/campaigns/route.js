@@ -88,10 +88,18 @@ export async function POST(request) {
 
   const campaign = await prisma.campaign.create({
     data: {
-      ...data,
+      title: data.title,
+      type: data.type,
+      bannerUrl: data.bannerUrl,
+      targetUrl: data.targetUrl,
+      region: data.region,
       startDate: new Date(data.startDate),
       endDate: new Date(data.endDate),
+      budget: data.budget,
+      costPerClick: data.costPerClick,
       status: "DRAFT", // Admin/scheduler flips to SCHEDULED/ACTIVE
+      ...(data.storeId && { store: { connect: { id: data.storeId } } }),
+      ...(data.categoryId && { category: { connect: { id: data.categoryId } } }),
     },
   });
 

@@ -28,8 +28,22 @@ export async function PATCH(request, { params }) {
   }
 
   const data = { ...parsed.data };
-  if (data.startsAt !== undefined) data.startsAt = data.startsAt ? new Date(data.startsAt) : null;
-  if (data.expiresAt !== undefined) data.expiresAt = data.expiresAt ? new Date(data.expiresAt) : null;
+
+  // Normalize datetime-local strings to full ISO dates
+  const normalizeDate = (val) => {
+    if (val === null) return null;
+    if (val === undefined) return undefined;
+    return val.includes("T") && val.length <= 16 ? new Date(val + ":00Z") : new Date(val);
+  };
+
+  // If code is being changed, check uniqueness
+  if (data.code && data.code !== existing.code) {
+    const dup = await prisma.coupon.findUnique({ where: { code: data.code } });
+    if (dup) return Response.json({ error: "Bu kupon kodu artıq mövcuddur" }, { status: 409 });
+  }
+
+  if (data.startsAt !== undefined) data.startsAt = normalizeDate(data.startsAt);
+  if (data.expiresAt !== undefined) data.expiresAt = normalizeDate(data.expiresAt);
 
   const coupon = await prisma.coupon.update({ where: { id }, data });
   return Response.json({ coupon });

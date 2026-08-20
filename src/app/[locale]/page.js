@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 async function getHomeData() {
   const now = new Date();
   try {
-    const [categories, premiumListings, homepageAd, latestProducts, bundles, blogPosts] = await Promise.all([
+    const [categories, premiumListings, homepageAd, latestProducts, bundles, blogPosts, campaigns] = await Promise.all([
       prisma.category.findMany({
         where: { isActive: true, parentId: null },
         orderBy: { sortOrder: "asc" },
@@ -61,6 +61,12 @@ async function getHomeData() {
         take: 3,
         include: { author: { select: { fullName: true } } },
       }),
+      prisma.campaign.findMany({
+        where: { status: "ACTIVE", startDate: { lte: now }, endDate: { gte: now } },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        include: { store: { select: { name: true, slug: true } } },
+      }),
     ]);
     const serializeProduct = (p) => ({
       ...p,
@@ -68,14 +74,14 @@ async function getHomeData() {
       wholesalePrice: p.wholesalePrice ? p.wholesalePrice.toString() : null,
     });
 
-    return { 
-      categories, 
+    return {
+      categories,
       premiumListings: premiumListings.map(l => ({
         ...l,
         product: l.product ? serializeProduct(l.product) : null
-      })), 
-      homepageAd, 
-      latestProducts: latestProducts.map(serializeProduct), 
+      })),
+      homepageAd,
+      latestProducts: latestProducts.map(serializeProduct),
       bundles: bundles.map(b => ({
         ...b,
         discountValue: b.discountValue ? b.discountValue.toString() : null,
@@ -83,8 +89,9 @@ async function getHomeData() {
           ...item,
           product: item.product ? serializeProduct(item.product) : null
         }))
-      })), 
-      blogPosts 
+      })),
+      blogPosts,
+      campaigns,
     };
   } catch (error) {
     console.warn("Falling back to mock home data:", error.message);
@@ -96,7 +103,7 @@ export default async function HomePage({ searchParams }) {
   const resolvedSearchParams = await searchParams;
   const editMode = resolvedSearchParams?.editMode === "true";
   
-  let homeData = { categories:[], premiumListings:[], homepageAd:null, latestProducts:[], bundles:[], blogPosts:[] };
+  let homeData = { categories:[], premiumListings:[], homepageAd:null, latestProducts:[], bundles:[], blogPosts:[], campaigns:[] };
   let blocks = [];
   
   try { 
@@ -127,6 +134,7 @@ export default async function HomePage({ searchParams }) {
       { type: "HERO_SLIDER", props: {} },
       { type: "CATEGORIES", props: { title: "Kateqoriyalar", count: 20 } },
       { type: "AD_BANNER", props: {} },
+      { type: "CAMPAIGNS", props: { title: "Kampaniyalar" } },
       { type: "PREMIUM_ADS", props: { title: "Premium Elanlar" } },
       { type: "LATEST_ADS", props: { title: "Yeni Elanlar", count: 8 } },
       { type: "BUNDLES", props: { title: "Bağlamalar" } },

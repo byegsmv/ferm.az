@@ -49,7 +49,19 @@ export async function PATCH(request, { params }) {
   if (data.startDate) data.startDate = new Date(data.startDate);
   if (data.endDate) data.endDate = new Date(data.endDate);
 
-  const updated = await prisma.campaign.update({ where: { id }, data });
+  // Prisma requires relation fields as connect objects, not raw IDs
+  const prismaData = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (key === "storeId") {
+      prismaData.store = value ? { connect: { id: value } } : { disconnect: true };
+    } else if (key === "categoryId") {
+      prismaData.category = value ? { connect: { id: value } } : { disconnect: true };
+    } else {
+      prismaData[key] = value;
+    }
+  }
+
+  const updated = await prisma.campaign.update({ where: { id }, data: prismaData });
   return Response.json({ campaign: updated });
 }
 

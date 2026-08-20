@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import SafeImage from "@/components/SafeImage";
-import { sanitizeHtml } from "@/lib/security/sanitizer";
+import { sanitizeAdCode } from "@/lib/security/adSanitizer";
 
 /**
  * Renders a single resolved ad placement (see lib/adSlots.js#getAdSlotContent).
@@ -27,11 +27,9 @@ export default function AdBanner({ content, className = "", imgClassName = "w-fu
   useEffect(() => {
     if (content?.mode !== "external" || !externalRef.current) return;
     const container = externalRef.current;
-    // Sanitize external code to remove script/style/onclick/javascript: URLs
-    const cleanCode = sanitizeHtml(content.externalCode);
+    const cleanCode = sanitizeAdCode(content.externalCode);
     container.innerHTML = cleanCode;
-    // Re-execute any remaining <script> tags — innerHTML assignment does not run them
-    // NOTE: After sanitization, scripts should already be removed, but keep this for safety
+    // Re-execute any <script> tags — innerHTML assignment does not run them
     container.querySelectorAll("script").forEach((oldScript) => {
       const newScript = document.createElement("script");
       Array.from(oldScript.attributes).forEach((attr) => newScript.setAttribute(attr.name, attr.value));

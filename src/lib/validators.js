@@ -40,22 +40,42 @@ export const orderCreateSchema = z.object({
 export const couponCreateSchema = z.object({
   code: z.string().min(3).max(30),
   discountType: z.enum(["PERCENTAGE", "FIXED"]),
-  discountValue: z.number().positive(),
-  minOrderValue: z.number().positive().optional(),
+  discountValue: z.number().min(0).max(100),
+  minOrderValue: z.number().min(0).optional(),
   maxUses: z.number().int().positive().optional(),
-  startsAt: z.string().datetime().optional(),
-  expiresAt: z.string().datetime().optional(),
-});
+  startsAt: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)).optional(),
+  expiresAt: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)).optional(),
+  isActive: z.boolean().optional(),
+}).refine((data) => {
+  if (data.startsAt && data.expiresAt) {
+    const start = new Date(data.startsAt);
+    const end = new Date(data.expiresAt);
+    if (end <= start) {
+      return { valid: false, error: { path: ["expiresAt"], message: "Bitmə tarixi başlanğıc tarixindən sonra olmalıdır" } };
+    }
+  }
+  return { valid: true };
+}, { message: "Bitmə tarixi başlanğıc tarixindən sonra olmalıdır", path: ["expiresAt"] });
 
 export const couponUpdateSchema = z.object({
+  code: z.string().min(3).max(30).optional(),
   discountType: z.enum(["PERCENTAGE", "FIXED"]).optional(),
-  discountValue: z.number().positive().optional(),
-  minOrderValue: z.number().positive().nullable().optional(),
+  discountValue: z.number().min(0).max(100).optional(),
+  minOrderValue: z.number().min(0).nullable().optional(),
   maxUses: z.number().int().positive().nullable().optional(),
-  startsAt: z.string().datetime().nullable().optional(),
-  expiresAt: z.string().datetime().nullable().optional(),
+  startsAt: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)).nullable().optional(),
+  expiresAt: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)).nullable().optional(),
   isActive: z.boolean().optional(),
-});
+}).refine((data) => {
+  const start = data.startsAt ? (data.startsAt === null ? null : new Date(data.startsAt)) : undefined;
+  const end = data.expiresAt ? (data.expiresAt === null ? null : new Date(data.expiresAt)) : undefined;
+  if (start !== undefined && end !== undefined && start !== null && end !== null) {
+    if (end <= start) {
+      return { valid: false, error: { path: ["expiresAt"], message: "Bitmə tarixi başlanğıc tarixindən sonra olmalıdır" } };
+    }
+  }
+  return { valid: true };
+}, { message: "Bitmə tarixi başlanğıc tarixindən sonra olmalıdır", path: ["expiresAt"] });
 
 export const couponValidateSchema = z.object({
   code: z.string().min(1),
@@ -98,10 +118,12 @@ export const campaignCreateSchema = z
 
 export const campaignUpdateSchema = z.object({
   title: z.string().min(3).optional(),
-  status: z.enum(["DRAFT", "SCHEDULED", "ACTIVE", "PAUSED", "EXPIRED", "ENDED"]).optional(),
+  status: z.enum(["DRAFT", "SCHEDULED", "ACTIVE", "PAUSED", "EXPIRED"]).optional(),
   bannerUrl: z.string().url().optional().nullable(),
-  imageUrl: z.string().url().optional().nullable(),
   targetUrl: z.string().url().optional().nullable(),
+  storeId: z.string().cuid().optional().nullable(),
+  categoryId: z.string().cuid().optional().nullable(),
+  region: z.string().optional().nullable(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
   budget: z.number().positive().optional(),
@@ -143,6 +165,7 @@ export const categoryCreateSchema = z.object({
   nameAz: z.string().min(2),
   nameEn: z.string().optional(),
   nameRu: z.string().optional(),
+  description: z.string().optional(),
   icon: z.string().optional(),
   parentId: z.string().cuid().optional().nullable(),
   sortOrder: z.number().int().optional(),
@@ -206,6 +229,20 @@ export const productUpdateSchema = productRawSchema
   .extend({
     status: z.enum(["DRAFT", "PENDING_REVIEW", "ACTIVE", "SOLD", "EXPIRED", "REJECTED"]).optional(),
   });
+
+export const brandCreateSchema = z.object({
+  name: z.string().min(2, "Brend adı ən azı 2 simvol olmalıdır"),
+  logoUrl: z.string().url().optional().or(z.literal("")),
+  country: z.string().optional(),
+  website: z.string().url().optional().or(z.literal("")),
+  description: z.string().optional(),
+  isActive: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+});
+
+export const brandUpdateSchema = brandCreateSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
 
 export const storeCreateSchema = z.object({
   name: z.string().min(2, "Mağaza adı ən azı 2 simvol olmalıdır"),

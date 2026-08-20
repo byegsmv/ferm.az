@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "@/i18n/routing";
-import { sanitizeHtml } from "@/lib/security/sanitizer";
+import { sanitizeAdCode } from "@/lib/security/adSanitizer";
 
 export default function SideBanner({ position = "left" }) {
   const [ad, setAd] = useState(null);
@@ -31,8 +31,7 @@ export default function SideBanner({ position = "left" }) {
 
   // Admin-configured external embed (e.g. AdSense)
   if (ad?.mode === "external" && ad.externalCode) {
-    // Sanitize external code to remove script/style/onclick/javascript: URLs
-    const cleanCode = sanitizeHtml(ad.externalCode);
+    const cleanCode = sanitizeAdCode(ad.externalCode);
     return (
       <div className="hidden xl:block w-[160px] flex-shrink-0 sticky top-24 h-[600px] bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         <div ref={externalRef} dangerouslySetInnerHTML={{ __html: cleanCode }} />

@@ -21,8 +21,10 @@ export async function GET(request) {
       slug: cat.slug,
       name: locale === "en" ? cat.nameEn || cat.nameAz : locale === "ru" ? cat.nameRu || cat.nameAz : cat.nameAz,
       icon: cat.icon,
+      description: cat.description,
       parentId: cat.parentId,
       isActive: cat.isActive,
+      sortOrder: cat.sortOrder,
     });
     return Response.json({ categories: allCategories.map(localizeAdmin) });
   }

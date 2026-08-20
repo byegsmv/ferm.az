@@ -405,17 +405,18 @@ model Translation {
 // ---------- MARKETPLACE: CATEGORIES ----------
 
 model Category {
-  id        String     @id @default(cuid())
-  slug      String     @unique
-  nameAz    String
-  nameEn    String?
-  nameRu    String?
-  icon      String?
-  parentId  String?
-  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
-  children  Category[] @relation("CategoryTree")
-  isActive  Boolean    @default(true)
-  sortOrder Int        @default(0)
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  nameAz      String
+  nameEn      String?
+  nameRu      String?
+  description String?    @db.Text
+  icon        String?
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryTree")
+  isActive    Boolean    @default(true)
+  sortOrder   Int        @default(0)
 
   products  Product[]
   campaigns Campaign[]

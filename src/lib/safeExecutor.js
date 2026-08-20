@@ -92,7 +92,7 @@ export class SafeExecutor {
     const diffs = [];
 
     for (const file of changes.files || []) {
-      const fullPath = path.join(process.cwd(), file.path);
+      const fullPath = path.join(/* turbopackIgnore: true */process.cwd(), file.path);
       const exists = fs.existsSync(fullPath);
 
       if (file.action === "create") {
@@ -133,7 +133,7 @@ export class SafeExecutor {
     const timestamp = Date.now();
 
     for (const file of files) {
-      const fullPath = path.join(process.cwd(), file.path);
+      const fullPath = path.join(/* turbopackIgnore: true */process.cwd(), file.path);
       if (fs.existsSync(fullPath)) {
         const backupPath = path.join(BACKUP_DIR, `${timestamp}_${file.path.replace(/[\\/]/g, "__")}`);
         fs.mkdirSync(path.dirname(backupPath), { recursive: true });
@@ -159,7 +159,7 @@ export class SafeExecutor {
     // 3. Apply
     const results = [];
     for (const file of changes.files || []) {
-      const fullPath = path.join(process.cwd(), file.path);
+      const fullPath = path.join(/* turbopackIgnore: true */process.cwd(), file.path);
 
       try {
         if (file.action === "create") {

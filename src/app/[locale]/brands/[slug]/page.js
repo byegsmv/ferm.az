@@ -9,24 +9,29 @@ import { useSiteTexts } from "@/lib/siteTexts";
 
 export default function BrandDetailPage() {
   const params = useParams();
+  const slug = params?.slug;
   const [brand, setBrand] = useState(null);
   const [loading, setLoading] = useState(true);
   const { t } = useSiteTexts();
 
   useEffect(() => {
-    if (!params.slug) return;
-    // First get brand list, find by slug
-    apiFetch("/api/brands")
+    if (!slug) return;
+    // Fetch all brands, find by slug, then get detail with products
+    apiFetch("/api/brands?all=true")
       .then(async (data) => {
-        const found = (data.brands || []).find(b => b.slug === params.slug);
-        if (found) {
-          const detail = await apiFetch(`/api/brands/${found.id}`);
-          setBrand(detail.brand);
+        const found = (data.brands || []).find(b => b.slug === slug);
+        if (!found) {
+          setBrand(null);
+          return;
         }
+        const detail = await apiFetch(`/api/brands/${found.id}`);
+        setBrand(detail.brand);
       })
-      .catch(() => {})
+      .catch(() => {
+        setBrand(null);
+      })
       .finally(() => setLoading(false));
-  }, [params.slug]);
+  }, [slug]);
 
   if (loading) {
     return <div className="max-w-6xl mx-auto px-4 py-20 text-center text-gray-400">{t('products.loading', 'Yüklənir...')}</div>;
@@ -46,18 +51,18 @@ export default function BrandDetailPage() {
       {/* Brand Header */}
       <div className="bg-gradient-to-r from-brand-50 to-green-50 rounded-3xl p-6 md:p-8 mb-8 border border-brand-100">
         <div className="flex items-center gap-5">
-          <div className="w-20 h-20 rounded-2xl bg-white shadow-md flex items-center justify-center overflow-hidden flex-shrink-0">
+          <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-white shadow-md flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100">
             {brand.logoUrl ? (
-              <SafeImage src={brand.logoUrl} alt={brand.name} fill className="object-contain p-2" />
+              <img src={brand.logoUrl} alt={brand.name} className="w-full h-full object-contain p-3" />
             ) : (
-              <span className="text-3xl font-black text-brand-600">{brand.name[0]}</span>
+              <span className="text-4xl font-black text-brand-600">{brand.name[0]}</span>
             )}
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-black text-gray-900">{brand.name}</h1>
             {brand.country && <p className="text-gray-500 mt-1 flex items-center gap-1"><Icon name="mapPin" size={16} /> {brand.country}</p>}
             {brand.description && <p className="text-sm text-gray-600 mt-2 max-w-xl">{brand.description}</p>}
-            {brand.website && <a href={brand.website} target="_blank" rel="noopener" className="text-brand-600 text-sm font-medium hover:underline mt-2 inline-block">{brand.website}</a>}
+            {brand.website && <a href={brand.website} target="_blank" rel="noopener noreferrer" className="text-brand-600 text-sm font-medium hover:underline mt-2 inline-block">{brand.website}</a>}
           </div>
         </div>
       </div>

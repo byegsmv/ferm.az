@@ -144,6 +144,64 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
         } else if (block.type === "BLOG") {
           if (!homeData?.blogPosts?.length) return null;
           content = <div className="max-w-6xl mx-auto px-4 mt-10"><BlogSection posts={homeData.blogPosts} /></div>;
+        } else if (block.type === "CAMPAIGNS") {
+          if (!homeData?.campaigns?.length) return null;
+          content = (
+            <section className="max-w-6xl mx-auto px-4 mt-10">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500">
+                      <Icon name="megaphone" size={20} />
+                    </div>
+                    {p.title || "Kampaniyalar"}
+                  </h2>
+                  <p className="text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Aktiv kampaniya və endirimlər"}</p>
+                </div>
+                <Link href="/campaigns" className="text-sm text-brand-600 font-semibold hover:text-brand-700">
+                  <span className="flex items-center gap-1">Hamısı <Icon name="arrowRight" size={14} /></span>
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {homeData.campaigns.map((campaign) => {
+                  const daysLeft = Math.ceil((new Date(campaign.endDate).getTime() - Date.now()) / (1000 * 3600 * 24));
+                  const getBgColors = (type) => {
+                    switch(type) {
+                      case 'FLASH_SALE': return 'from-orange-400 to-red-500';
+                      case 'DAILY_DEAL': return 'from-blue-500 to-indigo-600';
+                      default: return 'from-brand-500 to-green-600';
+                    }
+                  };
+                  return (
+                    <Link
+                      key={campaign.id}
+                      href={campaign.targetUrl || "/campaigns"}
+                      className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 group"
+                    >
+                      <div className="relative h-36 bg-gray-100 overflow-hidden">
+                        {campaign.bannerUrl ? (
+                          <img src={campaign.bannerUrl} alt={campaign.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        ) : (
+                          <div className={`absolute inset-0 bg-gradient-to-br ${getBgColors(campaign.type)}`}></div>
+                        )}
+                        {daysLeft > 0 && daysLeft <= 7 && (
+                          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur text-xs font-bold px-2 py-0.5 rounded-full text-red-600">
+                            {daysLeft} gün qaldı
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-gray-900">{campaign.title}</h3>
+                        {campaign.store && (
+                          <p className="text-xs text-gray-500 mt-1">{campaign.store.name}</p>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          );
         } else if (block.type === "AD_BANNER") {
           if (!homeData?.homepageAd) return null;
           content = <div className="max-w-6xl mx-auto px-4 mt-10"><AdBanner content={homeData.homepageAd} /></div>;

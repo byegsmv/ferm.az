@@ -69,7 +69,10 @@ export default function AgronomPage() {
   };
 
   const handleAnalyze = async () => {
-    if (!image && !text.trim()) return;
+    if (!image && !text.trim()) {
+      toast.error("Şəkil yükləyin və ya simptomları təsvir edin");
+      return;
+    }
     setLoading(true);
     setResult(null);
     try {
@@ -81,10 +84,28 @@ export default function AgronomPage() {
         method: "POST",
         body: formData,
       });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || `Server xətası (${res.status})`);
+      }
+
       const data = await res.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
       setResult(data);
     } catch (err) {
-      setResult({ disease: "Xəta", confidence: "0%", recommendation: "Serverə qoşulmaq mümkün olmadı.", products: [] });
+      toast.error(err.message || "Analiz zamanı xəta baş verdi");
+      setResult({
+        disease: "Analiz uğursuz oldu",
+        confidence: "0%",
+        recommendation: err.message || "Serverə qoşulmaq mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.",
+        products: [],
+        error: true
+      });
     } finally {
       setLoading(false);
     }

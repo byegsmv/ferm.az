@@ -729,7 +729,7 @@ export default function StoreDashboard({ user }) {
 
 
 // ─── Create Store Form (shown when user has no store) ───────────────────
-function CreateStoreForm({ user, onCreated }) {
+export function CreateStoreForm({ user, onCreated }) {
   const [form, setForm] = useState({ name: "", description: "", address: "", phone: "", whatsapp: "" });
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");

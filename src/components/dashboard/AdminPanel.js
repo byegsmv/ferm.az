@@ -13,6 +13,7 @@ import AIAgentPanel from "@/components/dashboard/AIAgentPanel";
 import AdminSupport from "@/components/dashboard/AdminSupport";
 import AISettingsManager from "@/components/dashboard/AISettingsManager";
 import EmptyState from "@/components/ui/EmptyState";
+import SafeImage from "@/components/SafeImage";
 import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useSiteTexts } from "@/lib/siteTexts";
@@ -25,59 +26,60 @@ const PRODUCT_STATUS_COLORS = { PENDING_REVIEW: "badge-yellow", ACTIVE: "badge-g
 
 const SIDEBAR_GROUPS_DEF = [
   {
-    label: "admin.group.main", items: [
-      { id: "stats", icon: "dashboard", label: "admin.tab.stats" },
-      { id: "activity", icon: "zap", label: "admin.tab.activity" },
+    label: "Əsas", items: [
+      { id: "stats", icon: "dashboard", label: "Statistika" },
+      { id: "activity", icon: "zap", label: "Fəaliyyət" },
     ]
   },
   {
-    label: "admin.group.analytics", items: [
-      { id: "analytics", icon: "trendingUp", label: "admin.tab.analytics" },
+    label: "Analitika", items: [
+      { id: "analytics", icon: "trendingUp", label: "Analitika" },
     ]
   },
   {
-    label: "admin.group.marketplace", items: [
-      { id: "pending", icon: "clock", label: "admin.tab.pending", badge: "pending" },
-      { id: "all-listings", icon: "clipboard", label: "admin.tab.allListings" },
-      { id: "corporate", icon: "building", label: "admin.tab.corporate" },
-      { id: "categories", icon: "grid", label: "admin.tab.categories" },
-      { id: "stores", icon: "store", label: "admin.tab.stores" },
+    label: "Marketpleys", items: [
+      { id: "pending", icon: "clock", label: "Gözləyən", badge: "pending" },
+      { id: "allListings", icon: "clipboard", label: "Bütün Elanlar" },
+      { id: "corporate", icon: "building", label: "Korporativ" },
+      { id: "categories", icon: "grid", label: "Kateqoriyalar" },
+      { id: "brands", icon: "tag", label: "Brendlər" },
+      { id: "stores", icon: "store", label: "Mağazalar" },
     ]
   },
   {
-    label: "admin.group.orders", items: [
-      { id: "orders", icon: "package", label: "admin.tab.orders" },
-      { id: "wallet", icon: "wallet", label: "admin.tab.wallet" },
-      { id: "coupons", icon: "tag", label: "admin.tab.coupons" },
+    label: "Sifarişlər", items: [
+      { id: "orders", icon: "package", label: "Sifarişlər" },
+      { id: "wallet", icon: "wallet", label: "Cüzdan" },
+      { id: "coupons", icon: "tag", label: "Kuponlar" },
     ]
   },
   {
-    label: "admin.group.community", items: [
-      { id: "users", icon: "user", label: "admin.tab.users" },
-      { id: "reviews", icon: "star", label: "admin.tab.reviews", badge: "reviews" },
-      { id: "bundles", icon: "gift", label: "admin.tab.bundles" },
+    label: "İcmalar", items: [
+      { id: "users", icon: "user", label: "İstifadəçilər" },
+      { id: "reviews", icon: "star", label: "Rəylər", badge: "reviews" },
+      { id: "bundles", icon: "gift", label: "Paketlər" },
     ]
   },
   {
-    label: "admin.group.content", items: [
-      { id: "blog", icon: "fileText", label: "admin.tab.blog" },
-      { id: "campaigns", icon: "bell", label: "admin.tab.campaigns" },
-      { id: "adslots", icon: "image", label: "admin.tab.adslots" },
-      { id: "notify", icon: "bell", label: "admin.tab.notify" },
-      { id: "slider", icon: "image", label: "admin.tab.slider" },
-      { id: "site-texts", icon: "edit", label: "admin.tab.siteTexts" },
+    label: "Məzmun", items: [
+      { id: "blog", icon: "fileText", label: "Bloq" },
+      { id: "campaigns", icon: "bell", label: "Kampaniyalar" },
+      { id: "adslots", icon: "image", label: "Reklam Yeri" },
+      { id: "notify", icon: "bell", label: "Bildirişlər" },
+      { id: "slider", icon: "image", label: "Slayder" },
+      { id: "site-texts", icon: "edit", label: "Məzmun İdarəsi" },
     ]
   },
   {
-    label: "admin.group.system", items: [
-      { id: "ai-agent", icon: "zap", label: "AI Agent" },
-      { id: "ai-settings", icon: "bot", label: "admin.tab.aiSettings" },
-      { id: "emails", icon: "mail", label: "admin.tab.emails" },
-      { id: "user-modules", icon: "settings", label: "admin.tab.userModules" },
-      { id: "studio", icon: "component", label: "admin.tab.studio" },
-      { id: "messages", icon: "message", label: "admin.tab.messages" },
-      { id: "profile", icon: "user", label: "admin.tab.profile" },
-      { id: "support", icon: "info", label: "admin.tab.support" },
+    label: "Sistem", items: [
+      { id: "ai-agent", icon: "zap", label: "AI Köməkçi" },
+      { id: "ai-settings", icon: "bot", label: "AI Parametrləri" },
+      { id: "emails", icon: "mail", label: "E-poçtlar" },
+      { id: "user-modules", icon: "settings", label: "Modullar" },
+      { id: "studio", icon: "component", label: "Studiya" },
+      { id: "messages", icon: "message", label: "Mesajlar" },
+      { id: "profile", icon: "user", label: "Profil" },
+      { id: "support", icon: "info", label: "Dəstək" },
     ]
   },
 ];
@@ -85,36 +87,43 @@ const SIDEBAR_GROUPS_DEF = [
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 function AdminSidebar({ tab, setTab, badges, collapsed, setCollapsed, t }) {
   return (
-    <aside className={`${collapsed ? "w-[68px]" : "w-60"} hidden md:flex flex-col bg-white border-r border-gray-200/60 transition-all duration-300 ease-in-out shrink-0 h-screen sticky top-0 z-20 overflow-hidden`}>
+    <aside className={`${collapsed ? "w-[72px]" : "w-64"} hidden md:flex flex-col bg-white border-r border-[var(--border)] transition-all duration-300 ease-in-out shrink-0 sticky top-0 z-20 overflow-hidden`} style={{ height: '100vh' }}>
       {/* Header */}
-      <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} px-3 py-4 border-b border-gray-100 shrink-0`}>
-        {!collapsed && <span className="font-bold text-gray-900 text-sm tracking-tight">Admin</span>}
-        <button onClick={() => setCollapsed(v => !v)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700" aria-label="Toggle Sidebar">
+      <div className={`flex items-center ${collapsed ? "justify-center px-2" : "justify-between px-4"} py-4 border-b border-[var(--border)] shrink-0`}>
+        {!collapsed && (
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+              <Icon name="shield" size={16} strokeWidth={2} />
+            </div>
+            <span className="font-bold text-gray-900 text-sm tracking-tight">Admin</span>
+          </div>
+        )}
+        <button onClick={() => setCollapsed(v => !v)} className="p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-400 hover:text-gray-700" aria-label="Toggle Sidebar">
           <Icon name={collapsed ? "arrowRight" : "arrowLeft"} size={16} />
         </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-1 min-h-0 scrollbar-thin scrollbar-thumb-gray-200">
+      <nav className="flex-1 overflow-y-auto py-2.5 px-2.5 space-y-0.5 min-h-0" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 transparent' }}>
         {SIDEBAR_GROUPS_DEF.map(group => (
-          <div key={group.label} className="mb-1">
-            {!collapsed && <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest px-2 mb-1.5">{t(group.label, group.label)}</p>}
+          <div key={group.label} className="mb-1.5">
+            {!collapsed && <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1.5">{t(group.label, group.label)}</p>}
             {group.items.map(item => {
               const badgeNum = item.badge === "pending" ? badges?.pendingProducts : item.badge === "reviews" ? badges?.pendingReviews : 0;
               return (
                 <button key={item.id} onClick={() => setTab(item.id)}
-                  className={`w-full flex items-center ${collapsed ? "justify-center px-2" : "gap-2.5 px-2.5"} py-2 rounded-lg text-sm font-medium transition-all duration-150 relative ${
+                  className={`w-full flex items-center ${collapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-sm font-medium transition-all duration-200 relative ${
                     tab === item.id
                       ? "bg-brand-50 text-brand-700 font-semibold shadow-sm"
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   }`}>
-                  <Icon name={item.icon} size={18} className={`shrink-0 ${tab === item.id ? "text-brand-600" : ""}`} />
+                  <Icon name={item.icon} size={18} className={`shrink-0 ${tab === item.id ? "text-brand-600" : "text-gray-400"}`} strokeWidth={tab === item.id ? 2 : 1.8} />
                   {!collapsed && <span className="flex-1 text-left truncate">{t(item.label, item.label)}</span>}
                   {!collapsed && badgeNum > 0 && (
-                    <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{badgeNum}</span>
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{badgeNum}</span>
                   )}
                   {collapsed && badgeNum > 0 && (
-                    <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
                   )}
                 </button>
               );
@@ -130,12 +139,16 @@ function AdminSidebar({ tab, setTab, badges, collapsed, setCollapsed, t }) {
 function AdminMobileNav({ tab, setTab }) {
   const allItems = SIDEBAR_GROUPS_DEF.flatMap(g => g.items);
   return (
-    <div className="md:hidden sticky top-0 z-30 bg-white border-b border-gray-100 overflow-x-auto no-scrollbar">
-      <div className="flex px-2 py-1.5 gap-1 min-w-max">
+    <div className="md:hidden sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-[var(--border)] overflow-x-auto no-scrollbar">
+      <div className="flex px-2 py-2 gap-1.5 min-w-max">
         {allItems.map(item => (
           <button key={item.id} onClick={() => setTab(item.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${tab === item.id ? "bg-brand-50 text-brand-700" : "text-gray-500"}`}>
-            <Icon name={item.icon} size={16} />{item.label}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              tab === item.id
+                ? "bg-brand-50 text-brand-700 shadow-sm"
+                : "text-gray-500 hover:bg-gray-50"
+            }`}>
+            <Icon name={item.icon} size={14} />{item.label}
           </button>
         ))}
       </div>
@@ -828,6 +841,104 @@ function PushBroadcastManager() {
         <div><label className="label">Məzmun</label><textarea required rows={3} value={body} onChange={e => setBody(e.target.value)} className="input-field" /></div>
         <button type="submit" disabled={sending} className="btn-primary">{sending ? "Göndərilir..." : <span className="flex items-center gap-1"><Icon name="upload" size={16} />Hamıya Göndər</span>}</button>
       </form>
+    </div>
+  );
+}
+
+// ─── Brands Manager ───────────────────────────────────────────────────────────
+function BrandsManager() {
+  const [items, setItems] = useState([]); const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ name: "", logoUrl: "", country: "", website: "", description: "", isActive: true });
+  const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const { toast, ToastContainer } = useToast();
+  useEffect(() => { apiFetch("/api/brands?all=true").then(d => setItems(d.brands || [])).finally(() => setLoading(false)); }, []);
+  async function handleSubmit(e) {
+    e.preventDefault(); setErr("");
+    try {
+      const payload = { name: form.name.trim(), logoUrl: form.logoUrl.trim() || undefined, country: form.country.trim() || undefined, website: form.website.trim() || undefined, description: form.description.trim() || undefined, isActive: form.isActive };
+      if (editingId) {
+        await apiFetch(`/api/brands/${editingId}`, { method: "PATCH", body: JSON.stringify(payload) });
+        toast("Brend yeniləndi");
+      } else {
+        const d = await apiFetch("/api/brands", { method: "POST", body: JSON.stringify(payload) });
+        setItems(p => [...p, d.brand]);
+        toast("Brend əlavə edildi");
+      }
+      setForm({ name: "", logoUrl: "", country: "", website: "", description: "", isActive: true });
+      setEditingId(null); setShowModal(false);
+    } catch (e) { setErr(e.message); toast(e.message, "error"); }
+  }
+  function openEdit(b) { setEditingId(b.id); setForm({ name: b.name || "", logoUrl: b.logoUrl || "", country: b.country || "", website: b.website || "", description: b.description || "", isActive: b.isActive ?? true }); setErr(""); setShowModal(true); }
+  function openCreate() { setEditingId(null); setForm({ name: "", logoUrl: "", country: "", website: "", description: "", isActive: true }); setErr(""); setShowModal(true); }
+  async function toggleActive(id, val) { try { await apiFetch(`/api/brands/${id}`, { method: "PATCH", body: JSON.stringify({ isActive: val }) }); setItems(p => p.map(b => b.id === id ? { ...b, isActive: val } : b)); toast("Yeniləndi"); } catch (e) { toast(e.message, "error"); } }
+  async function deleteBrand(id, name) { if (!confirm(`"${name}" brendini silmək istədiyinizə əminsiniz?`)) return; try { await apiFetch(`/api/brands/${id}`, { method: "DELETE" }); setItems(p => p.filter(b => b.id !== id)); toast("Brend silindi"); } catch (e) { toast(e.message, "error"); } }
+  return (
+    <div className="space-y-4">
+      <ToastContainer />
+      <div className="flex items-center justify-between">
+        <h2 className="section-title">Brendlər</h2>
+        <button onClick={openCreate} className="btn-primary text-sm flex items-center gap-1.5"><Icon name="plus" size={14} />Yeni Brend</button>
+      </div>
+      {loading ? <SkeletonList count={4} /> : !items.length ? <EmptyState icon="tag" title="Brend tapılmadı" /> : (
+        <div className="card overflow-x-auto">
+          <table className="w-full min-w-[600px] text-left">
+            <thead className="table-header"><tr>
+              <th className="table-cell text-left min-w-[180px]">Ad</th>
+              <th className="table-cell text-left w-32">Ölkə</th>
+              <th className="table-cell text-left w-40 hidden md:table-cell">Vebsayt</th>
+              <th className="table-cell text-left w-24">Status</th>
+              <th className="table-cell text-right w-48 whitespace-nowrap">Əməl</th>
+            </tr></thead>
+            <tbody>
+              {items.map(b => (
+                <tr key={b.id} className="table-row">
+                  <td className="table-cell min-w-[180px]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+                        {b.logoUrl ? <SafeImage src={b.logoUrl} alt={b.name} fill className="object-contain p-0.5" /> : <span className="text-xs font-black text-brand-600">{b.name[0]}</span>}
+                      </div>
+                      <div className="min-w-0"><p className="font-medium text-sm truncate">{b.name}</p><p className="caption truncate">{b.slug}</p></div>
+                    </div>
+                  </td>
+                  <td className="table-cell w-32 text-gray-600">{b.country || "—"}</td>
+                  <td className="table-cell w-40 hidden md:table-cell">{b.website ? <a href={b.website} target="_blank" rel="noopener" className="text-brand-600 hover:underline truncate block">{b.website}</a> : "—"}</td>
+                  <td className="table-cell w-24 whitespace-nowrap">{b.isActive ? <span className="badge badge-green">Aktiv</span> : <span className="badge badge-red">Deaktiv</span>}</td>
+                  <td className="table-cell text-right whitespace-nowrap">
+                    <div className="flex items-center gap-1.5 justify-end">
+                      <button onClick={() => openEdit(b)} className="btn-secondary btn-xs flex items-center gap-1"><Icon name="edit" size={12} />Redaktə</button>
+                      <button onClick={() => toggleActive(b.id, !b.isActive)} className="btn-secondary btn-xs">{b.isActive ? "Deaktiv" : "Aktiv"}</button>
+                      <button onClick={() => deleteBrand(b.id, b.name)} className="btn-danger btn-xs flex items-center gap-1"><Icon name="trash" size={12} />Sil</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+              <h2 className="text-lg font-bold text-gray-900">{editingId ? "Brendi Redaktə Et" : "Yeni Brend"}</h2>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><Icon name="close" size={20} /></button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-3">
+              {err && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{err}</div>}
+              <div><label className="block text-sm font-medium text-gray-700 mb-1">Ad <span className="text-red-500">*</span></label><input required value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none" placeholder="Məs: John Deere" /></div>
+              <div className="grid grid-cols-2 gap-3"><div><label className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label><input value={form.logoUrl} onChange={e => setForm(p => ({ ...p, logoUrl: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none" placeholder="https://..." /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Ölkə</label><input value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none" placeholder="ABŞ" /></div></div>
+              <div><label className="block text-sm font-medium text-gray-700 mb-1">Vebsayt</label><input type="url" value={form.website} onChange={e => setForm(p => ({ ...p, website: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none" placeholder="https://..." /></div>
+              <div><label className="block text-sm font-medium text-gray-700 mb-1">Təsvir</label><textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none resize-none" /></div>
+              <div className="flex items-center gap-3"><button type="button" onClick={() => setForm(p => ({ ...p, isActive: !p.isActive }))} className={`relative w-11 h-6 rounded-full transition-colors ${form.isActive ? 'bg-brand-600' : 'bg-gray-300'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.isActive ? 'translate-x-5' : ''}`} /></button><span className="text-sm font-medium text-gray-700">{form.isActive ? "Aktiv" : "Deaktiv"}</span></div>
+              <div className="flex justify-end gap-3 pt-3 border-t border-gray-100"><button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-100">Ləğv et</button><button type="submit" className="bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-700">{editingId ? "Yenilə" : "Yarat"}</button></div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1698,6 +1809,7 @@ export default function AdminPanel() {
       case "all-listings": return <AllListingsManager />;
       case "corporate": return <CorporateListingsManager />;
       case "categories": return <CategoriesManager />;
+      case "brands": return <BrandsManager />;
       case "stores": return <StoresManager />;
       case "orders": return <OrdersAll />;
       case "wallet": return <WalletWithdrawalsManager />;
@@ -1732,20 +1844,20 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="md:grid md:grid-cols-[auto_1fr] min-h-screen bg-gray-50/50">
+    <div className="flex min-h-screen bg-[var(--bg)]">
       <ToastContainer />
-      {/* Desktop sidebar — fixed height, sticky top, own scroll */}
+      {/* Desktop sidebar — sticky, full height, own scroll */}
       <AdminSidebar tab={tab} setTab={setTab} badges={badges} collapsed={collapsed} setCollapsed={setCollapsed} t={t} />
       {/* Content area */}
       <div className="flex flex-col min-w-0 flex-1">
         {/* Mobile horizontal tab nav */}
         <AdminMobileNav tab={tab} setTab={setTab} />
-        {/* Main content */}
-        <div className="flex-1 py-4 md:py-6 px-4 md:px-6 lg:px-8 min-w-0">
-          <div className="w-full max-w-[1440px] mx-auto space-y-4">
+        {/* Main content — proper padding, no extra whitespace */}
+        <main className="flex-1 py-4 md:py-6 px-4 sm:px-6 lg:px-8 min-w-0">
+          <div className="w-full max-w-[1440px] mx-auto space-y-5">
             {renderPanel()}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

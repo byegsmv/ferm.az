@@ -13,6 +13,10 @@ export default function CheckoutPage() {
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Coupon state
+  const [couponResult, setCouponResult] = useState(null); // { valid, discount, reason }
+  const [validating, setValidating] = useState(false);
+
   useEffect(() => {
     setItems(getCart());
     if (!getUser()) {
@@ -20,28 +24,56 @@ export default function CheckoutPage() {
     }
   }, [router]);
 
+  async function handleValidateCoupon() {
+    if (!form.couponCode.trim()) {
+      setCouponResult(null);
+      return;
+    }
+    setValidating(true);
+    setCouponResult(null);
+    try {
+      const data = await apiFetch("/api/coupons/validate", {
+        method: "POST",
+        body: JSON.stringify({ code: form.couponCode.trim(), orderSubtotal: cartTotal(items) }),
+      });
+      setCouponResult(data);
+    } catch (e) {
+      setCouponResult({ valid: false, reason: e.message });
+    } finally {
+      setValidating(false);
+    }
+  }
+
+  function getDeliveryCost() {
+    return form.deliveryMethod === "EXPRESS" ? 10 : form.deliveryMethod === "STANDARD" ? 5 : 0;
+  }
+
+  function getDiscount() {
+    return couponResult && couponResult.valid ? couponResult.discount : 0;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      const totalVal = cartTotal(items);
+      const subtotal = cartTotal(items);
       const payload = {
         items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
-        ...(form.couponCode ? { couponCode: form.couponCode } : {}),
+        ...(couponResult && couponResult.valid ? { couponCode: form.couponCode.trim() } : {}),
         shippingAddress: form.shippingAddress,
         shippingRegion: form.shippingRegion,
         shippingCity: form.shippingCity,
         deliveryMethod: form.deliveryMethod,
       };
       const data = await apiFetch("/api/orders", { method: "POST", body: JSON.stringify(payload) });
-      
-      const earnedCoin = (totalVal * 0.02).toFixed(2);
+
+      const earnedCoin = (subtotal * 0.02).toFixed(2);
       if (typeof window !== 'undefined') {
         const current = parseFloat(localStorage.getItem('fermerCoin') || '0');
         localStorage.setItem('fermerCoin', (current + parseFloat(earnedCoin)).toFixed(2));
       }
-      
+
       clearCart();
       setSuccess({ ...data.order, earnedCoin });
     } catch (err) {
@@ -60,7 +92,7 @@ export default function CheckoutPage() {
         <h1 className="text-2xl font-black">Sifariş qəbul edildi!</h1>
         <p className="text-gray-500 mt-2">Sifariş nömrəniz: {success.id?.slice(0, 8)}</p>
         <p className="text-brand-700 font-bold text-lg mt-1">{Number(success.total || 0).toFixed(2)} AZN</p>
-        
+
         <div className="mt-6 bg-gradient-to-r from-yellow-100 to-yellow-50 border border-yellow-200 p-4 rounded-2xl">
           <p className="text-sm text-yellow-800 font-bold">Təbriklər!</p>
           <p className="text-xs text-yellow-700 mt-1">Bu alış-verişdən <strong className="text-lg"><span className="inline-flex items-center gap-1">+{success.earnedCoin} <Icon name="coins" size={18} className="text-amber-500" /></span></strong> FermerCoin qazandınız. Balansınızı Panelinizdən yoxlaya bilərsiniz.</p>
@@ -80,6 +112,11 @@ export default function CheckoutPage() {
       </div>
     );
   }
+
+  const subtotal = cartTotal(items);
+  const deliveryCost = getDeliveryCost();
+  const discount = getDiscount();
+  const total = subtotal - discount + deliveryCost;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -111,9 +148,33 @@ export default function CheckoutPage() {
               <option value="PICKUP">Özüm götürəcəm (Pulsuz)</option>
             </select>
           </div>
+
+          {/* Coupon section */}
           <div>
             <label className="text-sm font-semibold text-gray-700">Kupon kodu (istəyə bağlı)</label>
-            <input className="input-field mt-1" placeholder="XOSGELDIN10" value={form.couponCode} onChange={(e) => setForm({ ...form, couponCode: e.target.value })} />
+            <div className="flex gap-2 mt-1">
+              <input
+                className="input-field flex-1"
+                placeholder="XOSGELDIN10"
+                value={form.couponCode}
+                onChange={(e) => { setForm({ ...form, couponCode: e.target.value }); setCouponResult(null); }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleValidateCoupon(); } }}
+              />
+              <button
+                type="button"
+                onClick={handleValidateCoupon}
+                disabled={validating}
+                className="btn-outline whitespace-nowrap px-4"
+              >
+                {validating ? "Yoxlanılır..." : "Yoxla"}
+              </button>
+            </div>
+            {couponResult && !couponResult.valid && (
+              <p className="text-sm text-red-600 mt-1">❌ {couponResult.reason}</p>
+            )}
+            {couponResult && couponResult.valid && (
+              <p className="text-sm text-green-600 mt-1">✅ Kupon tətbiq edildi! Endirim: <strong>{couponResult.discount.toFixed(2)} AZN</strong> ({couponResult.discountType === "PERCENTAGE" ? "Faiz" : "Sabit"})</p>
+            )}
           </div>
         </div>
 
@@ -132,17 +193,21 @@ export default function CheckoutPage() {
           <div className="space-y-1.5 text-sm">
             <div className="flex justify-between text-gray-600">
               <span>Məhsul məbləği</span>
-              <span>{cartTotal(items).toFixed(2)} AZN</span>
+              <span>{subtotal.toFixed(2)} AZN</span>
             </div>
+            {discount > 0 && (
+              <div className="flex justify-between text-green-600 font-medium">
+                <span>Endirim</span>
+                <span>-{discount.toFixed(2)} AZN</span>
+              </div>
+            )}
             <div className="flex justify-between text-gray-600">
               <span>Çatdırılma</span>
-              <span>{(form.deliveryMethod === "EXPRESS" ? 10 : form.deliveryMethod === "STANDARD" ? 5 : 0).toFixed(2)} AZN</span>
+              <span>{deliveryCost.toFixed(2)} AZN</span>
             </div>
             <div className="flex items-center justify-between font-black text-lg pt-3 border-t border-gray-200">
               <span>Cəmi</span>
-              <span className="text-brand-700">
-                {(cartTotal(items) + (form.deliveryMethod === "EXPRESS" ? 10 : form.deliveryMethod === "STANDARD" ? 5 : 0)).toFixed(2)} AZN
-              </span>
+              <span className="text-brand-700">{total.toFixed(2)} AZN</span>
             </div>
           </div>
           <button type="submit" disabled={loading} className="btn-primary w-full py-3 text-base font-bold shadow-lg">

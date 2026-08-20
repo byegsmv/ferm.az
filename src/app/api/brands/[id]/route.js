@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/auth";
+import { getAuthUser, requireRole } from "@/lib/auth";
+import { brandUpdateSchema } from "@/lib/validators";
 
 // GET /api/brands/[id] — public brand detail with products
 export async function GET(request, { params }) {
@@ -22,32 +23,64 @@ export async function GET(request, { params }) {
 
 // PATCH /api/brands/[id] — admin only
 export async function PATCH(request, { params }) {
-  const resolvedParams = await params;
-  const user = await requireRole(request, ["ADMIN", "SUPER_ADMIN"]);
-  if (user.error) return Response.json({ error: user.error }, { status: user.status || 403 });
+  const authUser = await getAuthUser(request);
+  const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
+  if (denied) return denied;
 
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
+
+  let body;
   try {
-    const body = await request.json();
-    const brand = await prisma.brand.update({
-      where: { id: resolvedParams.id },
-      data: body,
-    });
-    return Response.json({ brand });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Yanlış JSON formatı" }, { status: 400 });
   }
+
+  const parsed = brandUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return Response.json(
+      { error: "Validasiya xətası", details: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+
+  const existing = await prisma.brand.findUnique({ where: { id } });
+  if (!existing) {
+    return Response.json({ error: "Brend tapılmadı" }, { status: 404 });
+  }
+
+  const brand = await prisma.brand.update({
+    where: { id },
+    data: parsed.data,
+  });
+
+  return Response.json({ brand });
 }
 
-// DELETE /api/brands/[id]
+// DELETE /api/brands/[id] — admin only
 export async function DELETE(request, { params }) {
-  const resolvedParams = await params;
-  const user = await requireRole(request, ["ADMIN", "SUPER_ADMIN"]);
-  if (user.error) return Response.json({ error: user.error }, { status: user.status || 403 });
+  const authUser = await getAuthUser(request);
+  const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
+  if (denied) return denied;
 
-  try {
-    await prisma.brand.delete({ where: { id: resolvedParams.id } });
-    return Response.json({ success: true });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
+
+  const existing = await prisma.brand.findUnique({
+    where: { id },
+    include: { products: { take: 1 } },
+  });
+  if (!existing) {
+    return Response.json({ error: "Brend tapılmadı" }, { status: 404 });
   }
+  if (existing.products.length > 0) {
+    return Response.json(
+      { error: "Məhsulları olan brend silinə bilməz. Əvvəlcə məhsulları silin və ya başqa brendə köçürün." },
+      { status: 409 }
+    );
+  }
+
+  await prisma.brand.delete({ where: { id } });
+  return Response.json({ success: true });
 }
