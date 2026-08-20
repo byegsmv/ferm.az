@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, requireRole } from "@/lib/auth";
-import { couponCreateSchema } from "@/lib/validators";
+import { couponCreateSchema, couponUpdateSchema } from "@/lib/validators";
 
 export async function GET(request) {
   const authUser = await getAuthUser(request);

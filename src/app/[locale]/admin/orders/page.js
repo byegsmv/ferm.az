@@ -34,6 +34,9 @@ export default function AdminOrdersPage() {
           <h1 className="text-3xl font-extrabold text-gray-900">Sifarişlər</h1>
           <p className="text-gray-500 mt-1">Platforma üzərindən olan bütün sifarişləri idarə edin.</p>
         </div>
+        <div className="text-sm text-gray-500">
+          Cəmi: <span className="font-bold text-gray-900">{items.length}</span>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -49,22 +52,27 @@ export default function AdminOrdersPage() {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loading ? (
-              <tr><td colSpan="5" className="p-8 text-center text-gray-500">Yüklənir...</td></tr>
+              <tr><td colSpan="5" className="p-12 text-center"><div className="animate-pulse text-gray-400">Yüklənir...</div></td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan="5" className="p-8 text-center text-gray-500">Heç bir sifariş tapılmadı.</td></tr>
+              <tr><td colSpan="5" className="p-12 text-center text-gray-500">
+                <div className="text-4xl mb-2">📦</div>
+                <p className="font-medium">Heç bir sifariş tapılmadı</p>
+                <p className="text-sm text-gray-400 mt-1">Sifarişlər gəldikcə burada görünəcək</p>
+              </td></tr>
             ) : items.map(o => (
               <tr key={o.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 font-bold text-gray-900 text-sm">#{o.id.slice(-6).toUpperCase()}</td>
+                <td className="px-6 py-4 font-mono text-sm text-gray-700">#{o.id.slice(-6).toUpperCase()}</td>
                 <td className="px-6 py-4">
-                  <p className="font-bold text-gray-900 text-sm">{o.buyer?.fullName || "Bilinmir"}</p>
+                  <p className="font-medium text-gray-900 text-sm">{o.buyer?.fullName || "—"}</p>
+                  {o.buyer?.email && <p className="text-xs text-gray-500">{o.buyer.email}</p>}
                 </td>
                 <td className="px-6 py-4 text-sm font-bold text-gray-900">{Number(o.total).toLocaleString("az-AZ")} ₼</td>
-                <td className="px-6 py-4 text-sm text-gray-600">{new Date(o.createdAt).toLocaleDateString("az-AZ")}</td>
+                <td className="px-6 py-4 text-sm text-gray-500">{new Date(o.createdAt).toLocaleDateString("az-AZ", { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                 <td className="px-6 py-4">
-                  <select 
-                    value={o.status} 
+                  <select
+                    value={o.status}
                     onChange={e => updateStatus(o.id, e.target.value)}
-                    className={`border border-gray-100 rounded-full text-xs font-bold px-2 py-1 outline-none ${STATUS_COLORS[o.status] || "bg-gray-100 text-gray-700"}`}
+                    className={`inline-block rounded-full text-xs font-bold px-3 py-1 outline-none cursor-pointer ${STATUS_COLORS[o.status] || "bg-gray-100 text-gray-700"}`}
                   >
                     {Object.keys(STATUS_LABELS).map(k => (
                       <option key={k} value={k}>{STATUS_LABELS[k]}</option>
