@@ -17,6 +17,10 @@ const TEMPLATES = {
   "mətn.*dəyiş|text.*change|replace.*text|link.*dəyiş|link.*change|change.*link|facebook.*link|instagram.*link|whatsapp.*link": {
     handler: "linkReplace",
   },
+  // "Banner deaktiv et" / "reklam söndür" → disable ad banners
+  "banner.*deaktiv|banner.*söndür|reklam.*deaktiv|reklam.*söndür|ad.*disable|ad.*deactivate|deaktiv.*banner": {
+    handler: "disableBanners",
+  },
   // "Sync discovery" → auto-scan translations
   "sync.*discovery|discovery|tərcüm.*sync|translation.*sync": {
     handler: "syncDiscovery",
@@ -178,6 +182,50 @@ Sonra bütün əmrlər işləyəcək.`,
       missingKeys: [],
       warnings: [],
     };
+  }
+
+  if (match.handler === "disableBanners") {
+    const { prisma } = await import("@/lib/prisma");
+
+    try {
+      // Get all active ad slots
+      const activeSlots = await prisma.adSlot.findMany({
+        where: { isActive: true },
+        select: { id: true, key: true, isActive: true },
+      });
+
+      if (activeSlots.length === 0) {
+        return {
+          plan: "Aktiv reklam banner-i tapılmadı. Hamısı artıq deaktivdir.",
+          files: [],
+          missingKeys: [],
+          warnings: [],
+        };
+      }
+
+      // Deactivate all
+      for (const slot of activeSlots) {
+        await prisma.adSlot.update({
+          where: { id: slot.id },
+          data: { isActive: false },
+        });
+      }
+
+      return {
+        plan: `✅ ${activeSlots.length} reklam banner-i deaktiv edildi:\n\n${activeSlots.map(s => `• \`${s.key}\` → deaktiv`).join('\n')}`,
+        files: [],
+        missingKeys: [],
+        warnings: [],
+        applyResults: activeSlots.map(s => ({ path: s.key, action: "deactivated" })),
+      };
+    } catch (error) {
+      return {
+        plan: `❌ Xəta: ${error.message}`,
+        files: [],
+        missingKeys: [],
+        warnings: ["Banner deaktiv edilərkən xəta baş verdi"],
+      };
+    }
   }
 
   if (match.handler === "newPage") {
