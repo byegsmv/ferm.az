@@ -100,10 +100,14 @@ Sonra bütün əmrlər işləyəcək.`,
     }
 
     // Find files containing the platform link
-    const footerFiles = ["src/components/Footer.js", "src/components/home/Footer.js"];
+    const targetFiles = [
+      "src/components/Footer.js",
+      "src/components/home/Footer.js",
+      "src/components/Header.js",
+    ];
     const changes = [];
 
-    for (const file of footerFiles) {
+    for (const file of targetFiles) {
       const fullPath = path.join(process.cwd(), file);
       if (!fs.existsSync(fullPath)) continue;
 
@@ -161,7 +165,7 @@ Sonra bütün əmrlər işləyəcək.`,
 
     if (changes.length === 0) {
       return {
-        plan: `${platform} linki tapılmadı. Yoxla:\n- Footer.js\n- home/Footer.js\n\nƏmri dəqiqləşdir.`,
+        plan: `${platform} linki tapılmadı. Yoxla:\n- Footer.js\n- home/Footer.js\n- Header.js\n\nƏmri dəqiqləşdir.`,
         files: [],
         missingKeys: [],
         warnings: [`${platform} URL-i mövcud fayllarda tapılmadı`],
