@@ -188,31 +188,31 @@ Sonra bütün əmrlər işləyəcək.`,
     const { prisma } = await import("@/lib/prisma");
 
     try {
-      // Get all active ad slots
+      // Get all ad slots that are NOT "off"
       const activeSlots = await prisma.adSlot.findMany({
-        where: { isActive: true },
-        select: { id: true, key: true, isActive: true },
+        where: { mode: { not: "off" } },
+        select: { id: true, key: true, mode: true },
       });
 
       if (activeSlots.length === 0) {
         return {
-          plan: "Aktiv reklam banner-i tapılmadı. Hamısı artıq deaktivdir.",
+          plan: "Aktiv reklam banner-i tapılmadı. Hamısı artıq deaktivdir (mode=off).",
           files: [],
           missingKeys: [],
           warnings: [],
         };
       }
 
-      // Deactivate all
+      // Deactivate all by setting mode to "off"
       for (const slot of activeSlots) {
         await prisma.adSlot.update({
           where: { id: slot.id },
-          data: { isActive: false },
+          data: { mode: "off" },
         });
       }
 
       return {
-        plan: `✅ ${activeSlots.length} reklam banner-i deaktiv edildi:\n\n${activeSlots.map(s => `• \`${s.key}\` → deaktiv`).join('\n')}`,
+        plan: `✅ ${activeSlots.length} reklam banner-i deaktiv edildi:\n\n${activeSlots.map(s => `• \`${s.key}\` (${s.mode} → off)`).join('\n')}`,
         files: [],
         missingKeys: [],
         warnings: [],

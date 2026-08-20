@@ -9,8 +9,8 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const { toast, ToastContainer } = useToast();
 
-  useEffect(() => { 
-    apiFetch("/api/orders").then(d => setItems(d.orders || [])).catch(e => toast(e.message, "error")).finally(() => setLoading(false)); 
+  useEffect(() => {
+    apiFetch("/api/orders?view=all").then(d => setItems(d.orders || [])).catch(e => toast(e.message, "error")).finally(() => setLoading(false));
   }, []);
 
   async function updateStatus(id, st) {

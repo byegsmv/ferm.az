@@ -85,29 +85,36 @@ const SIDEBAR_GROUPS_DEF = [
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 function AdminSidebar({ tab, setTab, badges, collapsed, setCollapsed, t }) {
   return (
-    <aside className={`${collapsed ? "w-16" : "w-64"} hidden md:flex flex-col bg-white border-r border-gray-100 transition-all duration-200 shrink-0 h-screen sticky top-0 z-20 overflow-hidden`}>
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 shrink-0">
-        {!collapsed && <span className="font-extrabold text-gray-900 text-sm">Admin Panel</span>}
-        <button onClick={() => setCollapsed(v => !v)} className="btn-icon ml-auto" aria-label="Toggle Sidebar">
+    <aside className={`${collapsed ? "w-[68px]" : "w-60"} hidden md:flex flex-col bg-white border-r border-gray-200/60 transition-all duration-300 ease-in-out shrink-0 h-screen sticky top-0 z-20 overflow-hidden`}>
+      {/* Header */}
+      <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} px-3 py-4 border-b border-gray-100 shrink-0`}>
+        {!collapsed && <span className="font-bold text-gray-900 text-sm tracking-tight">Admin</span>}
+        <button onClick={() => setCollapsed(v => !v)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700" aria-label="Toggle Sidebar">
           <Icon name={collapsed ? "arrowRight" : "arrowLeft"} size={16} />
         </button>
       </div>
-      <nav className="flex-1 overflow-y-auto p-2 space-y-4 min-h-0">
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-1 min-h-0 scrollbar-thin scrollbar-thumb-gray-200">
         {SIDEBAR_GROUPS_DEF.map(group => (
-          <div key={group.label}>
-            {!collapsed && <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 mb-1">{t(group.label, group.label)}</p>}
+          <div key={group.label} className="mb-1">
+            {!collapsed && <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest px-2 mb-1.5">{t(group.label, group.label)}</p>}
             {group.items.map(item => {
               const badgeNum = item.badge === "pending" ? badges?.pendingProducts : item.badge === "reviews" ? badges?.pendingReviews : 0;
               return (
                 <button key={item.id} onClick={() => setTab(item.id)}
-                  className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-3"} px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 relative ${tab === item.id ? "bg-brand-50 text-brand-700 font-semibold" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"}`}>
-                  <Icon name={item.icon} size={18} className="shrink-0" />
-                  {!collapsed && <span className="flex-1 text-left">{t(item.label, item.label)}</span>}
+                  className={`w-full flex items-center ${collapsed ? "justify-center px-2" : "gap-2.5 px-2.5"} py-2 rounded-lg text-sm font-medium transition-all duration-150 relative ${
+                    tab === item.id
+                      ? "bg-brand-50 text-brand-700 font-semibold shadow-sm"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}>
+                  <Icon name={item.icon} size={18} className={`shrink-0 ${tab === item.id ? "text-brand-600" : ""}`} />
+                  {!collapsed && <span className="flex-1 text-left truncate">{t(item.label, item.label)}</span>}
                   {!collapsed && badgeNum > 0 && (
-                    <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{badgeNum}</span>
+                    <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{badgeNum}</span>
                   )}
                   {collapsed && badgeNum > 0 && (
-                    <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full" />
+                    <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full" />
                   )}
                 </button>
               );
@@ -1725,7 +1732,7 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="md:grid md:grid-cols-[auto_1fr] min-h-screen bg-gray-50">
+    <div className="md:grid md:grid-cols-[auto_1fr] min-h-screen bg-gray-50/50">
       <ToastContainer />
       {/* Desktop sidebar — fixed height, sticky top, own scroll */}
       <AdminSidebar tab={tab} setTab={setTab} badges={badges} collapsed={collapsed} setCollapsed={setCollapsed} t={t} />
@@ -1734,8 +1741,8 @@ export default function AdminPanel() {
         {/* Mobile horizontal tab nav */}
         <AdminMobileNav tab={tab} setTab={setTab} />
         {/* Main content */}
-        <div className="flex-1 p-4 md:p-6 min-w-0">
-          <div className="w-full max-w-[1280px] mx-auto animate-fade-in-up space-y-6">
+        <div className="flex-1 py-4 md:py-6 px-4 md:px-6 lg:px-8 min-w-0">
+          <div className="w-full max-w-[1440px] mx-auto space-y-4">
             {renderPanel()}
           </div>
         </div>

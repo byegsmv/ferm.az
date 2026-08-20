@@ -105,6 +105,8 @@ export async function POST(request) {
       files: parsed.files || null,
       missingKeys: parsed.missingKeys || null,
       warnings: parsed.warnings || [],
+      applyResults: parsed.applyResults || null,
+      errors: parsed.errors || [],
     });
 
   } catch (error) {
