@@ -52,7 +52,7 @@ export default async function StoresPage() {
             <p className="text-gray-500">Sizə ən yaxın kənd təsərrüfatı apteklərini və rəsmi dilerləri tapın.</p>
           </div>
           <div className="flex gap-2">
-            <Link href="/dashboard" className="bg-gray-100 text-gray-800 px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-gray-200 font-semibold border border-gray-200">
+            <Link href="/dashboard?tab=create-store" className="bg-gray-100 text-gray-800 px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-gray-200 font-semibold border border-gray-200">
               <Icon name="store" size={18} /> Mağaza Aç
             </Link>
             <a href="#interactive-map" className="bg-brand-600 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-brand-700 font-semibold">
