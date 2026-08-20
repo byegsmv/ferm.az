@@ -13,9 +13,9 @@ const TEMPLATES = {
   "yeni.*kategori|new.*categor|create.*categor": {
     handler: "newCategory",
   },
-  // "Mətn dəyişdir" → text replacement
-  "mətn.*dəyiş|text.*change|replace.*text": {
-    handler: "textReplace",
+  // "Mətn dəyişdir" / "linki dəyişdir" → text/link replacement
+  "mətn.*dəyiş|text.*change|replace.*text|link.*dəyiş|link.*change|change.*link|facebook.*link|instagram.*link|whatsapp.*link": {
+    handler: "linkReplace",
   },
   // "Sync discovery" → auto-scan translations
   "sync.*discovery|discovery|tərcüm.*sync|translation.*sync": {
@@ -62,6 +62,116 @@ Sonra bütün əmrlər işləyəcək.`,
       plan: `Auto-Discovery tamamlandı!\n\n• Tapıldı: ${result.totalScanned} açar\n• Eksik: ${result.missing}\n• Yaradıldı: ${result.created}\n• Yeniləndi: ${result.updated}`,
       files: [],
       missingKeys: result.missingKeys || [],
+      warnings: [],
+    };
+  }
+
+  if (match.handler === "linkReplace") {
+    const fs = await import("fs");
+    const path = await import("path");
+
+    // Extract old/new links from command
+    // "facebook linkini https://new-url ile evez et"
+    const urlMatch = command.match(/https?:\/\/[^\s"']+/);
+    const newUrl = urlMatch ? urlMatch[0] : null;
+
+    // Detect platform from command
+    const platform = command.toLowerCase().includes("facebook") ? "facebook"
+      : command.toLowerCase().includes("instagram") ? "instagram"
+      : command.toLowerCase().includes("whatsapp") ? "whatsapp"
+      : null;
+
+    if (!platform) {
+      return {
+        plan: "Hansı platformun linkini dəyişmək istəyirsən? (facebook, instagram, whatsapp)",
+        files: [],
+        missingKeys: [],
+        warnings: ["Platform aşkar edilmədi"],
+      };
+    }
+
+    if (!newUrl) {
+      return {
+        plan: `Yeni ${platform} linkini əmrinə daxil et.\nMəsələn: "${platform} linkini https://facebook.com/yenisehife ile evez et"`,
+        files: [],
+        missingKeys: [],
+        warnings: ["Yeni URL tapılmadı"],
+      };
+    }
+
+    // Find files containing the platform link
+    const footerFiles = ["src/components/Footer.js", "src/components/home/Footer.js"];
+    const changes = [];
+
+    for (const file of footerFiles) {
+      const fullPath = path.join(process.cwd(), file);
+      if (!fs.existsSync(fullPath)) continue;
+
+      const content = fs.readFileSync(fullPath, "utf-8");
+      let modified = false;
+      let newContent = content;
+
+      // Replace platform-specific URLs
+      if (platform === "facebook") {
+        // Match facebook URL patterns
+        const fbRegex = /https?:\/\/(?:www\.)?(?:facebook\.com|fb\.com)\/[^\s"')>]*/gi;
+        const matches = content.match(fbRegex);
+        if (matches) {
+          for (const oldUrl of matches) {
+            newContent = newContent.replace(oldUrl, newUrl);
+            modified = true;
+          }
+        }
+        // Also check st("footer.facebookUrl", "...") pattern
+        const fbDefaultRegex = /("(?:footer\.facebookUrl)".*?,\s*")([^"]*)(")/;
+        const fbMatch = content.match(fbDefaultRegex);
+        if (fbMatch) {
+          newContent = newContent.replace(fbDefaultRegex, `$1${newUrl}$3`);
+          modified = true;
+        }
+      } else if (platform === "instagram") {
+        const igRegex = /https?:\/\/(?:www\.)?instagram\.com\/[^\s"')>]*/gi;
+        const matches = content.match(igRegex);
+        if (matches) {
+          for (const oldUrl of matches) {
+            newContent = newContent.replace(oldUrl, newUrl);
+            modified = true;
+          }
+        }
+      } else if (platform === "whatsapp") {
+        const waRegex = /https?:\/\/(?:wa\.me|api\.whatsapp\.com)[^\s"')>]*/gi;
+        const matches = content.match(waRegex);
+        if (matches) {
+          for (const oldUrl of matches) {
+            newContent = newContent.replace(oldUrl, newUrl);
+            modified = true;
+          }
+        }
+      }
+
+      if (modified) {
+        changes.push({
+          path: file,
+          action: "update",
+          content: newContent,
+          reason: `${platform} linki dəyişdirildi: ${newUrl}`,
+        });
+      }
+    }
+
+    if (changes.length === 0) {
+      return {
+        plan: `${platform} linki tapılmadı. Yoxla:\n- Footer.js\n- home/Footer.js\n\nƏmri dəqiqləşdir.`,
+        files: [],
+        missingKeys: [],
+        warnings: [`${platform} URL-i mövcud fayllarda tapılmadı`],
+      };
+    }
+
+    return {
+      plan: `${platform} linki dəyişdiriləcək:\n\n${changes.map(c => `📝 \`${c.path}\`\n   → ${newUrl}`).join('\n\n')}`,
+      files: changes,
+      missingKeys: [],
       warnings: [],
     };
   }
