@@ -1,0 +1,1730 @@
+[
+  {
+    "key": "admin.campaign.active",
+    "group": "admin",
+    "label": "campaign.active",
+    "valueAz": "Aktiv",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/dashboard/AdminPanel.js"
+  },
+  {
+    "key": "admin.campaign.paused",
+    "group": "admin",
+    "label": "campaign.paused",
+    "valueAz": "Dayandırılıb",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/dashboard/AdminPanel.js"
+  },
+  {
+    "key": "admin.campaign.scheduled",
+    "group": "admin",
+    "label": "campaign.scheduled",
+    "valueAz": "Planlanmış",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/dashboard/AdminPanel.js"
+  },
+  {
+    "key": "admin.title.adSlots",
+    "group": "admin",
+    "label": "title.adSlots",
+    "valueAz": "Reklam Yerləri",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/dashboard/AdminPanel.js"
+  },
+  {
+    "key": "admin.title.campaigns",
+    "group": "admin",
+    "label": "title.campaigns",
+    "valueAz": "Kampaniyalar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/dashboard/AdminPanel.js"
+  },
+  {
+    "key": "city.modalTitle",
+    "group": "city",
+    "label": "modalTitle",
+    "valueAz": "Şəhərinizi seçin",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/CitySelectModal.js"
+  },
+  {
+    "key": "footer.aboutDescription",
+    "group": "footer",
+    "label": "aboutDescription",
+    "valueAz": "Azərbaycanın kənd təsərrüfatı üçün premium rəqəmsal bazarı. Fermerlər, mağazalar və alıcıları bir platformada birləşdiririk.",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.aiAgronomist",
+    "group": "footer",
+    "label": "aiAgronomist",
+    "valueAz": "AI Aqronom",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.allListings",
+    "group": "footer",
+    "label": "allListings",
+    "valueAz": "Bütün elanlar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.blog",
+    "group": "footer",
+    "label": "blog",
+    "valueAz": "Bloq",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.cart",
+    "group": "footer",
+    "label": "cart",
+    "valueAz": "Səbət",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.chipAiSupport",
+    "group": "footer",
+    "label": "chipAiSupport",
+    "valueAz": "AI dəstəyi",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.chipMobileOptimization",
+    "group": "footer",
+    "label": "chipMobileOptimization",
+    "valueAz": "Mobil optimizasiya",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.chipPremium",
+    "group": "footer",
+    "label": "chipPremium",
+    "valueAz": "Premium",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.email",
+    "group": "footer",
+    "label": "email",
+    "valueAz": "info@fermermarket.az",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Footer.js"
+  },
+  {
+    "key": "footer.facebookUrl",
+    "group": "footer",
+    "label": "facebookUrl",
+    "valueAz": "https://facebook.com",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Footer.js"
+  },
+  {
+    "key": "footer.fertilizer",
+    "group": "footer",
+    "label": "fertilizer",
+    "valueAz": "Gübrə & Kimya",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.followUs",
+    "group": "footer",
+    "label": "followUs",
+    "valueAz": "Bizi izləyin",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.instagramUrl",
+    "group": "footer",
+    "label": "instagramUrl",
+    "valueAz": "https://instagram.com",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Footer.js"
+  },
+  {
+    "key": "footer.leaders",
+    "group": "footer",
+    "label": "leaders",
+    "valueAz": "Liderlər",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.livestock",
+    "group": "footer",
+    "label": "livestock",
+    "valueAz": "Heyvandarlıq",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.login",
+    "group": "footer",
+    "label": "login",
+    "valueAz": "Giriş",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.machinery",
+    "group": "footer",
+    "label": "machinery",
+    "valueAz": "Texnika",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.messages",
+    "group": "footer",
+    "label": "messages",
+    "valueAz": "Mesajlar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.moreLinksSoon",
+    "group": "footer",
+    "label": "moreLinksSoon",
+    "valueAz": "Digər linklər tezliklə əlavə ediləcək",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.myAccount",
+    "group": "footer",
+    "label": "myAccount",
+    "valueAz": "Hesabım",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.phone",
+    "group": "footer",
+    "label": "phone",
+    "valueAz": "+994 10 521 09 09",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Footer.js"
+  },
+  {
+    "key": "footer.postAd",
+    "group": "footer",
+    "label": "postAd",
+    "valueAz": "Elan yerləşdir",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.register",
+    "group": "footer",
+    "label": "register",
+    "valueAz": "Qeydiyyat",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.sectionCompany",
+    "group": "footer",
+    "label": "sectionCompany",
+    "valueAz": "Şirkət",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.sectionProducts",
+    "group": "footer",
+    "label": "sectionProducts",
+    "valueAz": "Məhsullar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.sectionSupport",
+    "group": "footer",
+    "label": "sectionSupport",
+    "valueAz": "Dəstək",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "footer.stores",
+    "group": "footer",
+    "label": "stores",
+    "valueAz": "Mağazalar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/Footer.js"
+  },
+  {
+    "key": "header.adminPanel",
+    "group": "header",
+    "label": "adminPanel",
+    "valueAz": "Admin Panel",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "header.cityLabel",
+    "group": "header",
+    "label": "cityLabel",
+    "valueAz": "Şəhər:",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "header.dashboard",
+    "group": "header",
+    "label": "dashboard",
+    "valueAz": "İdarə paneli",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "header.loginButton",
+    "group": "header",
+    "label": "loginButton",
+    "valueAz": "Giriş",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "header.logoAlt",
+    "group": "header",
+    "label": "logoAlt",
+    "valueAz": "FermerMarket Logo",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "header.logout",
+    "group": "header",
+    "label": "logout",
+    "valueAz": "Çıxış",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "header.newListing",
+    "group": "header",
+    "label": "newListing",
+    "valueAz": "Yeni Elan",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "header.notSelected",
+    "group": "header",
+    "label": "notSelected",
+    "valueAz": "Seçilməyib",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "header.searchPlaceholder",
+    "group": "header",
+    "label": "searchPlaceholder",
+    "valueAz": "Məhsul, şirkət, gübrə, texnika axtar...",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "homepage.agronomActiveTime",
+    "group": "homepage",
+    "label": "agronomActiveTime",
+    "valueAz": "24/7 aktiv",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/AgronomCard.js"
+  },
+  {
+    "key": "homepage.agronomAskQuestion",
+    "group": "homepage",
+    "label": "agronomAskQuestion",
+    "valueAz": "Sual Ver",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/AgronomCard.js"
+  },
+  {
+    "key": "homepage.agronomBadge",
+    "group": "homepage",
+    "label": "agronomBadge",
+    "valueAz": "AI ilə işləyir",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/AgronomCard.js"
+  },
+  {
+    "key": "homepage.agronomDesc",
+    "group": "homepage",
+    "label": "agronomDesc",
+    "valueAz": "Bitkinizdə xəstəlik var? Şəkil göndərin, AI analiz etsin. Torpaq, məhsul, iqlim haqqında sual verin.",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/AgronomCard.js"
+  },
+  {
+    "key": "homepage.agronomFeat1",
+    "group": "homepage",
+    "label": "agronomFeat1",
+    "valueAz": "Xəstəlik Analizi",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/AgronomCard.js"
+  },
+  {
+    "key": "homepage.agronomFeat2",
+    "group": "homepage",
+    "label": "agronomFeat2",
+    "valueAz": "Gübrə Məsləhəti",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/AgronomCard.js"
+  },
+  {
+    "key": "homepage.agronomFeat3",
+    "group": "homepage",
+    "label": "agronomFeat3",
+    "valueAz": "Hava Proqnozu",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/AgronomCard.js"
+  },
+  {
+    "key": "homepage.agronomFeat4",
+    "group": "homepage",
+    "label": "agronomFeat4",
+    "valueAz": "Qiymət İndeksi",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/AgronomCard.js"
+  },
+  {
+    "key": "homepage.agronomFeat5",
+    "group": "homepage",
+    "label": "agronomFeat5",
+    "valueAz": "Əkin Təqvimi",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/AgronomCard.js"
+  },
+  {
+    "key": "homepage.agronomSendPhoto",
+    "group": "homepage",
+    "label": "agronomSendPhoto",
+    "valueAz": "Şəkil Göndər",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/AgronomCard.js"
+  },
+  {
+    "key": "homepage.agronomTitle",
+    "group": "homepage",
+    "label": "agronomTitle",
+    "valueAz": "AI Aqronom",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/AgronomCard.js"
+  },
+  {
+    "key": "homepage.allCategoriesLink",
+    "group": "homepage",
+    "label": "allCategoriesLink",
+    "valueAz": "Bütün kateqoriyalar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/CategoriesSlider.js"
+  },
+  {
+    "key": "homepage.blogCatAgronomy",
+    "group": "homepage",
+    "label": "blogCatAgronomy",
+    "valueAz": "Aqronomiya",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/BlogSection.js"
+  },
+  {
+    "key": "homepage.blogCatMarket",
+    "group": "homepage",
+    "label": "blogCatMarket",
+    "valueAz": "Bazar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/BlogSection.js"
+  },
+  {
+    "key": "homepage.blogCatNews",
+    "group": "homepage",
+    "label": "blogCatNews",
+    "valueAz": "Xəbərlər",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/BlogSection.js"
+  },
+  {
+    "key": "homepage.blogCatTips",
+    "group": "homepage",
+    "label": "blogCatTips",
+    "valueAz": "Tövsiyyələr",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/BlogSection.js"
+  },
+  {
+    "key": "homepage.blogDefaultAuthor",
+    "group": "homepage",
+    "label": "blogDefaultAuthor",
+    "valueAz": "FermerMarket",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/BlogSection.js"
+  },
+  {
+    "key": "homepage.blogSeeAll",
+    "group": "homepage",
+    "label": "blogSeeAll",
+    "valueAz": "Hamısı",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/BlogSection.js"
+  },
+  {
+    "key": "homepage.blogSubtitle",
+    "group": "homepage",
+    "label": "blogSubtitle",
+    "valueAz": "Kənd təsərrüfatı haqqında faydalı məqalələr",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/BlogSection.js"
+  },
+  {
+    "key": "homepage.blogTitle",
+    "group": "homepage",
+    "label": "blogTitle",
+    "valueAz": "Fermer Məsləhətləri",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/BlogSection.js"
+  },
+  {
+    "key": "homepage.categoriesSubtitle",
+    "group": "homepage",
+    "label": "categoriesSubtitle",
+    "valueAz": "Məhsul növünü seçin",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/CategoriesSlider.js"
+  },
+  {
+    "key": "homepage.categoriesTitle",
+    "group": "homepage",
+    "label": "categoriesTitle",
+    "valueAz": "Kateqoriyalar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/CategoriesSlider.js"
+  },
+  {
+    "key": "homepage.catSliderNext",
+    "group": "homepage",
+    "label": "catSliderNext",
+    "valueAz": "Sonrakı kategoriya",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/CategorySlider.js"
+  },
+  {
+    "key": "homepage.catSliderPauseHint",
+    "group": "homepage",
+    "label": "catSliderPauseHint",
+    "valueAz": "Üzərinə gəlin - slider dayanacaq",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/CategorySlider.js"
+  },
+  {
+    "key": "homepage.catSliderPrev",
+    "group": "homepage",
+    "label": "catSliderPrev",
+    "valueAz": "Əvvəlki kategoriya",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/CategorySlider.js"
+  },
+  {
+    "key": "homepage.catSliderSubtitle",
+    "group": "homepage",
+    "label": "catSliderSubtitle",
+    "valueAz": "Bütün məhsulları kəşf edin",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/CategorySlider.js"
+  },
+  {
+    "key": "homepage.catSliderTitle",
+    "group": "homepage",
+    "label": "catSliderTitle",
+    "valueAz": "Kateqoriyalar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/CategorySlider.js"
+  },
+  {
+    "key": "homepage.heroSearchBtn",
+    "group": "homepage",
+    "label": "heroSearchBtn",
+    "valueAz": "Axtar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/HeroSearch.js"
+  },
+  {
+    "key": "homepage.heroSearchDiseases",
+    "group": "homepage",
+    "label": "heroSearchDiseases",
+    "valueAz": "Xəstəliklər",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/HeroSearch.js"
+  },
+  {
+    "key": "homepage.heroSearchIngredients",
+    "group": "homepage",
+    "label": "heroSearchIngredients",
+    "valueAz": "Aktiv Maddələr",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/HeroSearch.js"
+  },
+  {
+    "key": "homepage.heroSearchNoResults",
+    "group": "homepage",
+    "label": "heroSearchNoResults",
+    "valueAz": "Nəticə tapılmadı",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/HeroSearch.js"
+  },
+  {
+    "key": "homepage.heroSearchPests",
+    "group": "homepage",
+    "label": "heroSearchPests",
+    "valueAz": "Zərərvericilər",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/HeroSearch.js"
+  },
+  {
+    "key": "homepage.heroSearchPlaceholder",
+    "group": "homepage",
+    "label": "heroSearchPlaceholder",
+    "valueAz": "Nə axtarırsınız? (məs: Pomidor toxumu)",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/HeroSearch.js"
+  },
+  {
+    "key": "homepage.heroSearchProductCountUnit",
+    "group": "homepage",
+    "label": "heroSearchProductCountUnit",
+    "valueAz": "məhsul",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/HeroSearch.js"
+  },
+  {
+    "key": "homepage.heroSearchProducts",
+    "group": "homepage",
+    "label": "heroSearchProducts",
+    "valueAz": "Məhsullar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/HeroSearch.js"
+  },
+  {
+    "key": "homepage.heroSearchStores",
+    "group": "homepage",
+    "label": "heroSearchStores",
+    "valueAz": "Mağazalar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/HeroSearch.js"
+  },
+  {
+    "key": "homepage.heroSearchTrending",
+    "group": "homepage",
+    "label": "heroSearchTrending",
+    "valueAz": "Trend Axtarışlar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/HeroSearch.js"
+  },
+  {
+    "key": "homepage.minReadUnit",
+    "group": "homepage",
+    "label": "minReadUnit",
+    "valueAz": "dəq",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/BlogSection.js"
+  },
+  {
+    "key": "homepage.nextBtn",
+    "group": "homepage",
+    "label": "nextBtn",
+    "valueAz": "Növbəti",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/CategoriesSlider.js"
+  },
+  {
+    "key": "homepage.prevBtn",
+    "group": "homepage",
+    "label": "prevBtn",
+    "valueAz": "Əvvəlki",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/CategoriesSlider.js"
+  },
+  {
+    "key": "homepage.productUnit",
+    "group": "homepage",
+    "label": "productUnit",
+    "valueAz": "məhsul",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/CategorySlider.js"
+  },
+  {
+    "key": "homepage.promoCta1",
+    "group": "homepage",
+    "label": "promoCta1",
+    "valueAz": "İndi Bax",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoCta2",
+    "group": "homepage",
+    "label": "promoCta2",
+    "valueAz": "Kəşf Et",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoCta3",
+    "group": "homepage",
+    "label": "promoCta3",
+    "valueAz": "Sınayın",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoSubtitle1",
+    "group": "homepage",
+    "label": "promoSubtitle1",
+    "valueAz": "Toxum, gübrə və aqrar avadanlıqlarda 30%-ə qədər endirim",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoSubtitle2",
+    "group": "homepage",
+    "label": "promoSubtitle2",
+    "valueAz": "Seçilmiş satıcıların keyfiyyətli məhsulları bir yerdə",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoSubtitle3",
+    "group": "homepage",
+    "label": "promoSubtitle3",
+    "valueAz": "Bitkinizdəki xəstəlikləri şəkil göndərərək analiz etdirin",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoTag1",
+    "group": "homepage",
+    "label": "promoTag1",
+    "valueAz": "Kampaniya",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoTag2",
+    "group": "homepage",
+    "label": "promoTag2",
+    "valueAz": "Premium",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoTag3",
+    "group": "homepage",
+    "label": "promoTag3",
+    "valueAz": "Yeni Xüsusiyyət",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoTitle1",
+    "group": "homepage",
+    "label": "promoTitle1",
+    "valueAz": "Yaz Mövsümü Endirimləri",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoTitle2",
+    "group": "homepage",
+    "label": "promoTitle2",
+    "valueAz": "Premium Elanlar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoTitle3",
+    "group": "homepage",
+    "label": "promoTitle3",
+    "valueAz": "AI Aqronom",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.promoViewBtn",
+    "group": "homepage",
+    "label": "promoViewBtn",
+    "valueAz": "Bax",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/PromoSlider.js"
+  },
+  {
+    "key": "homepage.statActiveListings",
+    "group": "homepage",
+    "label": "statActiveListings",
+    "valueAz": "Aktiv Elan",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/StatsSection.js"
+  },
+  {
+    "key": "homepage.statFarmers",
+    "group": "homepage",
+    "label": "statFarmers",
+    "valueAz": "Fermer",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/StatsSection.js"
+  },
+  {
+    "key": "homepage.statSatisfiedUsers",
+    "group": "homepage",
+    "label": "statSatisfiedUsers",
+    "valueAz": "Məmnun İstifadəçi",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/StatsSection.js"
+  },
+  {
+    "key": "homepage.statsSubtitle",
+    "group": "homepage",
+    "label": "statsSubtitle",
+    "valueAz": "Azərbaycanlı fermerlər bizi seçir",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/StatsSection.js"
+  },
+  {
+    "key": "homepage.statsTitle",
+    "group": "homepage",
+    "label": "statsTitle",
+    "valueAz": "Niyə FermerMarket?",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/StatsSection.js"
+  },
+  {
+    "key": "homepage.statStores",
+    "group": "homepage",
+    "label": "statStores",
+    "valueAz": "Mağaza",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/StatsSection.js"
+  },
+  {
+    "key": "homepage.weatherWind",
+    "group": "homepage",
+    "label": "weatherWind",
+    "valueAz": "külək",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/home/WeatherWidget.js"
+  },
+  {
+    "key": "nav.agronom",
+    "group": "nav",
+    "label": "agronom",
+    "valueAz": "Aqronom",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "nav.blog",
+    "group": "nav",
+    "label": "blog",
+    "valueAz": "Bloq",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "nav.brands",
+    "group": "nav",
+    "label": "brands",
+    "valueAz": "Brendlər",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "nav.campaigns",
+    "group": "nav",
+    "label": "campaigns",
+    "valueAz": "Kampaniyalar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "nav.catalog",
+    "group": "nav",
+    "label": "catalog",
+    "valueAz": "Kataloq",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/BottomNav.js"
+  },
+  {
+    "key": "nav.categories",
+    "group": "nav",
+    "label": "categories",
+    "valueAz": "Kateqoriyalar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "nav.closeModal",
+    "group": "nav",
+    "label": "closeModal",
+    "valueAz": "Bağla",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/CitySelectModal.js"
+  },
+  {
+    "key": "nav.favorites",
+    "group": "nav",
+    "label": "favorites",
+    "valueAz": "Seçilmiş",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/BottomNav.js"
+  },
+  {
+    "key": "nav.home",
+    "group": "nav",
+    "label": "home",
+    "valueAz": "Əsas",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/BottomNav.js"
+  },
+  {
+    "key": "nav.login",
+    "group": "nav",
+    "label": "login",
+    "valueAz": "Giriş",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/BottomNav.js"
+  },
+  {
+    "key": "nav.messages",
+    "group": "nav",
+    "label": "messages",
+    "valueAz": "Mesajlar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/BottomNav.js"
+  },
+  {
+    "key": "nav.notificationsAria",
+    "group": "nav",
+    "label": "notificationsAria",
+    "valueAz": "Bildirişlər",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/NotificationBell.js"
+  },
+  {
+    "key": "nav.notificationsDeleteAria",
+    "group": "nav",
+    "label": "notificationsDeleteAria",
+    "valueAz": "Sil",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/NotificationBell.js"
+  },
+  {
+    "key": "nav.notificationsEmpty",
+    "group": "nav",
+    "label": "notificationsEmpty",
+    "valueAz": "Bildiriş yoxdur",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/NotificationBell.js"
+  },
+  {
+    "key": "nav.notificationsMarkAllRead",
+    "group": "nav",
+    "label": "notificationsMarkAllRead",
+    "valueAz": "Hamısını oxu",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/NotificationBell.js"
+  },
+  {
+    "key": "nav.notificationsTitle",
+    "group": "nav",
+    "label": "notificationsTitle",
+    "valueAz": "Bildirişlər",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/NotificationBell.js"
+  },
+  {
+    "key": "nav.postAdAria",
+    "group": "nav",
+    "label": "postAdAria",
+    "valueAz": "Elan yerləşdir",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/BottomNav.js"
+  },
+  {
+    "key": "nav.products",
+    "group": "nav",
+    "label": "products",
+    "valueAz": "Məhsullar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "nav.profile",
+    "group": "nav",
+    "label": "profile",
+    "valueAz": "Profil",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/BottomNav.js"
+  },
+  {
+    "key": "nav.selectLanguage",
+    "group": "nav",
+    "label": "selectLanguage",
+    "valueAz": "Dili seçin",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/LanguageSwitcher.js"
+  },
+  {
+    "key": "nav.sell",
+    "group": "nav",
+    "label": "sell",
+    "valueAz": "Sat",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/BottomNav.js"
+  },
+  {
+    "key": "nav.stores",
+    "group": "nav",
+    "label": "stores",
+    "valueAz": "Mağazalar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "products.addedToCompare",
+    "group": "products",
+    "label": "addedToCompare",
+    "valueAz": "Müqayisəyə əlavə edildi",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/CompareButton.js"
+  },
+  {
+    "key": "products.addToFavorites",
+    "group": "products",
+    "label": "addToFavorites",
+    "valueAz": "Sevimlilərə əlavə et",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/ProductCard.js"
+  },
+  {
+    "key": "products.allCategories",
+    "group": "products",
+    "label": "allCategories",
+    "valueAz": "Bütün Kateqoriyalar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/categories/page.js, app/[locale]/categories/[slug]/page.js"
+  },
+  {
+    "key": "products.allListings",
+    "group": "products",
+    "label": "allListings",
+    "valueAz": "Bütün Elanlar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/products/page.js"
+  },
+  {
+    "key": "products.brandNotFound",
+    "group": "products",
+    "label": "brandNotFound",
+    "valueAz": "Brend tapılmadı",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/brands/[slug]/page.js"
+  },
+  {
+    "key": "products.brandProductsSuffix",
+    "group": "products",
+    "label": "brandProductsSuffix",
+    "valueAz": "məhsulları",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/brands/[slug]/page.js"
+  },
+  {
+    "key": "products.brandsSubtitle",
+    "group": "products",
+    "label": "brandsSubtitle",
+    "valueAz": "Rəsmi distribütor brendləri və istehsalçılar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/brands/page.js"
+  },
+  {
+    "key": "products.brandsTitle",
+    "group": "products",
+    "label": "brandsTitle",
+    "valueAz": "Brendlər",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/brands/page.js"
+  },
+  {
+    "key": "products.compare",
+    "group": "products",
+    "label": "compare",
+    "valueAz": "Müqayisə et",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/CompareButton.js"
+  },
+  {
+    "key": "products.compareActiveIngredients",
+    "group": "products",
+    "label": "compareActiveIngredients",
+    "valueAz": "Aktiv Maddələr",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.compareCountryOfOrigin",
+    "group": "products",
+    "label": "compareCountryOfOrigin",
+    "valueAz": "İstehsalçı Ölkə",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.compareEstHectareCost",
+    "group": "products",
+    "label": "compareEstHectareCost",
+    "valueAz": "Təxmini Hektar Xərci",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.compareIsOrganic",
+    "group": "products",
+    "label": "compareIsOrganic",
+    "valueAz": "Orqanik Məhsul?",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.compareManufacturer",
+    "group": "products",
+    "label": "compareManufacturer",
+    "valueAz": "İstehsalçı",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.compareMaxApplications",
+    "group": "products",
+    "label": "compareMaxApplications",
+    "valueAz": "Maks. Tətbiq Sayı",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.compareNormTimesPrice",
+    "group": "products",
+    "label": "compareNormTimesPrice",
+    "valueAz": "Norma × Qiymət",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.comparePageDesc",
+    "group": "products",
+    "label": "comparePageDesc",
+    "valueAz": "Məhsulların xüsusiyyətlərini yan-yana müqayisə edin və ən uyğununu seçin.",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.comparePageTitle",
+    "group": "products",
+    "label": "comparePageTitle",
+    "valueAz": "Müqayisə Cədvəli",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.comparePreparativeForm",
+    "group": "products",
+    "label": "comparePreparativeForm",
+    "valueAz": "Preparativ Forma",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.compareStockStatus",
+    "group": "products",
+    "label": "compareStockStatus",
+    "valueAz": "Stok Vəziyyəti",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.compareStoreSeller",
+    "group": "products",
+    "label": "compareStoreSeller",
+    "valueAz": "Mağaza / Satıcı",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.compareTableTitle",
+    "group": "products",
+    "label": "compareTableTitle",
+    "valueAz": "Məhsul Müqayisəsi",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.compareUseNorm",
+    "group": "products",
+    "label": "compareUseNorm",
+    "valueAz": "Tətbiq Norması",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.compareWaitingPeriodDays",
+    "group": "products",
+    "label": "compareWaitingPeriodDays",
+    "valueAz": "Gözləmə Müddəti (gün)",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.corporateBadge",
+    "group": "products",
+    "label": "corporateBadge",
+    "valueAz": "Korporativ",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/ProductCard.js"
+  },
+  {
+    "key": "products.currencyAzn",
+    "group": "products",
+    "label": "currencyAzn",
+    "valueAz": "AZN",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/ProductCard.js"
+  },
+  {
+    "key": "products.emptyCompareTitle",
+    "group": "products",
+    "label": "emptyCompareTitle",
+    "valueAz": "Müqayisə siyahısı boşdur",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.errorLoadingProducts",
+    "group": "products",
+    "label": "errorLoadingProducts",
+    "valueAz": "Məhsulları yükləmək mümkün olmadı.",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.fallbackCategoryNotice",
+    "group": "products",
+    "label": "fallbackCategoryNotice",
+    "valueAz": "Bu kateqoriyada dəqiq uyğun elan tapılmadı. Sizin üçün oxşar kateqoriyaların elanlarını göstəririk.",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/products/page.js"
+  },
+  {
+    "key": "products.featuredBadge",
+    "group": "products",
+    "label": "featuredBadge",
+    "valueAz": "ÖNE ÇIXAN",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/ProductCard.js"
+  },
+  {
+    "key": "products.inFavorites",
+    "group": "products",
+    "label": "inFavorites",
+    "valueAz": "Sevimlilərə əlavə edilib",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/ProductCard.js"
+  },
+  {
+    "key": "products.installmentLabel",
+    "group": "products",
+    "label": "installmentLabel",
+    "valueAz": "Hissəli ödəniş",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/ProductCard.js"
+  },
+  {
+    "key": "products.inStock",
+    "group": "products",
+    "label": "inStock",
+    "valueAz": "Anbarda var",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.listingsFound",
+    "group": "products",
+    "label": "listingsFound",
+    "valueAz": "elan tapıldı",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/products/page.js"
+  },
+  {
+    "key": "products.loading",
+    "group": "products",
+    "label": "loading",
+    "valueAz": "Yüklənir...",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/brands/[slug]/page.js, app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.loadingCompareData",
+    "group": "products",
+    "label": "loadingCompareData",
+    "valueAz": "Müqayisə məlumatları yüklənir...",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.maxCompareLimit",
+    "group": "products",
+    "label": "maxCompareLimit",
+    "valueAz": "Maksimum 5 məhsul müqayisə edilə bilər",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/CompareButton.js"
+  },
+  {
+    "key": "products.minOrderLabel",
+    "group": "products",
+    "label": "minOrderLabel",
+    "valueAz": "Min:",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/ProductCard.js"
+  },
+  {
+    "key": "products.noProductsForBrand",
+    "group": "products",
+    "label": "noProductsForBrand",
+    "valueAz": "Bu brendin məhsulu yoxdur",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/brands/[slug]/page.js"
+  },
+  {
+    "key": "products.noProductsFound",
+    "group": "products",
+    "label": "noProductsFound",
+    "valueAz": "Heç bir elan tapılmadı",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/products/page.js"
+  },
+  {
+    "key": "products.noProductsFoundDesc",
+    "group": "products",
+    "label": "noProductsFoundDesc",
+    "valueAz": "Axtarış şərtlərinizə uyğun nəticə yoxdur. Zəhmət olmasa filtrləri dəyişərək yenidən yoxlayın.",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/products/page.js"
+  },
+  {
+    "key": "products.notSpecified",
+    "group": "products",
+    "label": "notSpecified",
+    "valueAz": "Qeyd edilməyib",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.outOfStock",
+    "group": "products",
+    "label": "outOfStock",
+    "valueAz": "Bitib",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.popularBrands",
+    "group": "products",
+    "label": "popularBrands",
+    "valueAz": "Məşhur Brendlər",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/categories/page.js"
+  },
+  {
+    "key": "products.popularStores",
+    "group": "products",
+    "label": "popularStores",
+    "valueAz": "Məşhur Mağazalar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/categories/page.js"
+  },
+  {
+    "key": "products.productsCountLabel",
+    "group": "products",
+    "label": "productsCountLabel",
+    "valueAz": "məhsul",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/brands/page.js, app/[locale]/categories/page.js, app/[locale]/categories/[slug]/page.js, app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.removedFromCompare",
+    "group": "products",
+    "label": "removedFromCompare",
+    "valueAz": "Müqayisədən çıxarıldı",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/CompareButton.js"
+  },
+  {
+    "key": "products.removeFromCompare",
+    "group": "products",
+    "label": "removeFromCompare",
+    "valueAz": "Müqayisədən çıxar",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/CompareButton.js"
+  },
+  {
+    "key": "products.removeFromCompareTitle",
+    "group": "products",
+    "label": "removeFromCompareTitle",
+    "valueAz": "Müqayisədən sil",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.resetFilters",
+    "group": "products",
+    "label": "resetFilters",
+    "valueAz": "Filtrləri Sıfırla",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/products/page.js"
+  },
+  {
+    "key": "products.searchResultsSuffix",
+    "group": "products",
+    "label": "searchResultsSuffix",
+    "valueAz": "üzrə nəticələr",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/products/page.js"
+  },
+  {
+    "key": "products.sponsoredLabel",
+    "group": "products",
+    "label": "sponsoredLabel",
+    "valueAz": "Sponsorlu",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/products/page.js"
+  },
+  {
+    "key": "products.subcategoriesSuffix",
+    "group": "products",
+    "label": "subcategoriesSuffix",
+    "valueAz": "Alt Kateqoriyaları",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/categories/[slug]/page.js"
+  },
+  {
+    "key": "products.unitDays",
+    "group": "products",
+    "label": "unitDays",
+    "valueAz": "gün",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.unitPiece",
+    "group": "products",
+    "label": "unitPiece",
+    "valueAz": "ədəd",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/ProductCard.js"
+  },
+  {
+    "key": "products.view",
+    "group": "products",
+    "label": "view",
+    "valueAz": "Bax",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/CompareButton.js"
+  },
+  {
+    "key": "products.viewAll",
+    "group": "products",
+    "label": "viewAll",
+    "valueAz": "Hamısına bax",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/categories/page.js"
+  },
+  {
+    "key": "products.viewProductsBtn",
+    "group": "products",
+    "label": "viewProductsBtn",
+    "valueAz": "Məhsullara bax",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "products.yesLabel",
+    "group": "products",
+    "label": "yesLabel",
+    "valueAz": "Bəli",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "app/[locale]/compare/page.js"
+  },
+  {
+    "key": "role.admin",
+    "group": "role",
+    "label": "admin",
+    "valueAz": "Admin",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "role.agronomist",
+    "group": "role",
+    "label": "agronomist",
+    "valueAz": "Aqronom",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "role.buyer",
+    "group": "role",
+    "label": "buyer",
+    "valueAz": "Alıcı",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "role.deliveryPartner",
+    "group": "role",
+    "label": "deliveryPartner",
+    "valueAz": "Çatdırılma",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "role.farmer",
+    "group": "role",
+    "label": "farmer",
+    "valueAz": "Fermer",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "role.moderator",
+    "group": "role",
+    "label": "moderator",
+    "valueAz": "Moderator",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "role.store",
+    "group": "role",
+    "label": "store",
+    "valueAz": "Mağaza",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  },
+  {
+    "key": "role.superAdmin",
+    "group": "role",
+    "label": "superAdmin",
+    "valueAz": "Super Admin",
+    "valueEn": null,
+    "valueRu": null,
+    "sourceFiles": "components/Header.js"
+  }
+]

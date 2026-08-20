@@ -8,7 +8,7 @@ import NoCodeAdminStudio from "@/components/dashboard/NoCodeAdminStudio";
 import EmailManager from "./EmailManager";
 import MessagingPanel from "@/components/chat/MessagingPanel";
 import AdminProfile from "@/components/dashboard/AdminProfile";
-import SiteTextsManager from "@/components/dashboard/SiteTextsManager";
+import ContentHub from "@/components/dashboard/ContentHub";
 import AdminSupport from "@/components/dashboard/AdminSupport";
 import AISettingsManager from "@/components/dashboard/AISettingsManager";
 import EmptyState from "@/components/ui/EmptyState";
@@ -1715,7 +1715,7 @@ export default function AdminPanel() {
       );
       case "profile": return <AdminProfile />;
       case "support": return <AdminSupport />;
-      case "site-texts": return <SiteTextsManager />;
+      case "site-texts": return <ContentHub />;
       case "ai-settings": return <AISettingsManager />;
       default: return <EmptyState icon="clock" title="Gəlir..." />;
     }
