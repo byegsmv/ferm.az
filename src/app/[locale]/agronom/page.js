@@ -32,9 +32,18 @@ export default function AgronomPage() {
     if (user && activeTab === "services") {
       apiFetch("/api/agro-services")
         .then((data) => setRequests(data.services || []))
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [user, activeTab]);
+
+  useEffect(() => {
+    if (!selectedService) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [selectedService]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -164,22 +173,20 @@ export default function AgronomPage() {
         <div className="bg-white rounded-2xl p-1.5 shadow-xl border border-gray-100 mb-4 flex gap-1">
           <button
             onClick={() => setActiveTab("ai")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all ${
-              activeTab === "ai"
-                ? "bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-md"
-                : "text-gray-500 hover:bg-gray-50"
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all ${activeTab === "ai"
+              ? "bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-md"
+              : "text-gray-500 hover:bg-gray-50"
+              }`}
           >
             <Icon name="search" size={18} strokeWidth={2.5} />
             AI Analiz
           </button>
           <button
             onClick={() => setActiveTab("services")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all ${
-              activeTab === "services"
-                ? "bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-md"
-                : "text-gray-500 hover:bg-gray-50"
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all ${activeTab === "services"
+              ? "bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-md"
+              : "text-gray-500 hover:bg-gray-50"
+              }`}
           >
             <Icon name="grid" size={18} strokeWidth={2.5} />
             Aqro Xidmətlər
@@ -296,9 +303,9 @@ export default function AgronomPage() {
                           href={`/products/${p.slug}`}
                           className="group bg-gray-50 rounded-2xl overflow-hidden hover:shadow-md transition-all border border-gray-100"
                         >
-                          <div className="aspect-square bg-gray-100 overflow-hidden">
+                          <div className="relative aspect-square bg-gray-100 overflow-hidden">
                             {p.coverImage ? (
-                              <SafeImage src={p.coverImage} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform" />
+                              <SafeImage src={p.coverImage} alt={p.name} fill sizes="(max-width: 768px) 45vw, 160px" className="object-cover group-hover:scale-105 transition-transform" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-gray-300">
                                 <Icon name="sprout" size={32} />
@@ -375,8 +382,8 @@ export default function AgronomPage() {
             </div>
 
             {selectedService && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setSelectedService(null)}>
-                <div className="bg-white rounded-3xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+              <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-4 pt-20 sm:items-center sm:pt-8 bg-black/50" onClick={() => setSelectedService(null)}>
+                <div className="bg-white rounded-3xl p-6 max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
                   <h3 className="font-bold text-lg mb-4">
                     {services.find(s => s.type === selectedService)?.title} sorğusu
                   </h3>

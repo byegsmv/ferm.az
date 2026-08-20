@@ -6,7 +6,7 @@ export const registerSchema = z.object({
   password: z
     .string()
     .min(8, "Şifrə ən azı 8 simvol olmalıdır")
-,
+  ,
   fullName: z.string().min(2, "Ad Soyad tələb olunur"),
   phone: z.string().optional().or(z.literal("")),
   role: z.enum(["BUYER"]).default("BUYER").optional(),
@@ -185,6 +185,8 @@ const productRawSchema = z.object({
   unit: z.string().optional(),
   wholesalePrice: z.number().positive().optional().nullable(),
   wholesaleMinQty: z.number().int().positive().optional().nullable(),
+  discountedPrice: z.number().positive().optional().nullable(),
+  brandId: z.string().optional().nullable(),
   tags: z.array(z.string().max(50)).max(10).optional(),
   allowInstallment: z.boolean().optional(),
 });

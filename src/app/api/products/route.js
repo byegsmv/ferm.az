@@ -68,39 +68,71 @@ export async function GET(request) {
       ...(isOrganic ? { isOrganic: true } : {}),
       ...(minPrice || maxPrice
         ? {
-            price: {
-              ...(minPrice ? { gte: Number(minPrice) } : {}),
-              ...(maxPrice ? { lte: Number(maxPrice) } : {}),
-            },
-          }
+          price: {
+            ...(minPrice ? { gte: Number(minPrice) } : {}),
+            ...(maxPrice ? { lte: Number(maxPrice) } : {}),
+          },
+        }
         : {}),
       ...(search
         ? {
-            OR: [
-              { titleAz: { contains: search, mode: "insensitive" } },
-              { titleEn: { contains: search, mode: "insensitive" } },
-              { titleRu: { contains: search, mode: "insensitive" } },
-              { barcode: { contains: search, mode: "insensitive" } },
-              { manufacturer: { contains: search, mode: "insensitive" } },
-              { activeIngredients: { some: { ingredient: { OR: [
-                { name: { contains: search, mode: "insensitive" } },
-                { nameAz: { contains: search, mode: "insensitive" } }
-              ] } } } },
-              { diseases: { some: { disease: { OR: [
-                { name: { contains: search, mode: "insensitive" } },
-                { nameAz: { contains: search, mode: "insensitive" } }
-              ] } } } },
-              { pests: { some: { pest: { OR: [
-                { name: { contains: search, mode: "insensitive" } },
-                { nameAz: { contains: search, mode: "insensitive" } }
-              ] } } } },
-              { crops: { some: { crop: { OR: [
-                { name: { contains: search, mode: "insensitive" } },
-                { nameAz: { contains: search, mode: "insensitive" } }
-              ] } } } },
-              { tags: { hasSome: search.toLowerCase().split(/[\s,]+/).filter(w => w.length > 1) } }
-            ],
-          }
+          OR: [
+            { titleAz: { contains: search, mode: "insensitive" } },
+            { titleEn: { contains: search, mode: "insensitive" } },
+            { titleRu: { contains: search, mode: "insensitive" } },
+            { barcode: { contains: search, mode: "insensitive" } },
+            { manufacturer: { contains: search, mode: "insensitive" } },
+            {
+              activeIngredients: {
+                some: {
+                  ingredient: {
+                    OR: [
+                      { name: { contains: search, mode: "insensitive" } },
+                      { nameAz: { contains: search, mode: "insensitive" } }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              diseases: {
+                some: {
+                  disease: {
+                    OR: [
+                      { name: { contains: search, mode: "insensitive" } },
+                      { nameAz: { contains: search, mode: "insensitive" } }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              pests: {
+                some: {
+                  pest: {
+                    OR: [
+                      { name: { contains: search, mode: "insensitive" } },
+                      { nameAz: { contains: search, mode: "insensitive" } }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              crops: {
+                some: {
+                  crop: {
+                    OR: [
+                      { name: { contains: search, mode: "insensitive" } },
+                      { nameAz: { contains: search, mode: "insensitive" } }
+                    ]
+                  }
+                }
+              }
+            },
+            { tags: { hasSome: search.toLowerCase().split(/[\s,]+/).filter(w => w.length > 1) } }
+          ],
+        }
         : {}),
     };
 
@@ -122,6 +154,7 @@ export async function GET(request) {
         include: {
           images: { orderBy: { sortOrder: "asc" }, ...(mine ? {} : { take: 1 }) },
           category: { select: { slug: true, nameAz: true, nameEn: true, nameRu: true } },
+          brand: { select: { id: true, name: true, slug: true, logoUrl: true } },
           store: { select: { name: true, slug: true, isVerified: true } },
           seller: { select: { fullName: true, email: true, phone: true } },
           activeIngredients: { include: { ingredient: true } },
@@ -141,7 +174,7 @@ export async function GET(request) {
           entity: "Search",
           metadata: { query: search, resultsCount: items.length }
         }
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     const localizeTitle = (p) =>
@@ -152,6 +185,7 @@ export async function GET(request) {
       slug: p.slug,
       title: localizeTitle(p),
       price: p.price,
+      discountedPrice: p.discountedPrice,
       currency: p.currency,
       region: p.region,
       city: p.city,
@@ -161,6 +195,7 @@ export async function GET(request) {
       titleAz: mine ? p.titleAz : undefined,
       images: mine ? p.images?.map((img) => ({ url: img.url, altText: img.altText })) : undefined,
       category: p.category ? { slug: p.category.slug, nameAz: p.category.nameAz, nameEn: p.category.nameEn, nameRu: p.category.nameRu } : null,
+      brand: p.brand || null,
       store: p.store ? { name: p.store.name, slug: p.store.slug } : null,
       preparativeForm: p.preparativeForm,
       useNorm: p.useNorm,
@@ -337,12 +372,12 @@ export async function POST(request) {
         status: "PENDING_REVIEW",
         images: images?.length
           ? {
-              create: images.map((img, idx) => ({
-                url: img.url,
-                altText: img.altText,
-                sortOrder: idx,
-              })),
-            }
+            create: images.map((img, idx) => ({
+              url: img.url,
+              altText: img.altText,
+              sortOrder: idx,
+            })),
+          }
           : undefined,
       },
       include: { images: true },

@@ -13,6 +13,7 @@ export default function PostListingPage() {
     titleAz: "",
     categoryId: "",
     price: "",
+    discountedPrice: "",
     stock: 1,
     region: "",
     city: "",
@@ -26,6 +27,7 @@ export default function PostListingPage() {
     wholesalePrice: "",
     wholesaleMinQty: "",
     allowRetail: true,
+    brandId: "",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -36,19 +38,20 @@ export default function PostListingPage() {
   const [uploading, setUploading] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [tagInput, setTagInput] = useState("");
-  
+
   // Cascading Category States
   const [selectedMainCat, setSelectedMainCat] = useState("");
   const [selectedSubCat, setSelectedSubCat] = useState("");
   const [selectedSubSubCat, setSelectedSubSubCat] = useState("");
 
+  const [brands, setBrands] = useState([]);
+
   useEffect(() => {
     setUser(getUser());
-    apiFetch("/api/categories")
-      .then((d) => {
-        setCategories(d.categories || []);
-      })
-      .catch(() => {});
+    Promise.all([
+      apiFetch("/api/categories").then((d) => setCategories(d.categories || [])).catch(() => { }),
+      apiFetch("/api/brands?withProducts=false").then((d) => setBrands(d.brands || [])).catch(() => { })
+    ]);
   }, []);
 
   const isSellerAccount = !!user;
@@ -112,7 +115,7 @@ export default function PostListingPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Yükləmə xətası");
-      
+
       const newImages = [...form.images, ...data.images].slice(0, 5);
       setForm(prev => ({ ...prev, images: newImages }));
     } catch (err) {
@@ -222,7 +225,7 @@ export default function PostListingPage() {
       {!isSellerAccount && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex justify-between items-center text-sm">
           <div className="text-amber-800 font-medium">
-             Qeydiyyatdan keç — daha çox imkan əldə et!
+            Qeydiyyatdan keç — daha çox imkan əldə et!
           </div>
           <Link href="/login" className="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all">
             Daxil ol
@@ -252,8 +255,8 @@ export default function PostListingPage() {
           {aiLoading && (
             <div className="absolute right-3 top-3">
               <svg className="animate-spin h-5 w-5 text-brand-600" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
               </svg>
             </div>
           )}
@@ -285,10 +288,10 @@ export default function PostListingPage() {
                 const val = e.target.value;
                 setSelectedSubCat(val);
                 setSelectedSubSubCat("");
-                
+
                 const mainCat = categories.find(c => c.id === selectedMainCat);
                 const subCat = mainCat?.children?.find(ch => ch.id === val);
-                
+
                 // If this sub-category doesn't have its own children, it's a leaf node.
                 if (subCat && (!subCat.children || subCat.children.length === 0)) {
                   setForm({ ...form, categoryId: val });
@@ -352,7 +355,7 @@ export default function PostListingPage() {
               <option value="bağlama">Bağlama</option>
             </select>
           </div>
-          
+
           {(!form.isCorporate || form.allowRetail) && (
             <div className="relative">
               <label className="block text-xs font-semibold text-gray-500 mb-1">
@@ -370,6 +373,44 @@ export default function PostListingPage() {
               />
             </div>
           )}
+        </div>
+
+        {/* Endirimli Qiymət və Brend Seçimi */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">
+              Endirimli Qiymət (AZN) — İstəyə bağlı
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Məs: 8.99"
+              className="input-field"
+              value={form.discountedPrice}
+              onChange={(e) => setForm({ ...form, discountedPrice: e.target.value })}
+            />
+            {form.discountedPrice && form.price && (
+              <p className="text-[10px] text-green-600 mt-1">
+                Endirim: {Math.round((1 - Number(form.discountedPrice) / Number(form.price)) * 100)}%
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">
+              Brend (İstehsalçı)
+            </label>
+            <select
+              className="input-field"
+              value={form.brandId}
+              onChange={(e) => setForm({ ...form, brandId: e.target.value })}
+            >
+              <option value="">Brend seçilməyib</option>
+              {brands.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Corporate Ad Module Toggle */}
@@ -480,8 +521,8 @@ export default function PostListingPage() {
               <label className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 hover:border-brand-400 hover:bg-brand-50 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-brand-600 transition-all cursor-pointer">
                 {uploading ? (
                   <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                   </svg>
                 ) : (
                   <>
