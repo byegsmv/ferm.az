@@ -9,6 +9,7 @@ import EmailManager from "./EmailManager";
 import MessagingPanel from "@/components/chat/MessagingPanel";
 import AdminProfile from "@/components/dashboard/AdminProfile";
 import ContentHub from "@/components/dashboard/ContentHub";
+import AIAgentPanel from "@/components/dashboard/AIAgentPanel";
 import AdminSupport from "@/components/dashboard/AdminSupport";
 import AISettingsManager from "@/components/dashboard/AISettingsManager";
 import EmptyState from "@/components/ui/EmptyState";
@@ -69,6 +70,7 @@ const SIDEBAR_GROUPS_DEF = [
   },
   {
     label: "admin.group.system", items: [
+      { id: "ai-agent", icon: "zap", label: "AI Agent" },
       { id: "ai-settings", icon: "bot", label: "admin.tab.aiSettings" },
       { id: "emails", icon: "mail", label: "admin.tab.emails" },
       { id: "user-modules", icon: "settings", label: "admin.tab.userModules" },
@@ -1716,6 +1718,7 @@ export default function AdminPanel() {
       case "profile": return <AdminProfile />;
       case "support": return <AdminSupport />;
       case "site-texts": return <ContentHub />;
+      case "ai-agent": return <AIAgentPanel />;
       case "ai-settings": return <AISettingsManager />;
       default: return <EmptyState icon="clock" title="Gəlir..." />;
     }
