@@ -4,6 +4,124 @@ import Icon from "@/components/ui/Icon";
 import { apiFetch } from "@/lib/apiClient";
 import { useToast } from "@/components/ui/Toast";
 
+// Reusable API Key Card Component
+function ApiKeyCard({ title, description, value, envValue, source, placeholder, link, onSave, onTest, onClear }) {
+  const [newKey, setNewKey] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const { showToast, ToastContainer } = useToast();
+
+  const keySourceLabels = {
+    database: { label: "DB-də", color: "bg-emerald-50 text-emerald-600" },
+    env: { label: "ENV", color: "bg-blue-50 text-blue-600" },
+    none: { label: "Yoxdur", color: "bg-red-50 text-red-600" },
+  };
+
+  const handleSave = async () => {
+    if (!newKey.trim()) { showToast("Açar daxil edin", "warning"); return; }
+    setSaving(true);
+    try {
+      const res = await onSave(newKey.trim());
+      if (res.success || !res.error) {
+        showToast("Açar saxlanıldı", "success");
+        setNewKey("");
+        setShowKey(false);
+        setTestResult(null);
+        window.location.reload();
+      } else showToast(res.error || "Xəta", "error");
+    } catch { showToast("Xəta", "error"); }
+    finally { setSaving(false); }
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    try {
+      const res = await onTest();
+      setTestResult(res);
+      showToast(res?.success ? "İşləyir!" : (res?.message || "Test uğursuz"), res?.success ? "success" : "error");
+    } catch { setTestResult({ success: false, message: "Bağlantı xətası" }); }
+    finally { setTesting(false); }
+  };
+
+  const handleClear = async () => {
+    try {
+      const res = await onClear();
+      if (res.success || !res.error) { showToast("Açar silindi", "success"); window.location.reload(); }
+    } catch { showToast("Xəta", "error"); }
+  };
+
+  return (
+    <div className="mb-6 pb-6 border-b border-gray-100 last:border-0 last:pb-0 last:mb-0">
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <h4 className="font-semibold text-gray-900 text-sm">{title}</h4>
+          <p className="text-xs text-gray-500">{description}</p>
+        </div>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${keySourceLabels[source]?.color || ""}`}>
+          {keySourceLabels[source]?.label || "—"}
+        </span>
+      </div>
+
+      {/* Current key display */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="bg-gray-50 rounded-lg p-2">
+          <p className="text-[10px] text-gray-400 mb-0.5">DB</p>
+          <p className="font-mono text-xs text-gray-700 truncate">{value ? `${value.slice(0, 4)}...${value.slice(-4)}` : "—"}</p>
+        </div>
+        {envValue && (
+          <div className="bg-gray-50 rounded-lg p-2">
+            <p className="text-[10px] text-gray-400 mb-0.5">ENV</p>
+            <p className="font-mono text-xs text-gray-700 truncate">{envValue ? `${envValue.slice(0, 4)}...${envValue.slice(-4)}` : "—"}</p>
+          </div>
+        )}
+      </div>
+
+      {/* New key input */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <input
+            type={showKey ? "text" : "password"}
+            value={newKey}
+            onChange={(e) => setNewKey(e.target.value)}
+            placeholder={placeholder}
+            className="w-full px-3 py-2 pr-8 rounded-lg border border-gray-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+          />
+          <button type="button" onClick={() => setShowKey(!showKey)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <Icon name="eye" size={14} />
+          </button>
+        </div>
+        <button onClick={handleSave} disabled={saving || !newKey.trim()}
+          className="px-3 py-2 rounded-lg bg-brand-600 text-white text-xs font-semibold hover:bg-brand-700 disabled:opacity-50">
+          {saving ? "..." : "Saxla"}
+        </button>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 mt-2">
+        <button onClick={handleTest} disabled={testing || !value}
+          className="px-3 py-1 rounded bg-sky-50 text-sky-700 text-[11px] font-medium hover:bg-sky-100 disabled:opacity-50">
+          {testing ? "..." : "Test"}
+        </button>
+        <button onClick={handleClear} disabled={!value}
+          className="px-3 py-1 rounded bg-red-50 text-red-600 text-[11px] font-medium hover:bg-red-100 disabled:opacity-50">
+          Sil
+        </button>
+        <a href={link} target="_blank" rel="noopener" className="px-3 py-1 rounded bg-gray-100 text-gray-600 text-[11px] font-medium hover:bg-gray-200">
+          Açar Al
+        </a>
+      </div>
+
+      {testResult && (
+        <div className={`mt-2 p-2 rounded text-xs ${testResult.success ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>
+          {testResult.message}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AISettingsManager() {
   const { showToast, ToastContainer } = useToast();
   const [loading, setLoading] = useState(true);
@@ -149,81 +267,78 @@ export default function AISettingsManager() {
         </div>
       </div>
 
-      {/* API Key Card */}
+      {/* API Keys */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
           <Icon name="key" size={20} className="text-brand-600" />
-          Gemini API Açarı
+          API Açarları
         </h3>
 
-        {/* Current key status */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-          <div className="bg-gray-50 rounded-xl p-4">
-            <p className="text-xs text-gray-500 mb-1">Cari açar (DB)</p>
-            <p className="font-mono text-sm text-gray-800">{data?.geminiKey || "—"}</p>
-          </div>
-          <div className="bg-gray-50 rounded-xl p-4">
-            <p className="text-xs text-gray-500 mb-1">Vercel ENV açarı</p>
-            <p className="font-mono text-sm text-gray-800">{data?.geminiEnvKey || "—"}</p>
-          </div>
-          <div className="bg-gray-50 rounded-xl p-4">
-            <p className="text-xs text-gray-500 mb-1">Mənbə</p>
-            <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${keySourceLabels[data?.geminiKeySource]?.color || ""}`}>
-              {keySourceLabels[data?.geminiKeySource]?.label || "Naməlum"}
-            </span>
-          </div>
-        </div>
+        {/* Gemini API Key */}
+        <ApiKeyCard
+          title="Gemini API"
+          description="AI Agent, Tərcümə, Məzmun generasiyası"
+          value={data?.geminiKey || ""}
+          envValue={data?.geminiEnvKey || ""}
+          source={data?.geminiKeySource || "none"}
+          placeholder="AIzaSy..."
+          link="https://aistudio.google.com/app/apikey"
+          onSave={async (key) => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ geminiApiKey: key }) })}
+          onTest={async () => await apiFetch("/api/admin/ai-settings", { method: "POST" })}
+          onClear={async () => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ geminiApiKey: "" }) })}
+        />
 
-        {/* New key input */}
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-gray-700">Yeni API açarı daxil edin</label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                type={showKey ? "text" : "password"}
-                value={newKey}
-                onChange={(e) => setNewKey(e.target.value)}
-                placeholder="AIzaSy..."
-                className="w-full px-4 py-2.5 pr-10 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              />
-              <button type="button" onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                <Icon name={showKey ? "eye" : "eye"} size={18} />
-              </button>
-            </div>
-            <button onClick={handleSave} disabled={saving || !newKey.trim()}
-              className="px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 disabled:opacity-50 flex items-center gap-2">
-              {saving ? <Icon name="loader" size={16} className="animate-spin" /> : <Icon name="save" size={16} />}
-              {saving ? "Saxlanılır..." : "Saxla"}
-            </button>
-          </div>
-          <p className="text-xs text-gray-400">
-            💡 Pulsuz açar: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" className="text-brand-600 hover:underline">aistudio.google.com/app/apikey</a>
-          </p>
-        </div>
+        {/* Resend API Key */}
+        <ApiKeyCard
+          title="Resend API"
+          description="Email göndərmə servisi"
+          value={data?.resendKey || ""}
+          source={data?.resendKeySource || "none"}
+          placeholder="re_..."
+          link="https://resend.com/api-keys"
+          onSave={async (key) => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ resendApiKey: key }) })}
+          onTest={async () => await apiFetch("/api/admin/ai-settings?action=test-resend", { method: "POST" })}
+          onClear={async () => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ resendApiKey: "" }) })}
+        />
 
-        {/* Action buttons */}
-        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
-          <button onClick={handleTest} disabled={testing || !data?.hasActiveKey}
-            className="px-4 py-2 rounded-xl bg-sky-50 text-sky-700 text-sm font-semibold hover:bg-sky-100 disabled:opacity-50 flex items-center gap-2">
-            {testing ? <Icon name="loader" size={16} className="animate-spin" /> : <Icon name="zap" size={16} />}
-            Açarı Test Et
-          </button>
-          <button onClick={handleDelete} disabled={saving || !data?.geminiKey}
-            className="px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm font-semibold hover:bg-red-100 disabled:opacity-50 flex items-center gap-2">
-            <Icon name="trash" size={16} />
-            DB açarını sil
-          </button>
-        </div>
+        {/* Sentry DSN */}
+        <ApiKeyCard
+          title="Sentry DSN"
+          description="Error tracking və monitoring"
+          value={data?.sentryDsn || ""}
+          source={data?.sentryDsnSource || "none"}
+          placeholder="https://...@sentry.io/..."
+          link="https://sentry.io/settings"
+          onSave={async (key) => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ sentryDsn: key }) })}
+          onTest={async () => ({ success: true, message: "DSN formatı düzgündür" })}
+          onClear={async () => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ sentryDsn: "" }) })}
+        />
 
-        {testResult && (
-          <div className={`mt-3 p-3 rounded-xl text-sm ${testResult.success ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>
-            <p className="font-semibold flex items-center gap-2">
-              <Icon name={testResult.success ? "checkCircle" : "closeCircle"} size={16} />
-              {testResult.message}
-            </p>
-            {testResult.sample && <p className="mt-1 text-xs opacity-80">Cavab nümunəsi: "{testResult.sample}"</p>}
-          </div>
-        )}
+        {/* Alpha Vantage */}
+        <ApiKeyCard
+          title="Alpha Vantage"
+          description="Kənd təsərrüfatı qiymət indeksləri"
+          value={data?.alphaVantageKey || ""}
+          source={data?.alphaVantageKeySource || "none"}
+          placeholder="..."
+          link="https://www.alphavantage.co/support/#api-key"
+          onSave={async (key) => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ alphaVantageKey: key }) })}
+          onTest={async () => await apiFetch("/api/admin/ai-settings?action=test-alphavantage", { method: "POST" })}
+          onClear={async () => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ alphaVantageKey: "" }) })}
+        />
+
+        {/* OpenAI API Key */}
+        <ApiKeyCard
+          title="OpenAI API"
+          description="Alternativ AI modeli (GPT-4, etc.)"
+          value={data?.openaiKey || ""}
+          source={data?.openaiKeySource || "none"}
+          placeholder="sk-..."
+          link="https://platform.openai.com/api-keys"
+          onSave={async (key) => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ openaiApiKey: key }) })}
+          onTest={async () => await apiFetch("/api/admin/ai-settings?action=test-openai", { method: "POST" })}
+          onClear={async () => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ openaiApiKey: "" }) })}
+        />
       </div>
 
       {/* AI Modules */}

@@ -18,18 +18,22 @@ export async function GET(request) {
     const map = {};
     for (const s of settings) map[s.key] = s.value;
 
-    const geminiKey = map["geminiApiKey"] || "";
-    const maskedKey = geminiKey ? geminiKey.slice(0, 6) + "••••••••••••••••" + geminiKey.slice(-4) : "";
-    const envKey = process.env.GEMINI_API_KEY || "";
-    const maskedEnvKey = envKey ? envKey.slice(0, 6) + "••••••••••••••••" + envKey.slice(-4) : "";
+    const mask = (key) => {
+      if (!map[key]) return "";
+      const v = map[key];
+      return v.length > 10 ? `${v.slice(0, 4)}...${v.slice(-4)}` : "••••";
+    };
 
-    // Build modules list: start with defaults, overlay any custom modules from DB
+    const geminiKey = mask("geminiApiKey");
+    const envKey = process.env.GEMINI_API_KEY || "";
+    const maskedEnvKey = envKey.length > 10 ? `${envKey.slice(0, 4)}...${envKey.slice(-4)}` : "";
+
+    // Build modules list
     let modules = DEFAULT_MODULES.map(m => ({
       ...m,
-      active: map[`module.${m.id}.active`] !== "false", // default active
+      active: map[`module.${m.id}.active`] !== "false",
     }));
 
-    // Add custom modules from DB
     for (const s of settings) {
       if (s.key.startsWith("module.") && s.key.endsWith(".config")) {
         try {
@@ -46,11 +50,22 @@ export async function GET(request) {
     }
 
     return Response.json({
-      geminiKey: maskedKey,
-      geminiKeySource: geminiKey ? "database" : (envKey ? "env" : "none"),
+      geminiKey,
+      geminiKeySource: map["geminiApiKey"] ? "database" : (envKey ? "env" : "none"),
       geminiEnvKey: maskedEnvKey,
-      hasActiveKey: !!(geminiKey || envKey),
+      hasActiveKey: !!(map["geminiApiKey"] || envKey),
       model: "gemini-2.5-flash",
+
+      // Other API keys
+      resendKey: mask("resendApiKey"),
+      resendKeySource: map["resendApiKey"] ? "database" : "none",
+      sentryDsn: mask("sentryDsn"),
+      sentryDsnSource: map["sentryDsn"] ? "database" : "none",
+      alphaVantageKey: mask("alphaVantageKey"),
+      alphaVantageKeySource: map["alphaVantageKey"] ? "database" : "none",
+      openaiKey: mask("openaiApiKey"),
+      openaiKeySource: map["openaiApiKey"] ? "database" : "none",
+
       modules,
     });
   } catch (error) {
@@ -65,41 +80,50 @@ export async function PUT(request) {
 
   try {
     const body = await request.json();
-    const { geminiApiKey, moduleId, moduleActive, newModule, deleteModuleId } = body;
 
-    // 1. Update API key
-    if (geminiApiKey !== undefined) {
-      if (!geminiApiKey.trim()) {
-        await prisma.setting.deleteMany({ where: { key: "geminiApiKey", category: "ai" } });
-        clearGeminiKeyCache();
-        return Response.json({ success: true, message: "API açarı silindi — sistem env/offline rejimə keçəcək" });
+    // API Key mappings: frontend key -> DB key
+    const keyMappings = {
+      geminiApiKey: "geminiApiKey",
+      resendApiKey: "resendApiKey",
+      sentryDsn: "sentryDsn",
+      alphaVantageKey: "alphaVantageKey",
+      openaiApiKey: "openaiApiKey",
+    };
+
+    // 1. Update any API key
+    for (const [frontendKey, dbKey] of Object.entries(keyMappings)) {
+      if (body[frontendKey] !== undefined) {
+        const value = body[frontendKey].trim();
+        if (!value) {
+          await prisma.setting.deleteMany({ where: { key: dbKey, category: "ai" } });
+          if (dbKey === "geminiApiKey") clearGeminiKeyCache();
+          return Response.json({ success: true, message: `${dbKey} silindi` });
+        }
+        await prisma.setting.upsert({
+          where: { key: dbKey },
+          update: { value, category: "ai" },
+          create: { key: dbKey, value, category: "ai" },
+        });
+        if (dbKey === "geminiApiKey") clearGeminiKeyCache();
+        return Response.json({ success: true, message: `${dbKey} yeniləndi` });
       }
-      const trimmed = geminiApiKey.trim();
-      if (trimmed.length < 20) return Response.json({ error: "API açarı çox qısadır" }, { status: 400 });
-      await prisma.setting.upsert({
-        where: { key: "geminiApiKey" },
-        update: { value: trimmed, category: "ai" },
-        create: { key: "geminiApiKey", value: trimmed, category: "ai" },
-      });
-      clearGeminiKeyCache();
-      return Response.json({ success: true, message: "Gemini API açarı uğurla yeniləndi" });
     }
 
     // 2. Toggle module active/deactive
-    if (moduleId && moduleActive !== undefined) {
-      const key = `module.${moduleId}.active`;
+    if (body.moduleId && body.moduleActive !== undefined) {
+      const key = `module.${body.moduleId}.active`;
       await prisma.setting.upsert({
         where: { key },
-        update: { value: moduleActive ? "true" : "false", category: "ai" },
-        create: { key, value: moduleActive ? "true" : "false", category: "ai" },
+        update: { value: body.moduleActive ? "true" : "false", category: "ai" },
+        create: { key, value: body.moduleActive ? "true" : "false", category: "ai" },
       });
-      return Response.json({ success: true, message: `Modul ${moduleActive ? "aktivləşdirildi" : "deaktivləşdirildi"}` });
+      return Response.json({ success: true, message: `Modul ${body.moduleActive ? "aktivləşdirildi" : "deaktivləşdirildi"}` });
     }
 
     // 3. Add new custom module
-    if (newModule) {
-      if (!newModule.id || !newModule.name) return Response.json({ error: "Modul ID və adı tələb olunur" }, { status: 400 });
-      const configKey = `module.${newModule.id}.config`;
+    if (body.newModule) {
+      if (!body.newModule.id || !body.newModule.name) return Response.json({ error: "Modul ID və adı tələb olunur" }, { status: 400 });
+      const configKey = `module.${body.newModule.id}.config`;
       const existing = await prisma.setting.findUnique({ where: { key: configKey } });
       if (existing) return Response.json({ error: "Bu ID ilə modul artıq mövcuddur" }, { status: 400 });
 
@@ -107,28 +131,27 @@ export async function PUT(request) {
         data: {
           key: configKey,
           value: JSON.stringify({
-            id: newModule.id,
-            name: newModule.name,
-            description: newModule.description || "",
-            endpoint: newModule.endpoint || "",
-            icon: newModule.icon || "bot",
+            id: body.newModule.id,
+            name: body.newModule.name,
+            description: body.newModule.description || "",
+            endpoint: body.newModule.endpoint || "",
+            icon: body.newModule.icon || "bot",
           }),
           category: "ai",
         },
       });
-      // Set as active by default
       await prisma.setting.create({
-        data: { key: `module.${newModule.id}.active`, value: "true", category: "ai" },
+        data: { key: `module.${body.newModule.id}.active`, value: "true", category: "ai" },
       }).catch(() => {});
       return Response.json({ success: true, message: "Yeni AI modulu əlavə edildi" });
     }
 
     // 4. Delete custom module
-    if (deleteModuleId) {
+    if (body.deleteModuleId) {
       await prisma.setting.deleteMany({
         where: { OR: [
-          { key: `module.${deleteModuleId}.config` },
-          { key: `module.${deleteModuleId}.active` },
+          { key: `module.${body.deleteModuleId}.config` },
+          { key: `module.${body.deleteModuleId}.active` },
         ] },
       });
       return Response.json({ success: true, message: "Modul silindi" });
