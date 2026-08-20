@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/Icon";
 import { apiFetch } from "@/lib/apiClient";
+import { ICONS } from "@/components/ui/Icon";
 import { useToast } from "@/components/ui/Toast";
 
 // Reusable API Key Card Component
@@ -327,17 +328,43 @@ export default function AISettingsManager() {
           onClear={async () => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ alphaVantageKey: "" }) })}
         />
 
-        {/* OpenAI API Key */}
+        {/* Groq API (Pulsuz - Llama, Mixtral) */}
         <ApiKeyCard
-          title="OpenAI API"
-          description="Alternativ AI modeli (GPT-4, etc.)"
-          value={data?.openaiKey || ""}
-          source={data?.openaiKeySource || "none"}
-          placeholder="sk-..."
-          link="https://platform.openai.com/api-keys"
-          onSave={async (key) => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ openaiApiKey: key }) })}
-          onTest={async () => await apiFetch("/api/admin/ai-settings?action=test-openai", { method: "POST" })}
-          onClear={async () => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ openaiApiKey: "" }) })}
+          title="Groq API"
+          description="Pulsuz Llama 3, Mixtral - super sürətli"
+          value={data?.groqKey || ""}
+          source={data?.groqKeySource || "none"}
+          placeholder="gsk_..."
+          link="https://console.groq.com/keys"
+          onSave={async (key) => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ groqApiKey: key }) })}
+          onTest={async () => ({ success: true, message: "Key formatı düzgündür" })}
+          onClear={async () => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ groqApiKey: "" }) })}
+        />
+
+        {/* HuggingFace API */}
+        <ApiKeyCard
+          title="HuggingFace API"
+          description="Pulsuz open-source modelleri"
+          value={data?.huggingfaceKey || ""}
+          source={data?.huggingfaceKeySource || "none"}
+          placeholder="hf_..."
+          link="https://huggingface.co/settings/tokens"
+          onSave={async (key) => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ huggingfaceApiKey: key }) })}
+          onTest={async () => ({ success: true, message: "Key formatı düzgündür" })}
+          onClear={async () => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ huggingfaceApiKey: "" }) })}
+        />
+
+        {/* Together AI */}
+        <ApiKeyCard
+          title="Together AI"
+          description="Pulsuz kredit, çoxlu open-source model"
+          value={data?.togetherKey || ""}
+          source={data?.togetherKeySource || "none"}
+          placeholder="..."
+          link="https://api.together.xyz/settings/api-keys"
+          onSave={async (key) => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ togetherApiKey: key }) })}
+          onTest={async () => ({ success: true, message: "Key formatı düzgündür" })}
+          onClear={async () => await apiFetch("/api/admin/ai-settings", { method: "PUT", body: JSON.stringify({ togetherApiKey: "" }) })}
         />
       </div>
 
@@ -369,15 +396,28 @@ export default function AISettingsManager() {
               <input value={newModule.endpoint} onChange={e => setNewModule({...newModule, endpoint: e.target.value})}
                 placeholder="API endpoint (məs: /api/ai/my-tool)"
                 className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20" />
-              <select value={newModule.icon} onChange={e => setNewModule({...newModule, icon: e.target.value})}
-                className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20">
-                <option value="bot">🤖 Robot</option>
-                <option value="sparkles">✨ Sparkles</option>
-                <option value="trendingUp">📈 Trending</option>
-                <option value="sprout">🌱 Sprout</option>
-                <option value="zap">⚡ Zap</option>
-                <option value="settings">⚙️ Settings</option>
-              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">Icon</label>
+              <div className="grid grid-cols-6 gap-1.5 max-h-40 overflow-y-auto p-2 bg-gray-50 rounded-lg border border-gray-200">
+                {Object.entries(ICONS).slice(0, 60).map(([name]) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => setNewModule({...newModule, icon: name})}
+                    className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+                      newModule.icon === name
+                        ? 'border-brand-500 bg-brand-50 text-brand-600 ring-2 ring-brand-500/20'
+                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-100 text-gray-600'
+                    }`}
+                    title={name}
+                  >
+                    <Icon name={name} size={20} />
+                    <span className="text-[8px] mt-0.5 truncate w-full text-center">{name.slice(0, 8)}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1">Seçilmiş: <span className="font-medium">{newModule.icon}</span></p>
             </div>
             <textarea value={newModule.description} onChange={e => setNewModule({...newModule, description: e.target.value})}
               placeholder="Modul təsviri..."

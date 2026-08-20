@@ -63,8 +63,12 @@ export async function GET(request) {
       sentryDsnSource: map["sentryDsn"] ? "database" : "none",
       alphaVantageKey: mask("alphaVantageKey"),
       alphaVantageKeySource: map["alphaVantageKey"] ? "database" : "none",
-      openaiKey: mask("openaiApiKey"),
-      openaiKeySource: map["openaiApiKey"] ? "database" : "none",
+      groqKey: mask("groqApiKey"),
+      groqKeySource: map["groqApiKey"] ? "database" : "none",
+      huggingfaceKey: mask("huggingfaceApiKey"),
+      huggingfaceKeySource: map["huggingfaceApiKey"] ? "database" : "none",
+      togetherKey: mask("togetherApiKey"),
+      togetherKeySource: map["togetherApiKey"] ? "database" : "none",
 
       modules,
     });
@@ -87,7 +91,9 @@ export async function PUT(request) {
       resendApiKey: "resendApiKey",
       sentryDsn: "sentryDsn",
       alphaVantageKey: "alphaVantageKey",
-      openaiApiKey: "openaiApiKey",
+      groqApiKey: "groqApiKey",
+      huggingfaceApiKey: "huggingfaceApiKey",
+      togetherApiKey: "togetherApiKey",
     };
 
     // 1. Update any API key
