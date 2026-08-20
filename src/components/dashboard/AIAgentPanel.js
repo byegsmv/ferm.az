@@ -64,9 +64,22 @@ export default function AIAgentPanel() {
       });
 
       if (result.error) {
+        let errorMsg = `❌ Xəta: ${result.error}`;
+        if (result.errors && result.errors.length > 0) {
+          errorMsg += `\n\nValidation xətaları:\n${result.errors.map(e => `• ${e.error || e}`).join('\n')}`;
+        }
+        if (result.warnings && result.warnings.length > 0) {
+          errorMsg += `\n\nXəbərdarlıqlar:\n${result.warnings.map(w => `• ${w}`).join('\n')}`;
+        }
+        if (result.applyResults) {
+          errorMsg += `\n\nNəticələr:\n${result.applyResults.map(r => `• ${r.path}: ${r.action}${r.error ? ` — ❌ ${r.error}` : ' ✅'}`).join('\n')}`;
+        }
+        if (!process.env.NEXT_PUBLIC_GEMINI_KEY && result.warnings?.some(w => w.includes("GEMINI"))) {
+          errorMsg += `\n\n💡 GEMINI_API_KEY əlavə etmək üçün .env faylını redaktə et:\nGEMINI_API_KEY=sizin_api_acariniz`;
+        }
         setMessages(prev => [...prev, {
           role: "error",
-          content: `❌ Xəta: ${result.error}`,
+          content: errorMsg,
           timestamp: new Date(),
         }]);
         setLoading(false);

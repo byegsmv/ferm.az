@@ -3,8 +3,10 @@ import { getAuthUser, requireRole } from "@/lib/auth";
 import { geminiGenerate } from "@/lib/gemini";
 import { SafeExecutor } from "@/lib/safeExecutor";
 import { discoverAndSyncMissingKeys } from "@/lib/autoDiscovery";
+import { executeRuleBased } from "@/lib/ruleBasedCodeGen";
 
 const executor = new SafeExecutor();
+const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
 // AI Full-Stack Agent — natural dil ilə idarə olunan code generator
 export async function POST(request) {
@@ -37,8 +39,31 @@ export async function POST(request) {
     // 2. AI prompt — system instruction
     const systemPrompt = buildSystemPrompt(projectContext, mode);
 
-    // 3. Call Gemini
-    const aiText = await geminiGenerate({ prompt: `${systemPrompt}\n\nUSER COMMAND: ${command}\n\nMODE: ${mode}` });
+    // 3. Try Gemini if API key exists, otherwise use rule-based
+    let aiText;
+    if (GEMINI_KEY) {
+      aiText = await geminiGenerate({ prompt: `${systemPrompt}\n\nUSER COMMAND: ${command}\n\nMODE: ${mode}` });
+    } else {
+      // Rule-based fallback
+      const ruleResult = await executeRuleBased(command, projectContext);
+      if (ruleResult.files && ruleResult.files.length > 0) {
+        // Rule-based found a match — skip parsing
+        if (mode === "apply") {
+          const validation = executor.validate(ruleResult);
+          if (!validation.valid) {
+            return Response.json({ error: "Validation failed", errors: validation.errors, warnings: validation.warnings }, { status: 422 });
+          }
+          const result = await executor.apply(ruleResult);
+          if (!result.success) {
+            await executor.rollback();
+            return Response.json({ error: "Apply failed, rolled back", results: result.results }, { status: 500 });
+          }
+          ruleResult.applyResults = result.results;
+        }
+        return Response.json(ruleResult);
+      }
+      aiText = ruleResult.plan;
+    }
 
     // 4. Parse AI response
     const parsed = parseAIResponse(aiText);
@@ -155,55 +180,73 @@ RULES:
 7. Hər fayl üçün TAM kodu yaz, yarımçıq yazma
 8. Validation, error handling, loading state hamısını yaz
 
-RESPONSE FORMAT (JSON):
-{
-  "plan": "Nə edəcəyinin addım-addım izahı (plan mode üçün)",
-  "files": [
-    {
-      "path": "src/app/[locale]/yeni-sehife/page.js",
-      "action": "create|update|delete",
-      "content": "faylın tam kodu (create/update üçün)",
-      "reason": "nə üçün bu fayl dəyişdirilir"
-    }
-  ],
-  "missingKeys": [
-    {"key": "new.page.title", "group": "new", "valueAz": "Yeni Səhifə", "label": "page.title"}
-  ],
-  "warnings": ["Ehtiyatlı olmalı yerlər"]
-}
+RESPONSE FORMAT (STRICT JSON — no markdown, no explanation):
+{"plan":"string or null","files":[{"path":"src/app/.../file.js","action":"create|update|delete","content":"full file content as escaped string","reason":"why"}],"missingKeys":[{"key":"group.name","group":"group","valueAz":"AZ text","label":"name"}],"warnings":["string"]}
+
+ESCAPE RULES for content field:
+- Use \\n for newlines, \\" for quotes, \\\\ for backslash
+- Do NOT use real newlines inside content strings
+- Keep content as single-line escaped JSON string
 
 MODE: ${mode}
-- plan: Sadəcə plan izah et, code yazma
-- dry-run: Kodu generatе et amma fayla yazma, diff göstər
-- apply: Kodu generatе et və fayllara yaz
+- plan: ONLY explain plan, NO files array
+- dry-run: Generate files array, do NOT write to disk
+- apply: Generate files array AND write to disk
 
-Cavabını JSON formatında ver. Başqa heç nə yazma.`;
+Return ONLY valid JSON. No code block markers. No explanation text.`;
 }
 
 function parseAIResponse(text) {
-  // AI bəzən markdown code block içində JSON yazır
-  let jsonStr = text;
+  if (!text) {
+    return {
+      plan: "AI boş cavab verdi. Zəhmət olmasa əmrini dəqiqləşdir.",
+      files: [],
+      missingKeys: [],
+      warnings: [],
+    };
+  }
 
-  // ```json ... ``` blokunu çıxar
-  const codeBlockMatch = text.match(/```(?:json)?\s*\n([\s\S]*?)\n```/);
+  let jsonStr = text.trim();
+
+  // 1. ```json ... ``` code block
+  const codeBlockMatch = text.match(/```(?:json)?\s*\n([\s\S]*?)\n\s*```/);
   if (codeBlockMatch) {
-    jsonStr = codeBlockMatch[1];
+    jsonStr = codeBlockMatch[1].trim();
   }
 
-  // {...} blokunu tap
-  const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    jsonStr = jsonMatch[0];
+  // 2. Find first { to last }
+  const firstBrace = jsonStr.indexOf("{");
+  const lastBrace = jsonStr.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
   }
+
+  // 3. Clean up common AI formatting issues
+  jsonStr = jsonStr
+    .replace(/,\s*([}\]])/g, "$1")  // trailing commas
+    .replace(/(['"])?(\w+)(['"])?\s*:/g, '"$2":') // unquoted keys
+    .replace(/:\s*'([^']*)'/g, (match, val) => {
+      // Single quotes to double quotes (but not inside strings)
+      if (val.includes('"')) return match;
+      return `: "${val}"`;
+    });
 
   try {
-    return JSON.parse(jsonStr);
-  } catch {
+    const parsed = JSON.parse(jsonStr);
+    // Ensure required fields exist
+    return {
+      plan: parsed.plan || null,
+      files: Array.isArray(parsed.files) ? parsed.files : [],
+      missingKeys: Array.isArray(parsed.missingKeys) ? parsed.missingKeys : [],
+      warnings: Array.isArray(parsed.warnings) ? parsed.warnings : [],
+    };
+  } catch (e) {
+    // JSON parse failed — return as plan text
     return {
       plan: text,
       files: [],
       missingKeys: [],
-      warnings: ["AI cavabı JSON formatında deyil"],
+      warnings: [`AI cavabı JSON formatında deyil: ${e.message}`],
     };
   }
 }
