@@ -1,1 +1,0 @@
-ALTER TABLE "HomepageSlide" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
