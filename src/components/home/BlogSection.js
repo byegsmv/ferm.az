@@ -22,21 +22,21 @@ export default function BlogSection({ posts }) {
   if (!posts || posts.length === 0) return null;
   return (
     <section className="animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div>
           <h2 className="section-title flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-5 sm:h-5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             </div>
             {t('homepage.blogTitle', 'Fermer Məsləhətləri')}
           </h2>
           <p className="section-subtitle mt-1">{t('homepage.blogSubtitle', 'Kənd təsərrüfatı haqqında faydalı məqalələr')}</p>
         </div>
-        <Link href="/blog" className="text-sm text-brand-600 font-semibold hover:text-brand-700">
+        <Link href="/blog" className="text-xs sm:text-sm text-brand-600 font-semibold hover:text-brand-700">
           <span className="flex items-center gap-1">{t('homepage.blogSeeAll', 'Hamısı')} <Icon name="arrowRight" size={14} /></span>
         </Link>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
         {posts.map((post, i) => (
           <Link
             key={post.id}

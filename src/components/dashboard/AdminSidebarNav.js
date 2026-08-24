@@ -20,7 +20,7 @@ export default function AdminSidebarNav() {
   ];
 
   return (
-    <aside className="w-64 h-screen sticky top-0 bg-white border-r border-[var(--border)] flex flex-col shadow-sm overflow-hidden">
+    <aside className="hidden md:flex w-64 h-screen sticky top-0 bg-white border-r border-[var(--border)] flex-col shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--border)] shrink-0">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white shadow-md shadow-brand-500/20">

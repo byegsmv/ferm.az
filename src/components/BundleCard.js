@@ -26,10 +26,10 @@ export default function BundleCard({ bundle }) {
   }
 
   return (
-    <div className="card p-4 space-y-3">
+    <div className="card p-3 sm:p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-bold truncate">{bundle.title}</h3>
-        <span className="tag-badge bg-amber-100 text-amber-800 whitespace-nowrap">
+        <h3 className="font-bold truncate text-sm sm:text-base">{bundle.title}</h3>
+        <span className="tag-badge bg-amber-100 text-amber-800 whitespace-nowrap shrink-0">
           {bundle.discountType === "PERCENTAGE" ? `-${Number(bundle.discountValue)}%` : `-${Number(bundle.discountValue)} AZN`}
         </span>
       </div>

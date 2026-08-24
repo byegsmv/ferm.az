@@ -49,18 +49,18 @@ function LoginContent() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 px-4 pb-24">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 px-3 sm:px-4 pb-24">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Icon name="sprout" size={30} className="text-white" strokeWidth={1.8} />
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-green-600 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+            <Icon name="sprout" size={28} className="text-white" strokeWidth={1.8} />
           </div>
-          <h1 className="text-2xl font-black text-gray-900">FermerMarket</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-gray-900">FermerMarket</h1>
           <p className="text-gray-500 text-sm mt-1">Kabinetinizə daxil olun</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="p-6">
+          <div className="p-5 sm:p-6">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-4 flex items-center gap-2">
               <Icon name="alert" size={16} className="shrink-0" /> {error}

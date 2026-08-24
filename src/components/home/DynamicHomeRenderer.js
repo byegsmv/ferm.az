@@ -40,7 +40,7 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
   }
 
   return (
-    <div className={`pb-28 md:pb-12 ${editMode ? "p-4" : ""}`}>
+    <div className={`pb-28 md:pb-12 ${editMode ? "p-3 sm:p-4" : ""}`}>
       {blocks.map((block, index) => {
         const p = block.props || {};
         let content = null;
@@ -58,24 +58,24 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
         } else if (block.type === "PREMIUM_ADS") {
           if (!homeData?.premiumListings?.length) return null;
           content = (
-            <section className="max-w-6xl mx-auto px-4 mt-10">
+            <section className="max-w-6xl mx-auto px-3 sm:px-4 mt-8 sm:mt-10">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-500">
-                      <Icon name="star" size={20} />
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-500">
+                      <Icon name="star" size={18} />
                     </div>
                     {p.title || "Premium Elanlar"}
                   </h2>
-                  <p className="text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Önə çıxan elanlar"}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Önə çıxan elanlar"}</p>
                 </div>
-                <Link href="/products?tier=premium" className="text-sm text-brand-600 font-semibold hover:text-brand-700">
+                <Link href="/products?tier=premium" className="text-xs sm:text-sm text-brand-600 font-semibold hover:text-brand-700">
                   <span className="flex items-center gap-1">Hamısı <Icon name="arrowRight" size={14} /></span>
                 </Link>
               </div>
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 scroll-snap-x">
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-2 -mx-3 sm:-mx-4 px-3 sm:px-4 scroll-snap-x">
                 {homeData.premiumListings.map((l) => (
-                  <div key={l.id} className="scroll-snap-item shrink-0 w-44 sm:w-52">
+                  <div key={l.id} className="scroll-snap-item shrink-0 w-40 sm:w-48 md:w-52">
                     <ProductCard
                       tier={l.tier}
                       product={{
@@ -94,22 +94,22 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
           );
         } else if (block.type === "LATEST_ADS") {
           content = (
-            <section className="max-w-6xl mx-auto px-4 mt-10">
+            <section className="max-w-6xl mx-auto px-3 sm:px-4 mt-8 sm:mt-10">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600">
-                      <Icon name="tag" size={20} />
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600">
+                      <Icon name="tag" size={18} />
                     </div>
                     {p.title || "Yeni Elanlar"}
                   </h2>
-                  <p className="text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Ən son əlavə edilmiş məhsullar"}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Ən son əlavə edilmiş məhsullar"}</p>
                 </div>
-                <Link href="/products" className="text-sm text-brand-600 font-semibold hover:text-brand-700">
+                <Link href="/products" className="text-xs sm:text-sm text-brand-600 font-semibold hover:text-brand-700">
                   <span className="flex items-center gap-1">Hamısı <Icon name="arrowRight" size={14} /></span>
                 </Link>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                 {homeData?.latestProducts?.slice(0, p.count || 8).map((prod) => (
                   <ProductCard
                     key={prod.id}
@@ -129,14 +129,14 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
         } else if (block.type === "BUNDLES") {
           if (!homeData?.bundles?.length) return null;
           content = (
-            <section className="max-w-6xl mx-auto px-4 mt-10">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
-                  <Icon name="package" size={20} />
+            <section className="max-w-6xl mx-auto px-3 sm:px-4 mt-8 sm:mt-10">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+                  <Icon name="package" size={18} />
                 </div>
                 {p.title || "Bağlamalar"}
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                 {homeData.bundles.map((b) => <BundleCard key={b.id} bundle={b} />)}
               </div>
             </section>
@@ -147,22 +147,22 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
         } else if (block.type === "CAMPAIGNS") {
           if (!homeData?.campaigns?.length) return null;
           content = (
-            <section className="max-w-6xl mx-auto px-4 mt-10">
+            <section className="max-w-6xl mx-auto px-3 sm:px-4 mt-8 sm:mt-10">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500">
-                      <Icon name="megaphone" size={20} />
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500">
+                      <Icon name="megaphone" size={18} />
                     </div>
                     {p.title || "Kampaniyalar"}
                   </h2>
-                  <p className="text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Aktiv kampaniya və endirimlər"}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Aktiv kampaniya və endirimlər"}</p>
                 </div>
-                <Link href="/campaigns" className="text-sm text-brand-600 font-semibold hover:text-brand-700">
+                <Link href="/campaigns" className="text-xs sm:text-sm text-brand-600 font-semibold hover:text-brand-700">
                   <span className="flex items-center gap-1">Hamısı <Icon name="arrowRight" size={14} /></span>
                 </Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {homeData.campaigns.map((campaign) => {
                   const daysLeft = Math.ceil((new Date(campaign.endDate).getTime() - Date.now()) / (1000 * 3600 * 24));
                   const getBgColors = (type) => {

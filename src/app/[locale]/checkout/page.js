@@ -119,12 +119,12 @@ export default function CheckoutPage() {
   const total = subtotal - discount + deliveryCost;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-black text-gray-900 mb-6">Sifarişi tamamla</h1>
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <h1 className="text-xl sm:text-2xl font-black text-gray-900 mb-4 sm:mb-6">Sifarişi tamamla</h1>
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 items-start">
         {/* Left 2 columns: Delivery & Shipping details */}
-        <div className="md:col-span-2 card p-6 space-y-4">
-          <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Çatdırılma və Ünvan Məlumatları</h2>
+        <div className="md:col-span-2 card p-4 sm:p-6 space-y-4">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Çatdırılma və Ünvan Məlumatları</h2>
           {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3">{error}</p>}
           <div>
             <label className="text-sm font-semibold text-gray-700">Ünvan</label>
@@ -179,8 +179,8 @@ export default function CheckoutPage() {
         </div>
 
         {/* Right 1 column: Order Summary & Action */}
-        <div className="md:col-span-1 card p-6 space-y-4 bg-gray-50 border border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900 border-b border-gray-200 pb-3">Sifariş Xülasəsi</h2>
+        <div className="md:col-span-1 card p-4 sm:p-6 space-y-4 bg-gray-50 border border-gray-100">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 border-b border-gray-200 pb-3">Sifariş Xülasəsi</h2>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {items.map((item, idx) => (
               <div key={idx} className="flex justify-between items-center text-sm py-1">

@@ -33,6 +33,7 @@ export default function Header() {
   const [count, setCount] = useState(0);
   const [unreadMsg, setUnreadMsg] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLang, setShowLang] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const menuRef = useRef(null);
@@ -291,8 +292,17 @@ export default function Header() {
 
         {/* Mobile  icons */}
         <div className="md:hidden flex items-center gap-2 ml-auto">
+          {/* Hamburger Menu */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm active:scale-95 transition-transform"
+            aria-label="Menyu"
+          >
+            <Icon name={mobileMenuOpen ? "close" : "menu"} size={20} />
+          </button>
+
           {user && <NotificationBell />}
-          
+
           {/* Mobile Cart  */}
           <Link href="/cart" className="relative w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm active:scale-95 transition-transform">
             <Icon name="cart" size={20} strokeWidth={2} />
@@ -302,7 +312,7 @@ export default function Header() {
               </span>
             )}
           </Link>
-          
+
           {/* Mobile Lang  */}
           <button
             onClick={() => {
@@ -315,6 +325,35 @@ export default function Header() {
           </button>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1 animate-fade-in">
+          {NAV_LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-xl text-sm font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition"
+            >
+              {l.label}
+            </Link>
+          ))}
+          <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
+            <WeatherWidget />
+            {!user && (
+              <Link
+                href="/elan-yerlesdir"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 shadow-sm min-h-[44px]"
+              >
+                <Icon name="plus" size={16} strokeWidth={2.3} />
+                {st("header.newListing", "Yeni Elan")}
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Desktop Menyu */}
       <div className="hidden md:block border-t border-gray-100 bg-white">

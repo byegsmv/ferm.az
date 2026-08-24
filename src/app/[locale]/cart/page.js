@@ -27,8 +27,8 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 pb-24">
-      <h1 className="text-xl font-bold mb-4">Səbət ({items.length} məhsul)</h1>
+    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24">
+      <h1 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Səbət ({items.length} məhsul)</h1>
       <div className="space-y-3">
         {items.map((item) => {
           const wholesaleMin = item.wholesaleMinQty || 1;

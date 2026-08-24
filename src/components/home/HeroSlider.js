@@ -82,7 +82,7 @@ export default function HeroSlider() {
   }, [slides.length]);
 
   return (
-    <section className="relative overflow-hidden w-full min-h-[380px] md:h-[440px] bg-gray-900 group mb-6">
+    <section className="relative overflow-hidden w-full min-h-[320px] sm:min-h-[380px] md:h-[440px] bg-gray-900 group mb-4 sm:mb-6">
       {slides.map((slide, idx) => (
         <div
           key={idx}
@@ -104,20 +104,20 @@ export default function HeroSlider() {
              </div>
            )}
 
-           <div className="relative max-w-2xl mx-auto flex flex-col items-center">
-              <span className="flex h-16 w-16 md:h-20 md:w-20 items-center justify-center rounded-[2rem] bg-white/20 text-3xl md:text-4xl shadow-lg backdrop-blur-md mb-5 animate-fade-in-up">
-                <Icon name={slide.iconName} size={32} className="text-white" strokeWidth={1.8} />
+           <div className="relative max-w-2xl mx-auto flex flex-col items-center px-3 sm:px-4">
+              <span className="flex h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 items-center justify-center rounded-[2rem] bg-white/20 text-2xl sm:text-3xl md:text-4xl shadow-lg backdrop-blur-md mb-4 sm:mb-5 animate-fade-in-up">
+                <Icon name={slide.iconName} size={28} className="text-white" strokeWidth={1.8} />
               </span>
-              <h2 className="text-2xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-md tracking-tight leading-tight animate-fade-in-up" style={{animationDelay: "0.1s"}}>
+              <h2 className="text-xl sm:text-2xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4 drop-shadow-md tracking-tight leading-tight animate-fade-in-up" style={{animationDelay: "0.1s"}}>
                 {slide.title}
               </h2>
-              <p className="text-white/90 text-sm md:text-lg max-w-lg mb-8 animate-fade-in-up" style={{animationDelay: "0.2s"}}>
+              <p className="text-white/90 text-sm sm:text-base md:text-lg max-w-lg mb-6 sm:mb-8 animate-fade-in-up" style={{animationDelay: "0.2s"}}>
                 {slide.text}
               </p>
-              
+
               <Link
                 href={slide.href}
-                className="inline-flex items-center gap-2 bg-white text-gray-900 text-sm font-bold px-8 py-3.5 rounded-2xl hover:bg-gray-50 active:scale-95 transition-all duration-200 shadow-xl animate-fade-in-up"
+                className="inline-flex items-center gap-2 bg-white text-gray-900 text-sm font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl hover:bg-gray-50 active:scale-95 transition-all duration-200 shadow-xl animate-fade-in-up min-h-[44px]"
                 style={{animationDelay: "0.3s"}}
               >
                 {slide.btn}

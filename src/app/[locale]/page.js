@@ -102,18 +102,18 @@ async function getHomeData() {
 export default async function HomePage({ searchParams }) {
   const resolvedSearchParams = await searchParams;
   const editMode = resolvedSearchParams?.editMode === "true";
-  
-  let homeData = { categories:[], premiumListings:[], homepageAd:null, latestProducts:[], bundles:[], blogPosts:[], campaigns:[] };
+
+  let homeData = { categories: [], premiumListings: [], homepageAd: null, latestProducts: [], bundles: [], blogPosts: [], campaigns: [] };
   let blocks = [];
-  
-  try { 
-    homeData = await getHomeData(); 
+
+  try {
+    homeData = await getHomeData();
     blocks = await prisma.dynamicBlock.findMany({
       where: { page: "home", isActive: true },
       orderBy: { sortOrder: "asc" }
     });
-  } catch(e) { 
-    console.error("Fetch failed:", e.message); 
+  } catch (e) {
+    console.error("Fetch failed:", e.message);
   }
 
   const jsonLd = {
@@ -145,12 +145,16 @@ export default async function HomePage({ searchParams }) {
   return (
     <div className="bg-[#F8FAFC]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="max-w-[1600px] mx-auto flex gap-6 pt-6 px-4">
-        <SideBanner position="left" />
+      <div className="max-w-[1600px] mx-auto flex gap-4 md:gap-6 pt-4 md:pt-6 px-3 sm:px-4">
+        <div className="hidden xl:block">
+          <SideBanner position="left" />
+        </div>
         <div className="flex-1 min-w-0">
           <DynamicHomeRenderer initialBlocks={blocks} homeData={homeData} editMode={editMode} />
         </div>
-        <SideBanner position="right" />
+        <div className="hidden xl:block">
+          <SideBanner position="right" />
+        </div>
       </div>
     </div>
   );

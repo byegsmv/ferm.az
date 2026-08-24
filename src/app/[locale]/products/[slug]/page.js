@@ -279,11 +279,11 @@ export default async function ProductDetailPage({ params }) {
   } : null;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 pb-20 md:pb-6">
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-20 md:pb-6">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
         <ProductGallery images={product.images || []} title={product.titleAz} />
 
         <div>
@@ -298,8 +298,8 @@ export default async function ProductDetailPage({ params }) {
           )}
           
           <p className="text-sm text-brand-700 font-semibold">{product.category?.nameAz || "Ümumi"}</p>
-          <h1 className="text-2xl font-extrabold mt-1">{product.titleAz}</h1>
-          <p className="text-3xl font-extrabold text-brand-700 mt-3">
+          <h1 className="text-xl sm:text-2xl font-extrabold mt-1">{product.titleAz}</h1>
+          <p className="text-2xl sm:text-3xl font-extrabold text-brand-700 mt-2 sm:mt-3">
             {Number(product.price).toLocaleString("az-AZ")} {product.currency}
           </p>
           <p className="text-sm text-gray-500 mt-1">

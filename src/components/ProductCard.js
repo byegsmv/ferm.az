@@ -178,7 +178,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
       <button
         onClick={toggleFavorite}
         disabled={loading}
-        className={`absolute top-2 right-2 w-9 h-9 sm:w-10 sm:h-10 z-10 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm transition-all duration-300 hover:bg-white hover:scale-110 active:scale-95 ${
+        className={`absolute top-2 right-2 w-9 h-9 sm:w-10 sm:h-10 min-w-[36px] min-h-[36px] z-10 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm transition-all duration-300 hover:bg-white hover:scale-110 active:scale-95 ${
           favorited ? "opacity-100" : "opacity-100 md:opacity-0 group-hover:opacity-100"
         }`}
         aria-label={favorited ? t('products.inFavorites', 'Sevimlilərə əlavə edilib') : t('products.addToFavorites', 'Sevimlilərə əlavə et')}

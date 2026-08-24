@@ -71,14 +71,14 @@ export default async function RootLayout({ children, params }) {
 
   return (
     <html lang={locale}>
-      <body className="min-h-screen flex flex-col overflow-x-hidden">
+      <body className="min-h-screen flex flex-col overflow-x-hidden" style={{ overflowX: 'hidden' }}>
         <NextIntlClientProvider messages={messages}>
           <ServiceWorkerRegister />
           <Header />
           <main className="flex-1 pb-20 md:pb-0">{children}</main>
           {footerAd && (
-            <div className="max-w-6xl mx-auto px-4 pt-4 pb-24 md:pb-4">
-              <AdBanner content={footerAd} className="w-full h-20 md:h-24 overflow-hidden rounded-xl" imgClassName="w-full h-20 md:h-24 object-cover" />
+            <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-4 pb-24 md:pb-4">
+              <AdBanner content={footerAd} className="w-full h-16 sm:h-20 md:h-24 overflow-hidden rounded-xl" imgClassName="w-full h-16 sm:h-20 md:h-24 object-cover" />
             </div>
           )}
           <Footer />

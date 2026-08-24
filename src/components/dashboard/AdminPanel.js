@@ -143,7 +143,7 @@ function AdminMobileNav({ tab, setTab }) {
       <div className="flex px-2 py-2 gap-1.5 min-w-max">
         {allItems.map(item => (
           <button key={item.id} onClick={() => setTab(item.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
               tab === item.id
                 ? "bg-brand-50 text-brand-700 shadow-sm"
                 : "text-gray-500 hover:bg-gray-50"
@@ -158,7 +158,7 @@ function AdminMobileNav({ tab, setTab }) {
 
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 function DashboardStats({ stats, loading }) {
-  if (loading) return <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{[1, 2, 3, 4, 5, 6, 7, 8].map(i => <SkeletonCard key={i} />)}</div>;
+  if (loading) return <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">{[1, 2, 3, 4, 5, 6, 7, 8].map(i => <SkeletonCard key={i} />)}</div>;
   if (!stats) return null;
   const cards = [
     { icon: "user", label: "Ümumi İstifadəçi", value: stats.users.total, change: null, color: "brand" },
@@ -171,17 +171,17 @@ function DashboardStats({ stats, loading }) {
     { icon: "bell", label: "Aktiv Kampaniya", value: stats.campaigns.active, color: "blue" },
   ];
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <h2 className="section-title mb-1">İdarə Paneli</h2>
         <p className="section-subtitle">Real vaxt iş göstəriciləri</p>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
         {cards.map(c => <StatCard key={c.label} {...c} />)}
       </div>
       {/* Revenue highlight */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="card p-5 md:col-span-2 flex items-center justify-between gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
+        <div className="card p-4 sm:p-5 md:col-span-2 flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ümumi Dövriyyə</p>
             <p className="text-3xl font-extrabold text-brand-700 mt-1">₼{Number(stats.revenue.total).toLocaleString("az-AZ")}</p>

@@ -186,20 +186,20 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
   };
 
   return (
-    <section className="max-w-7xl mx-auto px-4 mt-6 relative z-10">
-      <div className="flex flex-col items-center justify-center text-center mb-5 px-1 gap-1">
-        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <span className="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center">
-            <Icon name="layers" size={18} />
+    <section className="max-w-7xl mx-auto px-3 sm:px-4 mt-4 sm:mt-6 relative z-10">
+      <div className="flex flex-col items-center justify-center text-center mb-4 sm:mb-5 px-1 gap-1">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center">
+            <Icon name="layers" size={16} />
           </span>
           {title || t('homepage.categoriesTitle', 'Kateqoriyalar')}
         </h2>
-        <p className="text-sm text-gray-500 font-medium">
+        <p className="text-xs sm:text-sm text-gray-500 font-medium">
           {subtitle || t('homepage.categoriesSubtitle', 'Məhsul növünü seçin')}
         </p>
         <Link
           href="/products"
-          className="text-sm text-brand-600 font-semibold hover:text-brand-700 flex items-center gap-1 group transition-colors mt-1"
+          className="text-xs sm:text-sm text-brand-600 font-semibold hover:text-brand-700 flex items-center gap-1 group transition-colors mt-1"
         >
           <span>{t('homepage.allCategoriesLink', 'Bütün kateqoriyalar')}</span>
           <Icon name="arrowRight" size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -207,18 +207,18 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
       </div>
 
       <div className="relative group/slider">
-        {/* Left Arrow — always visible */}
+        {/* Left Arrow */}
         <button
           onClick={scrollLeftBtn}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           aria-label={t('homepage.prevBtn', 'Əvvəlki')}
-          className="absolute -left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 opacity-100"
+          className="absolute -left-1 sm:-left-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 opacity-100"
         >
-          <Icon name="arrowLeft" size={20} />
+          <Icon name="arrowLeft" size={18} />
         </button>
 
-        {/* Scroll Container — no duplication, each category appears once */}
+        {/* Scroll Container */}
         <div
           ref={scrollRef}
           onMouseEnter={handleMouseEnter}
@@ -227,7 +227,7 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onClickCapture={handleClickCapture}
-          className="flex gap-3.5 overflow-x-auto no-scrollbar py-2 px-1 scroll-smooth cursor-grab active:cursor-grabbing select-none"
+          className="flex gap-2 sm:gap-3.5 overflow-x-auto no-scrollbar py-2 px-1 scroll-smooth cursor-grab active:cursor-grabbing select-none"
         >
           {categories.map((c, i) => {
             const theme = CATEGORY_THEMES[c.slug] || PALETTES[i % PALETTES.length];
@@ -238,15 +238,15 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
                 key={c.id || c.slug || i}
                 href={`/products?category=${c.slug}`}
                 draggable={false}
-                className={`shrink-0 w-60 sm:w-64 group/card flex items-center gap-3.5 p-4 rounded-2xl border bg-gradient-to-br ${theme.bg} ${theme.border} hover:shadow-md hover:-translate-y-0.5 transition-all duration-300`}
+                className={`shrink-0 w-52 sm:w-60 md:w-64 group/card flex items-center gap-2 sm:gap-3.5 p-3 sm:p-4 rounded-2xl border bg-gradient-to-br ${theme.bg} ${theme.border} hover:shadow-md hover:-translate-y-0.5 transition-all duration-300`}
               >
                 <span
-                  className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center p-2 shadow-sm ${theme.iconBg} group-hover/card:scale-110 transition-transform duration-300`}
+                  className={`w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl flex items-center justify-center p-2 shadow-sm ${theme.iconBg} group-hover/card:scale-110 transition-transform duration-300`}
                 >
-                  <Icon name={iconName} size={24} />
+                  <Icon name={iconName} size={20} />
                 </span>
                 <div className="flex flex-col min-w-0 flex-1">
-                  <span className={`text-sm font-bold leading-snug ${theme.text} line-clamp-2`}>
+                  <span className={`text-xs sm:text-sm font-bold leading-snug ${theme.text} line-clamp-2`}>
                     {c.nameAz}
                   </span>
                 </div>
@@ -255,15 +255,15 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
           })}
         </div>
 
-        {/* Right Arrow — always visible */}
+        {/* Right Arrow */}
         <button
           onClick={scrollRightBtn}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           aria-label={t('homepage.nextBtn', 'Növbəti')}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 opacity-100"
+          className="absolute -right-1 sm:-right-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-white border border-gray-200 shadow-lg rounded-full flex items-center justify-center text-gray-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition-all z-20 opacity-100"
         >
-          <Icon name="arrowRight" size={20} />
+          <Icon name="arrowRight" size={18} />
         </button>
       </div>
     </section>

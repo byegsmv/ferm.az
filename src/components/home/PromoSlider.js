@@ -56,7 +56,7 @@ export default function PromoSlider() {
 
   return (
     <div
-      className="relative overflow-hidden rounded-3xl h-44 md:h-52 cursor-pointer select-none"
+      className="relative overflow-hidden rounded-2xl sm:rounded-3xl h-40 sm:h-44 md:h-52 cursor-pointer select-none"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={() => setPaused(true)}
@@ -65,7 +65,7 @@ export default function PromoSlider() {
       {slides.map((s, i) => (
         <div
           key={s.id}
-          className={`absolute inset-0 flex items-center px-8 md:px-12 transition-all duration-500 ${
+          className={`absolute inset-0 flex items-center px-5 sm:px-8 md:px-12 transition-all duration-500 ${
             i === current ? "opacity-100 translate-x-0" : i < current ? "opacity-0 -translate-x-full" : "opacity-0 translate-x-full"
           }`}
           style={s.imageUrl ? undefined : getBgStyle(s.bg)}
@@ -76,29 +76,29 @@ export default function PromoSlider() {
               <div className="absolute inset-0 bg-black/40" />
             </>
           )}
-          <div className="flex-1 text-white relative">
-            <span className="text-xs font-bold bg-white/20 px-2.5 py-1 rounded-full text-white">{s.tag}</span>
-            <h3 className="text-xl md:text-2xl font-extrabold mt-2 mb-1 leading-tight text-white">{s.title}</h3>
-            <p className="text-white/95 text-sm max-w-sm font-medium">{s.subtitle}</p>
+          <div className="flex-1 text-white relative min-w-0">
+            <span className="text-[10px] sm:text-xs font-bold bg-white/20 px-2 sm:px-2.5 py-1 rounded-full text-white">{s.tag}</span>
+            <h3 className="text-base sm:text-xl md:text-2xl font-extrabold mt-1.5 sm:mt-2 mb-0.5 sm:mb-1 leading-tight text-white">{s.title}</h3>
+            <p className="text-white/95 text-xs sm:text-sm max-w-sm font-medium line-clamp-2">{s.subtitle}</p>
             <Link
               href={s.href}
-              className="inline-block mt-4 bg-white text-gray-900 text-xs font-bold px-5 py-2 rounded-xl hover:bg-gray-100 active:scale-95 transition-all shadow-sm"
+              className="inline-block mt-3 sm:mt-4 bg-white text-gray-900 text-xs font-bold px-4 sm:px-5 py-1.5 sm:py-2 rounded-xl hover:bg-gray-100 active:scale-95 transition-all shadow-sm min-h-[36px] sm:min-h-[40px] flex items-center"
               onClick={(e) => e.stopPropagation()}
             >
               <>{s.cta || t('homepage.promoViewBtn', 'Bax')} <Icon name="arrowRight" size={14} className="inline ml-1" /></>
             </Link>
           </div>
-          <div className="opacity-20"><Icon name={s.iconName || "flame"} size={80} className="text-white" strokeWidth={1.5} /></div>
+          <div className="hidden sm:block opacity-20 shrink-0 ml-3"><Icon name={s.iconName || "flame"} size={80} className="text-white" strokeWidth={1.5} /></div>
         </div>
       ))}
 
       {slides.length > 1 && (
         <>
-          <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors text-sm z-10">‹</button>
-          <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors text-sm z-10">›</button>
+          <button onClick={prev} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors text-sm z-10">‹</button>
+          <button onClick={next} className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors text-sm z-10">›</button>
 
           {/* Dots */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+          <div className="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
             {slides.map((_, i) => (
               <button
                 key={i}

@@ -73,7 +73,7 @@ export default function ModernAdminDashboard() {
             sidebarOpen ? 'w-64' : 'w-20'
           } ${
             darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-          } border-r transition-all duration-300 flex flex-col fixed h-screen`}
+          } border-r transition-all duration-300 flex flex-col fixed h-screen hidden lg:flex`}
         >
           {/* Logo */}
           <div className={`p-6 border-b ${darkMode ? 'border-slate-800' : 'border-slate-100'} flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
@@ -135,13 +135,13 @@ export default function ModernAdminDashboard() {
         </aside>
 
         {/* MAIN CONTENT */}
-        <main className={`flex-1 ${sidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
-          
+        <main className={`flex-1 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'} transition-all duration-300`}>
+
           {/* Top Bar */}
-          <div className={`${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} border-b p-6 sticky top-0 z-10`}>
-            <div className="flex justify-between items-center">
+          <div className={`${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} border-b p-4 sm:p-6 sticky top-0 z-10`}>
+            <div className="flex justify-between items-center gap-3 flex-wrap">
               <div>
-                <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                <h2 className={`text-lg sm:text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                   {activeTab === 'dashboard' && 'Dashboard'}
                   {activeTab === 'users' && 'İstifadəçilər Yönetimi'}
                   {activeTab === 'products' && 'Məhsullar'}
@@ -164,7 +164,7 @@ export default function ModernAdminDashboard() {
           </div>
 
           {/* Content */}
-          <div className="p-8">
+          <div className="p-4 sm:p-6 md:p-8">
             {activeTab === 'dashboard' && <DashboardTab stats={stats} darkMode={darkMode} />}
             {activeTab === 'users' && <UsersTab darkMode={darkMode} />}
             {activeTab === 'products' && <ProductsTab darkMode={darkMode} />}
@@ -189,8 +189,8 @@ function DashboardTab({ stats, darkMode }) {
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {cards.map((card, i) => (
           <div
             key={i}

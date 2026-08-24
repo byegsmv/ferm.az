@@ -13,7 +13,7 @@ export default function AdminLayout({ children }) {
       <AdminSidebarNav />
       {/* Content area */}
       <div className="flex-1 min-w-0">
-        <main className="py-4 md:py-6 px-4 sm:px-6 lg:px-8">
+        <main className="py-4 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="w-full max-w-[1440px] mx-auto">
             {children}
           </div>
