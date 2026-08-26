@@ -127,7 +127,13 @@ export default function ModuleToggleSystem() {
     if (!window.confirm(`'${modName}' modulunu tamamilə silmək istədiyinizdən əminsiniz? Bu əməliyyat geri qaytarılmır.`)) {
       return;
     }
-    const updated = modules.filter(m => m.id !== modId);
+    const recursiveDelete = (list) => {
+      return list.filter(m => m.id !== modId).map(m => ({
+        ...m,
+        children: m.children ? recursiveDelete(m.children) : []
+      }));
+    };
+    const updated = recursiveDelete(modules);
     saveModules(updated);
     toast(`'${modName}' modulu tamamilə silindi`, 'success');
   };

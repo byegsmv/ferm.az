@@ -125,31 +125,23 @@ export async function POST(request) {
       store_banner_ad: { id: "store_banner_ad", name: "Mağaza Banner Reklamı", price: Number(nextConfig.store_banner_ad_price ?? 40), days: 30, active: nextConfig.store_banner_ad_active !== false, type: "STORE_BANNER" },
     };
 
-    await prisma.dynamicBlock.upsert({
-      where: { key: "promotion_pricing_config" },
-      update: { props: promoUpdates, updatedAt: new Date() },
-      create: { key: "promotion_pricing_config", type: "pricing_config", props: promoUpdates },
-    });
+    const updateOrCreateConfig = async (configType, props) => {
+      let block = await prisma.dynamicBlock.findFirst({
+        where: { page: "system", type: configType }
+      });
+      if (block) {
+        await prisma.dynamicBlock.update({ where: { id: block.id }, data: { props, updatedAt: new Date() } });
+      } else {
+        await prisma.dynamicBlock.create({ data: { page: "system", type: configType, props } });
+      }
+    };
 
-    await prisma.dynamicBlock.upsert({
-      where: { key: "listing_pricing_config" },
-      update: {
-        props: {
-          tier_1_day: promoUpdates.tier_1_day,
-          tier_15_days: promoUpdates.tier_15_days,
-          tier_30_days: promoUpdates.tier_30_days,
-        },
-        updatedAt: new Date(),
-      },
-      create: {
-        key: "listing_pricing_config",
-        type: "pricing_config",
-        props: {
-          tier_1_day: promoUpdates.tier_1_day,
-          tier_15_days: promoUpdates.tier_15_days,
-          tier_30_days: promoUpdates.tier_30_days,
-        },
-      },
+    await updateOrCreateConfig("promotion_pricing_config", promoUpdates);
+    
+    await updateOrCreateConfig("listing_pricing_config", {
+      tier_1_day: promoUpdates.tier_1_day,
+      tier_15_days: promoUpdates.tier_15_days,
+      tier_30_days: promoUpdates.tier_30_days,
     });
 
     // Sync payment accounts config
@@ -166,11 +158,7 @@ export async function POST(request) {
       allowWallet: nextConfig.allowWallet !== false,
     };
 
-    await prisma.dynamicBlock.upsert({
-      where: { key: "payment_accounts_config" },
-      update: { props: paymentUpdates, updatedAt: new Date() },
-      create: { key: "payment_accounts_config", type: "payment_config", props: paymentUpdates },
-    });
+    await updateOrCreateConfig("payment_accounts_config", paymentUpdates);
 
     return Response.json({ success: true, config: nextConfig });
   } catch (error) {

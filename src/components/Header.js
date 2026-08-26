@@ -11,6 +11,43 @@ import WeatherWidget from "@/components/home/WeatherWidget";
 import CitySelectModal from "@/components/CitySelectModal";
 import { useSiteTexts } from "@/lib/siteTexts";
 
+function MobileNavItem({ link, setMobileMenuOpen, depth = 0 }) {
+  const [open, setOpen] = useState(false);
+  
+  if (!link.subLinks || link.subLinks.length === 0) {
+    return (
+      <Link
+        href={link.href}
+        onClick={() => setMobileMenuOpen(false)}
+        className="block px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-lg transition"
+        style={{ paddingLeft: `${(depth * 1) + 0.75}rem` }}
+      >
+        {link.label}
+      </Link>
+    );
+  }
+  
+  return (
+    <div>
+      <div className="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition" style={{ paddingLeft: `${(depth * 1) + 0.75}rem` }}>
+        <Link href={link.href} onClick={() => setMobileMenuOpen(false)} className="flex-1">
+          {link.label}
+        </Link>
+        <button onClick={() => setOpen(!open)} className="p-1">
+          <Icon name={open ? "chevronDown" : "chevronRight"} size={16} className="text-gray-400" />
+        </button>
+      </div>
+      {open && (
+        <div className="space-y-1 mt-1 border-l-2 border-brand-50 ml-4 pl-2">
+          {link.subLinks.map(sub => (
+            <MobileNavItem key={sub.href} link={sub} setMobileMenuOpen={setMobileMenuOpen} depth={depth + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Header() {
   const { t: st } = useSiteTexts();
   const router = useRouter();
@@ -44,19 +81,67 @@ export default function Header() {
   const [showCityModal, setShowCityModal] = useState(false);
   const [wallet, setWallet] = useState(null);
 
-  const NAV_LINKS = [
+  const [navLinks, setNavLinks] = useState([
     { href: "/products", label: st("nav.products", "Məhsullar") },
     { href: "/categories", label: st("nav.categories", "Kateqoriyalar") },
     { href: "/brands", label: st("nav.brands", "Brendlər") },
     { href: "/campaigns", label: st("nav.campaigns", "Kampaniyalar") },
     { href: "/stores", label: st("nav.stores", "Mağazalar") },
-    { href: "/agronom", label: st("nav.agronom", "Aqronom") },
-    { href: "/xidmetler", label: st("nav.services", "Xidmətlər") },
-    { href: "/blog", label: st("nav.blog", "Bloq") },
-  ];
+    { 
+      href: "/agronom", 
+      label: st("nav.agronom", "Aqronom"),
+      subLinks: [
+        { href: "/agronom", label: "Aqronom paneli" },
+        { href: "/blog", label: st("nav.blog", "Bloq") }
+      ]
+    },
+    { 
+      href: "/xidmetler", 
+      label: st("nav.services", "Xidmətlər"),
+      subLinks: [
+        { href: "/xidmetler", label: "Bütün xidmətlər" },
+        { href: "/xidmetler/satinalma", label: "Satınalma xidməti" },
+        { href: "/xidmetler/mehsul-qeydiyyati", label: "Məhsulların qeydiyyata alınması" },
+      ]
+    },
+  ]);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Fetch categories and inject to navLinks
+    import("@/lib/apiClient").then(({ apiFetch }) => {
+      apiFetch('/api/categories?all=true')
+        .then(res => {
+          if (res && res.categories) {
+            const buildCatTree = (parentId = null) => {
+              return res.categories
+                .filter(c => c.parentId === parentId && c.isActive)
+                .map(c => {
+                  const children = buildCatTree(c.id);
+                  return {
+                    href: `/products?category=${c.slug}`,
+                    label: c.nameAz || c.name,
+                    ...(children.length > 0 ? { subLinks: children } : {})
+                  };
+                });
+            };
+            
+            const categoryTree = buildCatTree(null);
+            
+            if (categoryTree.length > 0) {
+              setNavLinks(prev => prev.map(l => {
+                if (l.href === '/categories') {
+                  return { ...l, subLinks: categoryTree };
+                }
+                return l;
+              }));
+            }
+          }
+        })
+        .catch(console.error);
+    });
+
     const savedCity = localStorage.getItem("fmk-selected-city");
     if (savedCity) {
       setSelectedCity(savedCity);
@@ -350,15 +435,8 @@ export default function Header() {
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1 animate-fade-in">
-          {NAV_LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-xl text-sm font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition"
-            >
-              {l.label}
-            </Link>
+          {navLinks.map((l) => (
+            <MobileNavItem key={l.href} link={l} setMobileMenuOpen={setMobileMenuOpen} depth={0} />
           ))}
           <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
             <WeatherWidget />
@@ -379,11 +457,39 @@ export default function Header() {
       {/* Desktop Menyu */}
       <div className="hidden md:block border-t border-gray-100 bg-white">
         <div className="max-w-6xl mx-auto px-4 h-11 flex items-center justify-between">
-          <nav className="flex items-center gap-1 shrink-0">
-            {NAV_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} className="text-[15px] px-3 py-2 rounded-[14px] font-bold text-gray-600 whitespace-nowrap shrink-0 hover:text-brand-700 hover:bg-brand-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300">
-                {l.label}
-              </Link>
+          <nav className="flex items-center gap-1 shrink-0 relative">
+            {navLinks.map((l) => (
+              l.subLinks ? (
+                <div key={l.href} className="group relative">
+                  <Link href={l.href} className="flex items-center gap-1 text-[15px] px-3 py-2 rounded-[14px] font-bold text-gray-600 whitespace-nowrap shrink-0 hover:text-brand-700 hover:bg-brand-50 hover:shadow-sm transition-all duration-300">
+                    {l.label}
+                    <Icon name="chevronDown" size={14} className="opacity-50 group-hover:rotate-180 transition-transform duration-300" />
+                  </Link>
+                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block min-w-[240px] bg-white rounded-xl shadow-xl border border-gray-100 p-2 z-50">
+                    {l.subLinks.map(sub => (
+                      <div key={sub.href} className={sub.subLinks ? "group/sub relative" : ""}>
+                        <Link href={sub.href} className="flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-lg transition-colors">
+                          {sub.label}
+                          {sub.subLinks && <Icon name="chevronRight" size={14} className="opacity-50" />}
+                        </Link>
+                        {sub.subLinks && (
+                          <div className="absolute top-0 left-full ml-1 hidden group-hover/sub:block min-w-[240px] bg-white rounded-xl shadow-xl border border-gray-100 p-2 z-50">
+                            {sub.subLinks.map(child => (
+                              <Link key={child.href} href={child.href} className="block px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-lg transition-colors">
+                                {child.label}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <Link key={l.href} href={l.href} className="text-[15px] px-3 py-2 rounded-[14px] font-bold text-gray-600 whitespace-nowrap shrink-0 hover:text-brand-700 hover:bg-brand-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300">
+                  {l.label}
+                </Link>
+              )
             ))}
           </nav>
 

@@ -152,114 +152,117 @@ export default function ProductCard({ product, tier, compact = false, initialFav
   const discountPercent = hasDiscount ? Math.round((1 - Number(product.discountedPrice) / Number(product.price)) * 100) : 0;
 
   return (
-    <div className="group card-hover overflow-hidden flex flex-col relative h-full bg-white rounded-2xl border border-gray-100">
+    <div className="group card-hover flex flex-col relative bg-white rounded-2xl border border-gray-100 hover:border-brand-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-full">
       <Link
         href={`/products/${product.slug}`}
         className="absolute inset-0 z-0"
         aria-label={product.titleAz || product.title}
       />
-      {/* Image */}
-      <div className="relative w-full bg-gray-50 overflow-hidden pointer-events-none" style={{ aspectRatio: "4/3" }}>
+      
+      {/* Image Container */}
+      <div className="relative w-full bg-[#f8f9fa] flex items-center justify-center overflow-hidden" style={{ aspectRatio: "4/3" }}>
         {product.coverImage ? (
           <SafeImage
             src={product.coverImage}
             alt={product.titleAz || product.title}
             fill
-            sizes="(max-width: 640px) 50vw, 25vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-contain p-3 group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-brand-300"><Icon name="sprout" size={42} strokeWidth={1.2} /></div>
+          <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <Icon name="sprout" size={48} strokeWidth={1.2} />
+          </div>
         )}
 
-        {/* Tier badge */}
-        {hasDiscount ? (
-          <span className="absolute top-2 left-2 text-[10px] font-black px-2 py-0.5 rounded-lg bg-red-500 text-white shadow-xs z-10">
-            -{discountPercent}%
-          </span>
-        ) : badge && (
-          <span className={`absolute top-2 left-2 text-[10px] font-extrabold px-2 py-0.5 rounded-lg ${badge.bg}`}>
-            {badge.label === "ÖNE ÇIXAN" ? t('products.featuredBadge', 'ÖNE ÇIXAN') : badge.label}
-          </span>
-        )}
+        {/* Badges Overlay */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 z-10 pointer-events-none">
+          {hasDiscount && (
+            <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[11px] font-black tracking-wide text-white bg-red-500 rounded-md shadow-sm">
+              -{discountPercent}%
+            </span>
+          )}
+          {badge && (
+            <span className={`inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] uppercase font-extrabold tracking-wider rounded-md shadow-sm ${badge.bg}`}>
+              {badge.label === "ÖNE ÇIXAN" ? t('products.featuredBadge', 'ÖNE ÇIXAN') : badge.label}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Favorite btn - Always visible on mobile, visible on hover on desktop */}
-      <button
-        onClick={toggleFavorite}
-        disabled={loading}
-        className={`absolute top-2 right-2 w-9 h-9 sm:w-10 sm:h-10 min-w-[36px] min-h-[36px] z-10 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm transition-all duration-300 hover:bg-white hover:scale-110 active:scale-95 ${
-          favorited ? "opacity-100" : "opacity-100 md:opacity-0 group-hover:opacity-100"
-        }`}
-        aria-label={favorited ? t('products.inFavorites', 'Sevimlilərə əlavə edilib') : t('products.addToFavorites', 'Sevimlilərə əlavə et')}
-      >
-        {loading ? (
-          <span className="block w-4 h-4 rounded-full border-2 border-gray-200 border-t-brand-500 animate-spin" />
-        ) : (
-          <Icon name="heart" size={17} className={favorited ? "text-red-500 fill-red-500" : "text-gray-500"} />
-        )}
-      </button>
-
-      {/* Compare button - absolute positioned similar to favorite button */}
-      <div 
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} 
-        className="absolute top-12 right-2 z-10 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-      >
-        <CompareButton productId={productId} iconOnly={true} />
+      {/* Floating Action Buttons */}
+      <div className="absolute top-2 right-2 flex flex-col gap-1.5 z-10">
+        <button
+          onClick={toggleFavorite}
+          disabled={loading}
+          className={`w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-100 text-gray-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50 transition-all duration-300 active:scale-90 ${favorited ? "text-red-500" : ""}`}
+          aria-label="Add to favorites"
+        >
+          {loading ? (
+            <span className="block w-3.5 h-3.5 rounded-full border-2 border-gray-200 border-t-brand-500 animate-spin" />
+          ) : (
+            <Icon name="heart" size={16} className={favorited ? "fill-current" : ""} />
+          )}
+        </button>
+        <div className="opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 pointer-events-auto">
+           <CompareButton productId={productId} iconOnly={true} />
+        </div>
       </div>
 
-      {/* Info */}
-      <div className={`flex-1 flex flex-col pointer-events-none z-10 bg-white ${compact ? "p-2.5 gap-0.5" : "p-3 gap-1"}`}>
-        <h3 className={`font-semibold text-gray-900 line-clamp-2 leading-snug ${compact ? "text-xs" : "text-sm"}`}>
+      {/* Content Container */}
+      <div className={`flex flex-col flex-1 z-10 pointer-events-none ${compact ? "p-2.5" : "p-3 sm:p-4"}`}>
+        
+        {/* Title - Fixed minimum height for 2 lines to prevent jagged grids */}
+        <h3 className={`font-semibold text-gray-900 line-clamp-2 mb-1 group-hover:text-brand-600 transition-colors ${compact ? "text-[13px] leading-tight min-h-[30px]" : "text-[14px] sm:text-[15px] leading-snug min-h-[42px]"}`} title={product.titleAz || product.title}>
           {product.titleAz || product.title}
         </h3>
-        {product.isCorporate && (
-          <span className="self-start text-[10px] font-semibold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-md">
-            <Icon name="building" size={11} /> {t('products.corporateBadge', 'Korporativ')}
-          </span>
-        )}
-        {hasDiscount ? (
-          <div className="mt-auto flex items-baseline gap-1.5 flex-wrap">
-            <span className={`font-black text-brand-700 ${compact ? "text-sm" : "text-base"}`}>
-              {Number(product.discountedPrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} <span className="font-semibold text-xs">{product.currency || t('products.currencyAzn', 'AZN')}</span>
-            </span>
-            <span className="text-xs text-gray-400 line-through font-medium">
-              {Number(product.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} ₼
-            </span>
-          </div>
-        ) : (
-          <p className={`font-extrabold text-brand-700 mt-auto ${compact ? "text-sm" : "text-base"}`}>
-            {Number(product.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} <span className="font-semibold text-xs">{product.currency || t('products.currencyAzn', 'AZN')}</span>
-          </p>
-        )}
-        {product.isCorporate && product.minOrderQty && (
-          <p className="text-[10px] text-orange-600 font-medium">{t('products.minOrderLabel', 'Min:')} {product.minOrderQty} {t('products.unitPiece', 'ədəd')}</p>
-        )}
-        {product.allowInstallment && (
-          <p className="text-[10px] text-blue-600 font-medium flex items-center gap-1">
-            <Icon name="creditCard" size={12} /> {t('products.installmentLabel', 'Hissəli ödəniş')}
-          </p>
-        )}
-        {(product.region || product.city) && (
-          <p className="text-[11px] text-gray-400 flex items-center gap-1">
-            <Icon name="mapPin" size={13} />
-            {product.city || product.region}
-          </p>
-        )}
-        {product.store && (
-          <p className="text-[11px] text-brand-600 font-medium flex items-center gap-1 truncate">
-            <Icon name="store" size={13} />
-            {product.store.name}
-          </p>
-        )}
-      {/* Hashtags — max 3 */}
-      {product.tags && product.tags.length > 0 && !compact && (
-        <div className="flex flex-wrap gap-1 mt-1">
-          {product.tags.slice(0, 3).map(tag => (
-            <span key={tag} className="text-[9px] text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded-full font-medium">#{tag}</span>
-          ))}
+
+        {/* Pricing Area */}
+        <div className="mt-1 mb-2">
+          {hasDiscount ? (
+            <div className="flex flex-col">
+              <span className="text-[11px] text-gray-400 line-through font-medium">
+                {Number(product.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} ₼
+              </span>
+              <div className="flex items-baseline gap-1">
+                <span className="font-extrabold text-brand-600 text-lg sm:text-xl tracking-tight">
+                  {Number(product.discountedPrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+                </span>
+                <span className="font-semibold text-brand-600 text-[11px] uppercase">{product.currency || 'AZN'}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-baseline gap-1 pt-3">
+              <span className="font-extrabold text-brand-700 text-lg sm:text-xl tracking-tight">
+                {Number(product.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+              </span>
+              <span className="font-semibold text-brand-700 text-[11px] uppercase">{product.currency || 'AZN'}</span>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Metadata Row (Corporate, Min Qty, Location) - Pushed to absolute bottom */}
+        <div className="mt-auto pt-2 flex flex-wrap items-center gap-1.5 border-t border-gray-50">
+          {product.isCorporate && (
+            <span className="inline-flex items-center gap-1 text-[9px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">
+              <Icon name="building" size={9} /> Korporativ
+            </span>
+          )}
+          
+          {product.isCorporate && product.minOrderQty && (
+            <span className="text-[9px] text-amber-600 font-semibold bg-amber-50 px-1.5 py-0.5 rounded">
+              Min: {product.minOrderQty}
+            </span>
+          )}
+
+          {(product.city || product.region) && (
+            <span className="text-[10px] text-gray-400 flex items-center gap-0.5 font-medium ml-auto">
+              <Icon name="mapPin" size={10} className="text-gray-300" />
+              <span className="truncate max-w-[70px]">{product.city || product.region}</span>
+            </span>
+          )}
+        </div>
+
       </div>
     </div>
   );

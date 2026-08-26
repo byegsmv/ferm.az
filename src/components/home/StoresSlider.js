@@ -138,7 +138,7 @@ export default function StoresSlider({ stores, title, subtitle }) {
           {stores.map((s, i) => (
             <Link
               key={s.id || i}
-              href={`/magazalar/${s.slug}`}
+              href={`/stores/${s.slug}`}
               draggable={false}
               className="shrink-0 w-32 h-20 sm:w-48 sm:h-24 bg-white border border-gray-100 shadow-sm rounded-lg group/card flex items-center justify-center p-4 transition-all duration-300 hover:shadow-md hover:border-brand-200"
             >

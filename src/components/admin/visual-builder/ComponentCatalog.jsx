@@ -96,16 +96,21 @@ export default function ComponentCatalog({ onAddComponent }) {
           return (
             <div
               key={item.type}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('application/json', JSON.stringify(item));
+                e.dataTransfer.effectAllowed = 'copy';
+              }}
               onClick={() => onAddComponent(item)}
-              className="group p-2.5 rounded-xl border border-gray-200/70 hover:border-brand-500 hover:bg-brand-50/40 cursor-pointer shadow-xs transition-all flex items-center justify-between"
+              className="group p-2.5 rounded-xl border border-gray-200/70 hover:border-brand-500 hover:bg-brand-50/40 cursor-grab active:cursor-grabbing shadow-xs transition-all flex items-center justify-between"
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 pointer-events-none">
                 <div className="w-7 h-7 rounded-lg bg-gray-100 group-hover:bg-brand-100 group-hover:text-brand-700 flex items-center justify-center text-gray-600 transition-colors">
                   <IconComponent className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-xs font-medium text-gray-800 group-hover:text-brand-900">{item.label}</span>
               </div>
-              <span className="text-[10px] font-bold text-gray-400 group-hover:text-brand-600">+ Əlavə et</span>
+              <span className="text-[10px] font-bold text-gray-400 group-hover:text-brand-600 pointer-events-none">+</span>
             </div>
           );
         })}

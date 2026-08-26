@@ -24,10 +24,15 @@ export async function POST(request, { params }) {
   } catch (e) {}
 
   // Fetch dynamic promotion configuration
-  const block = await prisma.dynamicBlock.findFirst({
+  const setting = await prisma.setting.findUnique({
     where: { key: "promotion_pricing_config" },
   });
-  const config = block?.props ? { ...DEFAULT_PROMOTION_CONFIG, ...block.props } : DEFAULT_PROMOTION_CONFIG;
+  let config = DEFAULT_PROMOTION_CONFIG;
+  if (setting?.value) {
+    try {
+      config = { ...DEFAULT_PROMOTION_CONFIG, ...JSON.parse(setting.value) };
+    } catch {}
+  }
 
   const packageId = body.packageId || body.promotionKey || "product_premium";
   const promo = config[packageId] || config.product_premium;

@@ -114,7 +114,7 @@ export default function BoostModal({ isOpen, onClose, targetType = "PRODUCT", ta
             <div className="flex items-center gap-2">
               <span className="font-black text-sm text-gray-900">{userBalance.toFixed(2)} ₼</span>
               <Link
-                href="/dashboard/wallet"
+                href="/dashboard?tab=wallet"
                 className="text-[10px] font-bold text-brand-600 hover:text-brand-700 underline"
               >
                 Artır

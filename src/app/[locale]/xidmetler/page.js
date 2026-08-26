@@ -1,15 +1,11 @@
 import { Link } from "@/i18n/routing";
 import Icon from "@/components/ui/Icon";
-import { getSiteTexts } from "@/lib/siteTexts";
-
 export const metadata = {
   title: "Xidmətlər",
   description: "FermerMarket xidmətləri: Satınalma xidməti və Məhsulların qeydiyyata alınması.",
 };
 
-export default async function ServicesPage() {
-  const siteTexts = await getSiteTexts();
-  const t = (key, fallback) => siteTexts[key] || fallback;
+export default function ServicesPage() {
 
   const services = [
     {

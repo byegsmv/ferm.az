@@ -26,7 +26,7 @@ export const orderCreateSchema = z.object({
     .array(
       z.object({
         productId: z.string().min(1),
-        quantity: z.number().int().positive(),
+        quantity: z.coerce.number().int().positive(),
       })
     )
     .min(1, "Sifarişdə ən azı 1 məhsul olmalıdır"),
@@ -43,9 +43,9 @@ export const orderCreateSchema = z.object({
 export const couponCreateSchema = z.object({
   code: z.string().min(3).max(30),
   discountType: z.enum(["PERCENTAGE", "FIXED"]),
-  discountValue: z.number().min(0).max(100),
-  minOrderValue: z.number().min(0).optional(),
-  maxUses: z.number().int().positive().optional(),
+  discountValue: z.coerce.number().min(0).max(100),
+  minOrderValue: z.coerce.number().min(0).optional(),
+  maxUses: z.coerce.number().int().positive().optional(),
   startsAt: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)).optional(),
   expiresAt: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)).optional(),
   isActive: z.boolean().optional(),
@@ -63,9 +63,9 @@ export const couponCreateSchema = z.object({
 export const couponUpdateSchema = z.object({
   code: z.string().min(3).max(30).optional(),
   discountType: z.enum(["PERCENTAGE", "FIXED"]).optional(),
-  discountValue: z.number().min(0).max(100).optional(),
-  minOrderValue: z.number().min(0).nullable().optional(),
-  maxUses: z.number().int().positive().nullable().optional(),
+  discountValue: z.coerce.number().min(0).max(100).optional(),
+  minOrderValue: z.coerce.number().min(0).nullable().optional(),
+  maxUses: z.coerce.number().int().positive().nullable().optional(),
   startsAt: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)).nullable().optional(),
   expiresAt: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)).nullable().optional(),
   isActive: z.boolean().optional(),
@@ -82,7 +82,7 @@ export const couponUpdateSchema = z.object({
 
 export const couponValidateSchema = z.object({
   code: z.string().min(1),
-  orderSubtotal: z.number().positive(),
+  orderSubtotal: z.coerce.number().positive(),
 });
 
 export const listingUpsertSchema = z.object({
@@ -111,8 +111,8 @@ export const campaignCreateSchema = z
     region: z.string().optional(),
     startDate: z.string().min(8),
     endDate: z.string().min(8),
-    budget: z.number().positive().optional(),
-    costPerClick: z.number().positive().optional(),
+    budget: z.coerce.number().positive().optional(),
+    costPerClick: z.coerce.number().positive().optional(),
   })
   .refine((data) => new Date(data.endDate) > new Date(data.startDate), {
     message: "Bitmə tarixi başlanğıc tarixindən sonra olmalıdır",
@@ -122,15 +122,16 @@ export const campaignCreateSchema = z
 export const campaignUpdateSchema = z.object({
   title: z.string().min(3).optional(),
   status: z.enum(["DRAFT", "SCHEDULED", "ACTIVE", "PAUSED", "EXPIRED"]).optional(),
-  bannerUrl: z.string().url().optional().nullable(),
-  targetUrl: z.string().url().optional().nullable(),
+  bannerUrl: z.string().optional().nullable(),
+  targetUrl: z.string().optional().nullable(),
   storeId: z.string().cuid().optional().nullable(),
   categoryId: z.string().cuid().optional().nullable(),
   region: z.string().optional().nullable(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
-  budget: z.number().positive().optional(),
-  costPerClick: z.number().positive().optional(),
+  budget: z.coerce.number().positive().optional(),
+  costPerClick: z.coerce.number().positive().optional(),
+  type: z.string().optional()
 });
 
 export const passwordResetRequestSchema = z.object({
@@ -171,7 +172,7 @@ export const categoryCreateSchema = z.object({
   description: z.string().optional().nullable().or(z.literal("")),
   icon: z.string().optional().nullable().or(z.literal("")),
   parentId: z.string().optional().nullable().or(z.literal("")).transform(v => v || null),
-  sortOrder: z.number().int().optional().default(0),
+  sortOrder: z.coerce.number().int().optional().default(0),
   isActive: z.boolean().optional().default(true),
 });
 
@@ -182,14 +183,14 @@ const productRawSchema = z.object({
   descriptionAz: z.string().optional().nullable().or(z.literal("")),
   descriptionEn: z.string().optional().nullable().or(z.literal("")),
   descriptionRu: z.string().optional().nullable().or(z.literal("")),
-  price: z.number().positive("Qiymət müsbət olmalıdır"),
+  price: z.coerce.number().positive("Qiymət müsbət olmalıdır"),
   currency: z.string().optional(),
-  stock: z.number().int().nonnegative().optional(),
+  stock: z.coerce.number().int().nonnegative().optional(),
   categoryId: z.string().min(1, "Kateqoriya seçilməlidir"),
   storeId: z.string().optional().nullable().or(z.literal("")).transform(v => v || null),
   region: z.string().optional().nullable().or(z.literal("")),
   city: z.string().optional().nullable().or(z.literal("")),
-  durationDays: z.number().int().optional().default(1),
+  durationDays: z.coerce.number().int().optional().default(1),
   // Dynamic fields from form builder
   attributes: z.any().optional(),
   // Guest classified listing (no account)
@@ -204,12 +205,12 @@ const productRawSchema = z.object({
     )
     .optional(),
   isCorporate: z.boolean().optional(),
-  minOrderQty: z.number().int().positive().optional().nullable(),
+  minOrderQty: z.coerce.number().int().positive().optional().nullable(),
   allowRetail: z.boolean().optional(),
   unit: z.string().optional(),
-  wholesalePrice: z.number().positive().optional().nullable(),
-  wholesaleMinQty: z.number().int().positive().optional().nullable(),
-  discountedPrice: z.number().positive().optional().nullable(),
+  wholesalePrice: z.coerce.number().positive().optional().nullable(),
+  wholesaleMinQty: z.coerce.number().int().positive().optional().nullable(),
+  discountedPrice: z.coerce.number().positive().optional().nullable(),
   brandId: z.string().optional().nullable().or(z.literal("")).transform(v => v || null),
   tags: z.array(z.string().max(50)).max(10).optional(),
   allowInstallment: z.boolean().optional(),
@@ -217,13 +218,13 @@ const productRawSchema = z.object({
 
 export const productCreateSchema = productRawSchema.extend({
   currency: z.string().default("AZN"),
-  stock: z.number().int().nonnegative().default(1),
+  stock: z.coerce.number().int().nonnegative().default(1),
   isCorporate: z.boolean().default(false),
   allowRetail: z.boolean().default(true),
   unit: z.string().default("ədəd"),
   tags: z.array(z.string().max(50)).max(10).default([]),
   allowInstallment: z.boolean().optional().default(false),
-  durationDays: z.number().int().optional().default(1),
+  durationDays: z.coerce.number().int().optional().default(1),
 });
 
 export const productUpdateSchema = productRawSchema
@@ -239,7 +240,7 @@ export const brandCreateSchema = z.object({
   website: z.string().optional().nullable().or(z.literal("")),
   description: z.string().optional().nullable().or(z.literal("")),
   isActive: z.boolean().optional().default(true),
-  sortOrder: z.number().int().optional().default(0),
+  sortOrder: z.coerce.number().int().optional().default(0),
 });
 
 export const brandUpdateSchema = brandCreateSchema.partial();
@@ -250,8 +251,8 @@ export const storeCreateSchema = z.object({
   logoUrl: z.string().optional().nullable().or(z.literal("")),
   coverUrl: z.string().optional().nullable().or(z.literal("")),
   address: z.string().optional().nullable().or(z.literal("")),
-  lat: z.number().optional().nullable(),
-  lng: z.number().optional().nullable(),
+  lat: z.coerce.number().optional().nullable(),
+  lng: z.coerce.number().optional().nullable(),
   whatsapp: z.string().optional().nullable().or(z.literal("")),
   phone: z.string().optional().nullable().or(z.literal("")),
   website: z.string().optional().nullable().or(z.literal("")),
@@ -275,9 +276,9 @@ export const storeCreateSchema = z.object({
   primaryColor: z.string().optional().nullable().or(z.literal("")),
   secondaryColor: z.string().optional().nullable().or(z.literal("")),
   themeMode: z.enum(["light", "dark"]).optional(),
-  followerCount: z.number().int().optional().default(0),
-  storeViewCount: z.number().int().optional().default(0),
-  totalSales: z.number().int().optional().default(0),
+  followerCount: z.coerce.number().int().optional().default(0),
+  storeViewCount: z.coerce.number().int().optional().default(0),
+  totalSales: z.coerce.number().int().optional().default(0),
 });
 
 export const storeUpdateSchema = storeCreateSchema.partial().extend({
@@ -286,14 +287,14 @@ export const storeUpdateSchema = storeCreateSchema.partial().extend({
 });
 
 export const reviewCreateSchema = z.object({
-  rating: z.number().int().min(1, "Reytinq 1-5 arası olmalıdır").max(5, "Reytinq 1-5 arası olmalıdır"),
+  rating: z.coerce.number().int().min(1, "Reytinq 1-5 arası olmalıdır").max(5, "Reytinq 1-5 arası olmalıdır"),
   comment: z.string().max(2000).optional(),
 });
 
 // ---------- Phase 6: Wallet, Bundles, Blog, Messaging, Push ----------
 
 export const walletWithdrawSchema = z.object({
-  amount: z.number().positive("Məbləğ müsbət olmalıdır"),
+  amount: z.coerce.number().positive("Məbləğ müsbət olmalıdır"),
   note: z.string().max(500).optional(),
 });
 
@@ -302,7 +303,7 @@ export const bundleCreateSchema = z.object({
   description: z.string().optional().nullable().or(z.literal("")),
   storeId: z.string().optional().nullable().or(z.literal("")).transform(v => v || null),
   discountType: z.enum(["PERCENTAGE", "FIXED"]),
-  discountValue: z.number().positive(),
+  discountValue: z.coerce.number().positive(),
   productIds: z.array(z.string().cuid()).min(2, "Bağlamada ən azı 2 məhsul olmalıdır"),
 });
 
@@ -310,7 +311,7 @@ export const bundleUpdateSchema = z.object({
   title: z.string().min(3).optional(),
   description: z.string().optional().nullable().or(z.literal("")),
   discountType: z.enum(["PERCENTAGE", "FIXED"]).optional(),
-  discountValue: z.number().positive().optional(),
+  discountValue: z.coerce.number().positive().optional(),
   isActive: z.boolean().optional(),
   productIds: z.array(z.string().cuid()).min(2).optional(),
 });

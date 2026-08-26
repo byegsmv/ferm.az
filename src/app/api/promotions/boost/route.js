@@ -16,10 +16,15 @@ export async function POST(request) {
     }
 
     // Get current promotion config from DB
-    const block = await prisma.dynamicBlock.findFirst({
+    const setting = await prisma.setting.findUnique({
       where: { key: "promotion_pricing_config" },
     });
-    const config = block?.props ? { ...DEFAULT_PROMOTION_CONFIG, ...block.props } : DEFAULT_PROMOTION_CONFIG;
+    let config = DEFAULT_PROMOTION_CONFIG;
+    if (setting?.value) {
+      try {
+        config = { ...DEFAULT_PROMOTION_CONFIG, ...JSON.parse(setting.value) };
+      } catch {}
+    }
 
     const promo = config[promotionKey];
     if (!promo || promo.active === false) {

@@ -30,8 +30,8 @@ export default function DashboardClient({ searchParams }) {
     const localUser = getUser();
     if (!localUser) { router.push("/login"); return; }
 
-    // Admin-level users are redirected to /admin
-    if (ADMIN_ROLES.includes(localUser.role)) {
+    // Admin-level users are redirected to /admin unless they explicitly want to create a store
+    if (ADMIN_ROLES.includes(localUser.role) && searchParams?.tab !== "create-store") {
       router.push("/admin");
       return;
     }

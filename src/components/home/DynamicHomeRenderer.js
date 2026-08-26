@@ -200,11 +200,6 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
                         ) : (
                           <div className={`absolute inset-0 bg-gradient-to-br ${getBgColors(campaign.type)}`}></div>
                         )}
-                        {daysLeft > 0 && daysLeft <= 7 && (
-                          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur text-xs font-bold px-2 py-0.5 rounded-full text-red-600">
-                            {daysLeft} gün qaldı
-                          </div>
-                        )}
                       </div>
                       <div className="p-4">
                         <h3 className="font-bold text-gray-900">{campaign.title}</h3>
