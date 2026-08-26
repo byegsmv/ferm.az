@@ -1,0 +1,20 @@
+{
+  "siteName": "FermerMarket",
+  "tagline": "Açıq bazar, güçlü idarəetmə",
+  "currency": "AZN",
+  "locale": "AZ",
+  "maintenanceMode": false,
+  "allowRegistration": true,
+  "allowListings": true,
+  "allowReviews": true,
+  "allowWallet": true,
+  "allowPush": true,
+  "allowBlog": true,
+  "allowCampaigns": true,
+  "allowStores": true,
+  "allowCoupons": true,
+  "allowBundles": true,
+  "showAnalytics": true,
+  "enableAdminAudit": true,
+  "require2FA": true
+}
