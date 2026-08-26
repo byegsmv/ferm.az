@@ -27,10 +27,7 @@ export function verifyAccessTokenEdge(token) {
 
     // Decode header + payload (no signature check here — done below)
     const payloadB64 = parts[1];
-    const payloadJson = Buffer.from(
-      payloadB64.replace(/-/g, "+").replace(/_/g, "/"),
-      "base64"
-    ).toString("utf8");
+    const payloadJson = atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"));
     const payload = JSON.parse(payloadJson);
 
     // Check expiry
