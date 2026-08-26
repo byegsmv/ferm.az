@@ -1,23 +1,40 @@
 "use client";
+
 import Icon from "@/components/ui/Icon";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
 import { useToast } from "@/components/ui/Toast";
+import {
+  Globe, Share2, Phone, Mail, MapPin, Settings, ShoppingBag,
+  FileText, ShieldCheck, Check, Save, RefreshCw
+} from "lucide-react";
 
 const SECTION_ORDER = [
-  { key: "general", label: "Ümumi ayarlar", iconName: "settings" },
-  { key: "commerce", label: "Ticarət", iconName: "cart" },
-  { key: "content", label: "Məzmun", iconName: "fileText" },
-  { key: "access", label: "Giriş və icazə", iconName: "lock" },
+  { key: "social", label: "Sosial Şəbəkələr & Əlaqə", icon: <Share2 className="w-4 h-4 text-pink-500" /> },
+  { key: "general", label: "Ümumi Ayarlar", icon: <Settings className="w-4 h-4 text-blue-500" /> },
+  { key: "commerce", label: "Ticarət & Bazarlıq", icon: <ShoppingBag className="w-4 h-4 text-emerald-500" /> },
+  { key: "content", label: "Məzmun & Modullar", icon: <FileText className="w-4 h-4 text-purple-500" /> },
+  { key: "access", label: "Təhlükəsizlik & İcazələr", icon: <ShieldCheck className="w-4 h-4 text-amber-500" /> },
 ];
 
 const FIELD_DEFS = {
+  social: [
+    { key: "facebook", label: "Facebook Profil / Səhifə Linki", type: "text", placeholder: "https://facebook.com/..." },
+    { key: "instagram", label: "Instagram Hesab Linki", type: "text", placeholder: "https://instagram.com/..." },
+    { key: "whatsapp", label: "WhatsApp Nömrəsi / Linki", type: "text", placeholder: "+994 50 123 45 67 və ya https://wa.me/..." },
+    { key: "tiktok", label: "TikTok Profil Linki", type: "text", placeholder: "https://tiktok.com/@..." },
+    { key: "telegram", label: "Telegram Kanalı / Qrupu", type: "text", placeholder: "https://t.me/..." },
+    { key: "youtube", label: "YouTube Kanalı", type: "text", placeholder: "https://youtube.com/@..." },
+    { key: "phone", label: "Əlaqə Telefon Nömrəsi", type: "text", placeholder: "+994 10 521 09 09" },
+    { key: "email", label: "Rəsmi Əlaqə E-maili", type: "text", placeholder: "info@fermermarket.az" },
+    { key: "address", label: "Şirkət Ünvanı", type: "text", placeholder: "Bakı şəhəri, Azərbaycan" },
+  ],
   general: [
     { key: "siteName", label: "Sayt adı", type: "text" },
-    { key: "tagline", label: "Açıqlama", type: "text" },
+    { key: "tagline", label: "Açıqlama şüarı", type: "text" },
     { key: "currency", label: "Valyuta", type: "text" },
-    { key: "locale", label: "Dil", type: "select", options: ["AZ", "EN", "RU"] },
-    { key: "maintenanceMode", label: "Bakım modu", type: "toggle" },
+    { key: "locale", label: "Varsayılan Dil", type: "select", options: ["AZ", "EN", "RU"] },
+    { key: "maintenanceMode", label: "Texniki Qulluq Rejimi (Maintenance)", type: "toggle" },
   ],
   commerce: [
     { key: "allowRegistration", label: "Qeydiyyat açıqdır", type: "toggle" },
@@ -42,6 +59,7 @@ const FIELD_DEFS = {
 
 export default function NoCodeAdminStudio() {
   const [config, setConfig] = useState(null);
+  const [selectedSection, setSelectedSection] = useState("social");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast, ToastContainer } = useToast();
@@ -65,9 +83,12 @@ export default function NoCodeAdminStudio() {
   async function save() {
     setSaving(true);
     try {
-      const data = await apiFetch("/api/admin/studio", { method: "POST", body: JSON.stringify(config) });
+      const data = await apiFetch("/api/admin/studio", {
+        method: "POST",
+        body: JSON.stringify(config)
+      });
       setConfig(data.config || config);
-      toast("Ayarlar yadda saxlanıldı", "success");
+      toast("Bütün tənzimləmələr və sosial linklər uğurla yadda saxlanıldı!", "success");
     } catch (error) {
       toast(error.message, "error");
     } finally {
@@ -83,72 +104,97 @@ export default function NoCodeAdminStudio() {
     if (!config) return [];
     return [
       { label: "Sayt", value: config.siteName || "FermerMarket" },
-      { label: "Valyuta", value: config.currency || "AZN" },
-      { label: "Qeydiyyat", value: config.allowRegistration ? "Açıq" : "Bağlı" },
-      { label: "Analitika", value: config.showAnalytics ? "Aktiv" : "Deaktiv" },
+      { label: "Facebook", value: config.facebook ? "Təyin edilib" : "Yoxdur" },
+      { label: "Instagram", value: config.instagram ? "Təyin edilib" : "Yoxdur" },
+      { label: "WhatsApp", value: config.whatsapp || "Təyin edilməyib" },
     ];
   }, [config]);
 
   if (loading) {
-    return <div className="card p-6 text-sm text-gray-500">Yüklənir...</div>;
+    return (
+      <div className="p-12 flex items-center justify-center text-gray-500 gap-3">
+        <RefreshCw className="w-6 h-6 animate-spin text-brand-600" />
+        <span className="text-sm font-bold">Tənzimləmələr yüklənir...</span>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <ToastContainer />
-      <div className="flex items-start justify-between gap-3 flex-wrap">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="section-title">No-Code Admin Studio</h2>
-          <p className="section-subtitle">Bu panel vasitəsilə əsas sistem davranışlarını no-code şəkildə idarə edin.</p>
+          <h2 className="text-xl font-extrabold text-gray-900">Sistem Tənzimləmələri & Sosial Media İdarəsi</h2>
+          <p className="text-xs text-gray-500 mt-1">Sosial şəbəkə profilləri, əlaqə məlumatları və sistem qaydalarını birbaşa buradan dəyişin.</p>
         </div>
-        <button onClick={save} disabled={saving} className="btn-primary btn-sm">{saving ? "Yadda saxlanır..." : "Yadda saxla"}</button>
+        <button
+          onClick={save}
+          disabled={saving}
+          className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-md transition-all disabled:opacity-50"
+        >
+          {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <span>{saving ? "Yadda saxlanılır..." : "Yadda Saxla"}</span>
+        </button>
       </div>
 
-      <div className="grid md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {summary.map((item) => (
-          <div key={item.label} className="card p-4">
-            <p className="text-[11px] uppercase tracking-wider text-gray-400">{item.label}</p>
-            <p className="mt-1 font-semibold text-sm text-gray-900">{item.value}</p>
+          <div key={item.label} className="bg-gray-50 border border-gray-100 rounded-2xl p-4">
+            <p className="text-[11px] uppercase tracking-wider font-bold text-gray-400">{item.label}</p>
+            <p className="mt-1 font-extrabold text-sm text-gray-900 truncate">{item.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-[220px,1fr] gap-4">
-        <div className="card p-3 h-fit">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-3">Bölmələr</p>
-          <div className="space-y-1">
-            {SECTION_ORDER.map((section) => (
-              <div key={section.key} className="rounded-xl px-3 py-2 text-sm font-medium text-gray-600 bg-gray-50">
-                {section.icon} {section.label}
-              </div>
-            ))}
-          </div>
+      <div className="grid lg:grid-cols-[240px,1fr] gap-6">
+        <div className="bg-white rounded-2xl border border-gray-200 p-3 h-fit space-y-1">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 px-3 py-2">Bölmələr</p>
+          {SECTION_ORDER.map((section) => (
+            <button
+              key={section.key}
+              onClick={() => setSelectedSection(section.key)}
+              className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-bold transition-all text-left ${
+                selectedSection === section.key
+                  ? "bg-brand-50 text-brand-700 shadow-xs"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
+            >
+              {section.icon}
+              <span>{section.label}</span>
+            </button>
+          ))}
         </div>
 
         <div className="space-y-4">
-          {SECTION_ORDER.map((section) => (
-            <div key={section.key} className="card p-5">
-              <h3 className="font-semibold text-sm mb-4">{section.icon} {section.label}</h3>
+          {SECTION_ORDER.filter(s => s.key === selectedSection).map((section) => (
+            <div key={section.key} className="bg-white rounded-3xl border border-gray-200 p-6 shadow-xs">
+              <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-3">
+                {section.icon}
+                <h3 className="font-extrabold text-sm text-gray-900">{section.label}</h3>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-4">
                 {FIELD_DEFS[section.key].map((field) => {
                   const value = config?.[field.key];
                   return (
-                    <label key={field.key} className="flex flex-col gap-2 rounded-2xl border border-gray-100 p-3 bg-gray-50/70">
-                      <span className="text-sm font-medium text-gray-700">{field.label}</span>
+                    <div key={field.key} className="flex flex-col gap-1.5 rounded-2xl border border-gray-100 p-4 bg-gray-50/60">
+                      <label className="text-xs font-bold text-gray-700">{field.label}</label>
                       {field.type === "toggle" ? (
                         <button
                           type="button"
                           onClick={() => updateField(field.key, !value)}
-                          className={`inline-flex items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold ${value ? "bg-emerald-500 text-white" : "bg-gray-200 text-gray-700"}`}
+                          className={`inline-flex items-center justify-between rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                            value ? "bg-emerald-500 text-white shadow-xs" : "bg-gray-200 text-gray-700"
+                          }`}
                         >
-                          <span>{value ? "Aktiv" : "Deaktiv"}</span>
-                          {value ? <Icon name="check" size={14} className="text-emerald-600" /> : <span className="w-3.5 h-3.5 rounded-full border border-gray-300 inline-block" />}
+                          <span>{value ? "Aktivdir" : "Deaktivdir"}</span>
+                          {value ? <Check className="w-3.5 h-3.5 text-white" /> : <span className="w-3 h-3 rounded-full border border-gray-400 inline-block" />}
                         </button>
                       ) : field.type === "select" ? (
                         <select
                           value={value || ""}
                           onChange={(e) => updateField(field.key, e.target.value)}
-                          className="rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white"
+                          className="w-full rounded-xl border border-gray-200 px-3 py-2 text-xs bg-white outline-none focus:border-brand-500"
                         >
                           {field.options.map((option) => (
                             <option key={option} value={option}>{option}</option>
@@ -156,12 +202,14 @@ export default function NoCodeAdminStudio() {
                         </select>
                       ) : (
                         <input
+                          type="text"
                           value={value || ""}
+                          placeholder={field.placeholder || ""}
                           onChange={(e) => updateField(field.key, e.target.value)}
-                          className="rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white"
+                          className="w-full rounded-xl border border-gray-200 px-3 py-2 text-xs bg-white outline-none focus:border-brand-500 font-medium"
                         />
                       )}
-                    </label>
+                    </div>
                   );
                 })}
               </div>
