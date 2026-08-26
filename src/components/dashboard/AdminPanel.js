@@ -17,6 +17,7 @@ import SafeImage from "@/components/SafeImage";
 import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useSiteTexts } from "@/lib/siteTexts";
+import ImageUploadField from "@/components/ui/ImageUploadField";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ROLES = ["BUYER", "FARMER", "STORE", "AGRONOMIST", "DELIVERY_PARTNER", "MODERATOR", "ADMIN", "SUPER_ADMIN"];
@@ -927,14 +928,46 @@ function BrandsManager() {
               <h2 className="text-lg font-bold text-gray-900">{editingId ? "Brendi Redaktə Et" : "Yeni Brend"}</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><Icon name="close" size={20} /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-3">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {err && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{err}</div>}
-              <div><label className="block text-sm font-medium text-gray-700 mb-1">Ad <span className="text-red-500">*</span></label><input required value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none" placeholder="Məs: John Deere" /></div>
-              <div className="grid grid-cols-2 gap-3"><div><label className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label><input value={form.logoUrl} onChange={e => setForm(p => ({ ...p, logoUrl: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none" placeholder="https://..." /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Ölkə</label><input value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none" placeholder="ABŞ" /></div></div>
-              <div><label className="block text-sm font-medium text-gray-700 mb-1">Vebsayt</label><input type="url" value={form.website} onChange={e => setForm(p => ({ ...p, website: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none" placeholder="https://..." /></div>
-              <div><label className="block text-sm font-medium text-gray-700 mb-1">Təsvir</label><textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none resize-none" /></div>
-              <div className="flex items-center gap-3"><button type="button" onClick={() => setForm(p => ({ ...p, isActive: !p.isActive }))} className={`relative w-11 h-6 rounded-full transition-colors ${form.isActive ? 'bg-brand-600' : 'bg-gray-300'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.isActive ? 'translate-x-5' : ''}`} /></button><span className="text-sm font-medium text-gray-700">{form.isActive ? "Aktiv" : "Deaktiv"}</span></div>
-              <div className="flex justify-end gap-3 pt-3 border-t border-gray-100"><button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-100">Ləğv et</button><button type="submit" className="bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-700">{editingId ? "Yenilə" : "Yarat"}</button></div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ad <span className="text-red-500">*</span></label>
+                <input required value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none" placeholder="Məs: John Deere" />
+              </div>
+
+              {/* Direct File / Local Computer Upload or URL */}
+              <ImageUploadField
+                label="Brend Logosu (Kompüterdən və ya URL)"
+                value={form.logoUrl}
+                onChange={(val) => setForm(p => ({ ...p, logoUrl: val }))}
+                placeholder="https://..."
+              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ölkə</label>
+                  <input value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none" placeholder="Məs: ABŞ, Almaniya" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Vebsayt</label>
+                  <input type="url" value={form.website} onChange={e => setForm(p => ({ ...p, website: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none" placeholder="https://..." />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Təsvir</label>
+                <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 outline-none resize-none" />
+              </div>
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => setForm(p => ({ ...p, isActive: !p.isActive }))} className={`relative w-11 h-6 rounded-full transition-colors ${form.isActive ? 'bg-brand-600' : 'bg-gray-300'}`}>
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.isActive ? 'translate-x-5' : ''}`} />
+                </button>
+                <span className="text-sm font-medium text-gray-700">{form.isActive ? "Aktiv" : "Deaktiv"}</span>
+              </div>
+              <div className="flex justify-end gap-3 pt-3 border-t border-gray-100">
+                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-100">Ləğv et</button>
+                <button type="submit" className="bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-700">{editingId ? "Yenilə" : "Yarat"}</button>
+              </div>
             </form>
           </div>
         </div>
