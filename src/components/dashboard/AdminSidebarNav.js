@@ -8,13 +8,17 @@ export default function AdminSidebarNav() {
 
   const links = [
     { href: "/admin", icon: "dashboard", label: "Dashboard", exact: true },
+    { href: "/admin/builder", icon: "sparkles", label: "Visual System Builder", badge: "PRO" },
     { href: "/admin/products", icon: "package", label: "Məhsullar" },
     { href: "/admin/categories", icon: "folder", label: "Kateqoriyalar" },
     { href: "/admin/orders", icon: "cart", label: "Sifarişlər" },
     { href: "/admin/users", icon: "users", label: "İstifadəçilər" },
+    { href: "/admin/workflows", icon: "git-merge", label: "Workflows & Axınlar" },
+    { href: "/admin/permissions", icon: "shieldCheck", label: "Rollar & İcazələr" },
     { href: "/admin/campaigns", icon: "megaphone", label: "Kampaniyalar" },
     { href: "/admin/banners", icon: "image", label: "Bannerlər" },
     { href: "/admin/active-ingredients", icon: "flask", label: "Aktiv Maddələr" },
+    { href: "/admin/health", icon: "activity", label: "Sistem Sağlamlığı" },
     { href: "/admin/translations", icon: "globe", label: "Tərcümələr" },
     { href: "/admin/settings", icon: "settings", label: "Tənzimləmələr" },
   ];
@@ -55,7 +59,12 @@ export default function AdminSidebarNav() {
                 className={`shrink-0 ${isActive ? 'text-brand-600' : 'text-gray-400'}`}
                 strokeWidth={isActive ? 2 : 1.8}
               />
-              <span className="truncate">{link.label}</span>
+              <span className="truncate flex-1">{link.label}</span>
+              {link.badge && (
+                <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black bg-brand-600 text-white tracking-wide">
+                  {link.badge}
+                </span>
+              )}
             </Link>
           );
         })}
