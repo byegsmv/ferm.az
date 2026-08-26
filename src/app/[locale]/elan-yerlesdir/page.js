@@ -172,6 +172,7 @@ export default function PostListingPage() {
       const payload = {
         titleAz: form.titleAz,
         price: Number(form.price),
+        discountedPrice: form.discountedPrice ? Number(form.discountedPrice) : undefined,
         stock: Number(form.stock),
         categoryId: form.categoryId,
         region: form.region || undefined,

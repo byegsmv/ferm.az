@@ -36,7 +36,8 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLang, setShowLang] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const menuRef = useRef(null);
+  const userMenuRef = useRef(null);
+  const langMenuRef = useRef(null);
   const [mounted, setMounted] = useState(false);
   
   const [selectedCity, setSelectedCity] = useState(null);
@@ -50,6 +51,7 @@ export default function Header() {
     { href: "/campaigns", label: st("nav.campaigns", "Kampaniyalar") },
     { href: "/stores", label: st("nav.stores", "Mağazalar") },
     { href: "/agronom", label: st("nav.agronom", "Aqronom") },
+    { href: "/xidmetler", label: st("nav.services", "Xidmətlər") },
     { href: "/blog", label: st("nav.blog", "Bloq") },
   ];
 
@@ -84,7 +86,8 @@ export default function Header() {
     window.addEventListener("scroll", onScroll, { passive: true });
 
     const onClickOut = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setMenuOpen(false);
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target)) setShowLang(false);
     };
     document.addEventListener("mousedown", onClickOut);
 
@@ -210,7 +213,7 @@ export default function Header() {
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-2">
           {/* Language  */}
-          <div className="relative" ref={menuRef}>
+          <div className="relative" ref={langMenuRef}>
             <button
               onClick={() => setShowLang((v) => !v)}
               className="flex items-center gap-1.5 h-10 px-3 rounded-xl border border-gray-200 hover:border-brand-300 bg-white text-sm font-semibold text-gray-700 transition shadow-sm"
@@ -264,7 +267,7 @@ export default function Header() {
           </Link>
 
           {user ? (
-            <div className="relative" ref={menuRef}>
+            <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}
                 className="flex items-center gap-2 h-11 px-3.5 rounded-[14px] border border-gray-200 bg-white shadow-sm hover:border-brand-300 hover:bg-brand-50/50 text-sm font-semibold text-gray-800 transition-all duration-300"
@@ -287,7 +290,7 @@ export default function Header() {
                       </div>
                     )}
                   </div>
-                  {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
+                  {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'MODERATOR') && (
                     <Link href="/admin" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-brand-50 hover:text-brand-700 font-medium transition" onClick={() => setMenuOpen(false)}>
                       <Icon name="layoutDashboard" size={16} /> {st("header.adminPanel", "Admin Panel")}
                     </Link>

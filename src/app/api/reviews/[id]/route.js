@@ -20,9 +20,11 @@ export async function PATCH(request, { params }) {
   });
 
   if (body.isApproved) {
-    await createNotification(review.authorId, {
-      title: "Rəy Təsdiqləndi",
-      message: `Siz yazılan "${review.product.titleAz}" haqqında rəy təsdiqləndi.`,
+    await createNotification({
+      userId: review.authorId,
+      type: "review_approved",
+      title: "Rəy Təsdiqləndi ⭐",
+      body: `Sizin "${review.product.titleAz}" haqqında yazdığınız rəy təsdiqləndi.`,
       link: `/products/${review.productId}`,
     });
   }

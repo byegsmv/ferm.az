@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 async function getHomeData() {
   const now = new Date();
   try {
-    const [categories, premiumListings, homepageAd, latestProducts, bundles, blogPosts, campaigns] = await Promise.all([
+    const [categories, premiumListings, homepageAd, latestProducts, bundles, blogPosts, campaigns, brands, stores] = await Promise.all([
       prisma.category.findMany({
         where: { isActive: true, parentId: null },
         orderBy: { sortOrder: "asc" },
@@ -67,11 +67,22 @@ async function getHomeData() {
         take: 6,
         include: { store: { select: { name: true, slug: true } } },
       }),
+      prisma.brand.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
+        take: 15,
+      }),
+      prisma.store.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+        take: 15,
+      }),
     ]);
     const serializeProduct = (p) => ({
       ...p,
       price: p.price ? p.price.toString() : null,
       wholesalePrice: p.wholesalePrice ? p.wholesalePrice.toString() : null,
+      discountedPrice: p.discountedPrice ? p.discountedPrice.toString() : null,
     });
 
     return {
@@ -92,6 +103,8 @@ async function getHomeData() {
       })),
       blogPosts,
       campaigns,
+      brands,
+      stores,
     };
   } catch (error) {
     console.warn("Falling back to mock home data:", error.message);
@@ -133,6 +146,8 @@ export default async function HomePage({ searchParams }) {
     blocks = [
       { type: "HERO_SLIDER", props: {} },
       { type: "CATEGORIES", props: { title: "Kateqoriyalar", count: 20 } },
+      { type: "BRANDS", props: { title: "Populyar brendlər", count: 15 } },
+      { type: "STORES", props: { title: "Populyar satıcılar", count: 15 } },
       { type: "AD_BANNER", props: {} },
       { type: "CAMPAIGNS", props: { title: "Kampaniyalar" } },
       { type: "PREMIUM_ADS", props: { title: "Premium Elanlar" } },

@@ -32,10 +32,10 @@ export default function AdminProfile() {
 
     setLoading(true);
     try {
-      await apiFetch("/api/users/password-reset/request", {
-        method: "POST",
+      await apiFetch("/api/users/me", {
+        method: "PATCH",
         body: JSON.stringify({
-          currentPassword: form.currentPassword,
+          oldPassword: form.currentPassword,
           newPassword: form.newPassword,
         }),
       });

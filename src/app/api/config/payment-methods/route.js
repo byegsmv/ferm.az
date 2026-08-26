@@ -17,11 +17,16 @@ export const DEFAULT_PAYMENT_CONFIG = {
 // GET /api/config/payment-methods — public payment accounts for checkout
 export async function GET() {
   try {
-    const block = await prisma.dynamicBlock.findFirst({
+    const setting = await prisma.setting.findUnique({
       where: { key: "payment_accounts_config" },
     });
 
-    const accounts = block?.props ? { ...DEFAULT_PAYMENT_CONFIG, ...block.props } : DEFAULT_PAYMENT_CONFIG;
+    let accounts = DEFAULT_PAYMENT_CONFIG;
+    if (setting?.value) {
+      try {
+        accounts = { ...DEFAULT_PAYMENT_CONFIG, ...JSON.parse(setting.value) };
+      } catch {}
+    }
     return Response.json({ success: true, paymentAccounts: accounts });
   } catch (error) {
     console.error("GET payment methods config error:", error);
@@ -37,26 +42,33 @@ export async function PATCH(request) {
 
   try {
     const body = await request.json();
-    const currentBlock = await prisma.dynamicBlock.findFirst({
+    const currentSetting = await prisma.setting.findUnique({
       where: { key: "payment_accounts_config" },
     });
 
+    let currentVal = DEFAULT_PAYMENT_CONFIG;
+    if (currentSetting?.value) {
+      try {
+        currentVal = JSON.parse(currentSetting.value);
+      } catch {}
+    }
+
     const merged = {
-      ...(currentBlock?.props || DEFAULT_PAYMENT_CONFIG),
+      ...currentVal,
       ...body,
     };
 
-    const saved = await prisma.dynamicBlock.upsert({
+    const saved = await prisma.setting.upsert({
       where: { key: "payment_accounts_config" },
-      update: { props: merged, updatedAt: new Date() },
+      update: { value: JSON.stringify(merged), updatedAt: new Date() },
       create: {
         key: "payment_accounts_config",
-        type: "payment_config",
-        props: merged,
+        value: JSON.stringify(merged),
+        category: "payment",
       },
     });
 
-    return Response.json({ success: true, paymentAccounts: saved.props });
+    return Response.json({ success: true, paymentAccounts: JSON.parse(saved.value) });
   } catch (error) {
     console.error("PATCH payment methods error:", error);
     return Response.json({ error: "Ödəniş hesabları saxlanılmadı" }, { status: 500 });

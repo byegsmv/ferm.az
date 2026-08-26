@@ -31,16 +31,17 @@ function LoginContent() {
       const callbackUrl = searchParams.get("callbackUrl");
       let target = callbackUrl || "/dashboard";
       
-      // With localePrefix: 'as-needed', the default locale 'az' doesn't need
-      // a prefix. Strip any /az, /en, /ru prefix to avoid a double redirect
-      // (e.g. /az/dashboard -> /dashboard) which causes ERR_FAILED in browsers
-      // when a Service Worker intercepts the navigation.
-      target = target.replace(/^\/(az|en|ru)(\/|$)/, "/");
+      // For default locale 'az', strip prefix; for other locales ('en', 'ru'), ensure locale is preserved
+      if (locale === 'az') {
+        target = target.replace(/^\/az(\/|$)/, "/");
+      } else if (!target.startsWith(`/${locale}`)) {
+        target = `/${locale}${target.startsWith('/') ? '' : '/'}${target}`;
+      }
       
       window.location.href = target;
     } catch (err) {
       const msg = err?.code === "DB_CONN"
-        ? "Sunucu bağlantısı hatası. Lütfen yöneticinizle iletişime geçin."
+        ? "Server bağlantısı xətası. Zəhmət olmasa administratorla əlaqə saxlayın."
         : err.message || "Giriş mümkün olmadı";
       setError(msg);
     } finally {

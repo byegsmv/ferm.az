@@ -136,7 +136,7 @@ export default function SiteTextsManager() {
 
   return (
     <div className="space-y-4">
-      {ToastContainer}
+      <ToastContainer />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">

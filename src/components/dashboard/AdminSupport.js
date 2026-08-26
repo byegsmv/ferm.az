@@ -17,9 +17,16 @@ export default function AdminSupport() {
     }
     setLoading(true);
     try {
+      const { getUser } = await import("@/lib/apiClient");
+      const user = getUser();
       await apiFetch("/api/contact", {
         method: "POST",
-        body: JSON.stringify({ ...form, role: "admin_support" }),
+        body: JSON.stringify({
+          name: user?.fullName || "Admin İstifadəçi",
+          email: user?.email || "admin@fermermarket.az",
+          subject: form.subject,
+          message: `[Prioritet: ${form.priority}] ${form.message}`,
+        }),
       });
       showToast("Sorğunuz göndərildi", "success");
       setForm({ subject: "", message: "", priority: "normal" });

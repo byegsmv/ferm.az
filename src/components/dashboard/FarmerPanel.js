@@ -253,6 +253,14 @@ export default function FarmerPanel({ user }) {
   const [bundlesLoading, setBundlesLoading] = useState(false);
   const [bundlesError, setBundlesError] = useState("");
   const [bundlesMsg, setBundlesMsg] = useState("");
+  const [bundleForm, setBundleForm] = useState({
+    title: "",
+    description: "",
+    discountType: "PERCENTAGE",
+    discountValue: "",
+    productIds: [],
+  });
+  const [bundleSubmitting, setBundleSubmitting] = useState(false);
   const [promoteModal, setPromoteModal] = useState(null);
   const [promoteLoading, setPromoteLoading] = useState(false);
   const _store = user?.store || user?.ownedStores?.[0];

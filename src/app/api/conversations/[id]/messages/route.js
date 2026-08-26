@@ -82,10 +82,9 @@ export async function POST(request, { params }) {
       data: {
         userId: recipientId,
         type: "message",
-        title: "Yeni mesaj aldınız",
+        title: "Yeni mesaj 💬",
         body: parsed.data.content.slice(0, 100),
-        entity: "Conversation",
-        entityId: conversationId,
+        link: `/messages?id=${conversationId}`,
       },
     }).catch(() => {});
 

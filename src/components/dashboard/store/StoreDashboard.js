@@ -745,7 +745,6 @@ export default function StoreDashboard({ user }) {
         targetItem={boostModalData?.targetItem || {}}
         onSuccess={() => {
           loadProducts();
-          loadStore();
         }}
       />
     </div>

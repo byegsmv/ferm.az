@@ -12,6 +12,8 @@ import { getMessages } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { Toaster } from "react-hot-toast";
 
+const inter = Inter({ subsets: ["latin"] });
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ||
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://fermermarket.az");
 
@@ -43,12 +45,15 @@ export const metadata = {
   },
   alternates: {
     canonical: SITE_URL,
-    languages: Object.fromEntries(
-      routing.locales.map((locale) => [
-        locale === 'az' ? 'x-default' : locale,
-        locale === routing.defaultLocale ? SITE_URL : `${SITE_URL}/${locale}`,
-      ])
-    ),
+    languages: {
+      'x-default': SITE_URL,
+      ...Object.fromEntries(
+        routing.locales.map((loc) => [
+          loc,
+          loc === routing.defaultLocale ? SITE_URL : `${SITE_URL}/${loc}`,
+        ])
+      ),
+    },
   },
 };
 
@@ -71,7 +76,7 @@ export default async function RootLayout({ children, params }) {
 
   return (
     <html lang={locale}>
-      <body className="min-h-screen flex flex-col overflow-x-hidden" style={{ overflowX: 'hidden' }}>
+      <body className={`min-h-screen flex flex-col overflow-x-hidden ${inter.className}`} style={{ overflowX: 'hidden' }}>
         <NextIntlClientProvider messages={messages}>
           <ServiceWorkerRegister />
           <Header />

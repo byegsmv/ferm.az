@@ -35,11 +35,12 @@ export default function ModernAdminDashboard() {
     const checkAuth = async () => {
       try {
         const data = await apiFetch('/api/users/me');
-        if (!['ADMIN', 'SUPER_ADMIN'].includes(data.role)) {
+        const currentUser = data?.user || data;
+        if (!['ADMIN', 'SUPER_ADMIN'].includes(currentUser?.role)) {
           router.push('/login');
           return;
         }
-        setUser(data);
+        setUser(currentUser);
       } catch {
         router.push('/login');
       }

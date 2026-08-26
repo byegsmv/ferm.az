@@ -109,7 +109,9 @@ export default function DashboardClient({ searchParams }) {
         </div>
       ) : (
         <>
-          <DeliveryPanel user={user} />
+          {(user?.role === "DELIVERY_PARTNER") && (
+            <DeliveryPanel user={user} />
+          )}
 
           <div className="space-y-4">
             {hasStore && (

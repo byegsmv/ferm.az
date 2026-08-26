@@ -78,7 +78,7 @@ async function getRelatedProducts(product) {
 
   const tierById = {};
   const vipProducts = vipListings
-    .filter((l) => l.product.id !== product.id)
+    .filter((l) => l.product && l.product.id !== product.id)
     .map((l) => {
       tierById[l.product.id] = l.tier;
       return l.product;
@@ -651,9 +651,11 @@ export default async function ProductDetailPage({ params }) {
                 key={p.id}
                 tier={related.tierById[p.id]}
                 product={{
+                  id: p.id,
                   slug: p.slug,
                   title: p.titleAz,
                   price: Number(p.price),
+                  discountedPrice: p.discountedPrice ? Number(p.discountedPrice) : null,
                   currency: p.currency,
                   coverImage: p.images[0]?.url,
                   region: p.region,

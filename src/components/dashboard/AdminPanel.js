@@ -18,6 +18,7 @@ import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import ImageUploadField from "@/components/ui/ImageUploadField";
 import BoostModal from "@/components/products/BoostModal";
+import { useSiteTexts } from "@/lib/siteTexts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ROLES = ["BUYER", "FARMER", "STORE", "AGRONOMIST", "DELIVERY_PARTNER", "MODERATOR", "ADMIN", "SUPER_ADMIN"];
@@ -46,6 +47,11 @@ const SIDEBAR_GROUPS_DEF = [
       { id: "categories", icon: "grid", label: "Kateqoriyalar" },
       { id: "brands", icon: "tag", label: "Brendlər" },
       { id: "stores", icon: "store", label: "Mağazalar" },
+    ]
+  },
+  {
+    label: "Xidmətlər", items: [
+      { id: "agro_services", icon: "clipboard", label: "Xidmət Müraciətləri" },
     ]
   },
   {
@@ -2210,6 +2216,64 @@ function UserModulesPanel() {
     </div>
   );
 }
+
+// ─── Agro Services Manager ───────────────────────────────────────────────────
+function AgroServicesManager() {
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    apiFetch("/api/agro-services")
+      .then(d => setServices(d.services || []))
+      .catch(e => toast(e.message, "error"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <SkeletonList />;
+  if (services.length === 0) return <EmptyState icon="clipboard" title="Müraciət tapılmadı" />;
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden">
+      <div className="px-5 py-4 border-b border-[var(--border)] flex justify-between items-center bg-gray-50/50">
+        <h2 className="font-bold text-gray-900">Xidmət Müraciətləri</h2>
+      </div>
+      <div className="divide-y divide-[var(--border)]">
+        {services.map(s => (
+          <div key={s.id} className="p-5 flex flex-col sm:flex-row gap-4 hover:bg-gray-50/50 transition-colors">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="font-bold text-gray-900">{s.serviceType === "satinalma" ? "Satınalma Xidməti" : s.serviceType === "mehsul_qeydiyyati" ? "Məhsul Qeydiyyatı" : s.serviceType}</span>
+                <span className="text-xs text-gray-400">{new Date(s.createdAt).toLocaleString("az-AZ")}</span>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
+                <div>
+                  <p><span className="font-medium">Məhsul/Növ:</span> {s.cropType || "-"}</p>
+                  <p><span className="font-medium">Miqdar/Büdcə:</span> {s.area || "-"}</p>
+                </div>
+                <div>
+                  <p><span className="font-medium">Müştəri:</span> {s.user?.fullName || "-"}</p>
+                  <p><span className="font-medium">Telefon:</span> {s.contactPhone || "-"}</p>
+                </div>
+              </div>
+              {s.notes && (
+                <div className="text-sm bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <span className="font-medium text-gray-700">Qeydlər:</span> {s.notes}
+                </div>
+              )}
+            </div>
+            <div className="shrink-0">
+              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${s.status === "PENDING" ? "bg-amber-100 text-amber-700" : s.status === "COMPLETED" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                {s.status}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPanel() {
   const { t } = useSiteTexts();
   const [tab, setTab] = useState("stats");
@@ -2244,6 +2308,7 @@ export default function AdminPanel() {
       case "categories": return <CategoriesManager />;
       case "brands": return <BrandsManager />;
       case "stores": return <StoresManager />;
+      case "agro_services": return <AgroServicesManager />;
       case "orders": return <OrdersAll />;
       case "wallet": return <WalletWithdrawalsManager />;
       case "coupons": return <CouponsManager />;

@@ -99,7 +99,9 @@ import {
   Loader2,
   Paperclip,
   ShoppingBag,
-  Smile
+  Smile,
+  Menu,
+  GitCompare
 } from "lucide-react";
 
 export const ICONS = {
@@ -245,6 +247,9 @@ export const ICONS = {
   smile: Smile,
   x: X,
   "trash-2": Trash2,
+  menu: Menu,
+  gitCompare: GitCompare,
+  trash2: Trash2,
 };
 
 export default function Icon({ name, size = 18, strokeWidth = 1.8, className = "", ...props }) {

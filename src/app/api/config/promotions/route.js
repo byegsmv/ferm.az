@@ -21,11 +21,16 @@ export const DEFAULT_PROMOTION_CONFIG = {
 // GET /api/config/promotions — public list of all active promotion pricing
 export async function GET() {
   try {
-    const block = await prisma.dynamicBlock.findFirst({
+    const setting = await prisma.setting.findUnique({
       where: { key: "promotion_pricing_config" },
     });
 
-    const pricing = block?.props ? { ...DEFAULT_PROMOTION_CONFIG, ...block.props } : DEFAULT_PROMOTION_CONFIG;
+    let pricing = DEFAULT_PROMOTION_CONFIG;
+    if (setting?.value) {
+      try {
+        pricing = { ...DEFAULT_PROMOTION_CONFIG, ...JSON.parse(setting.value) };
+      } catch {}
+    }
     return Response.json({ success: true, promotions: pricing });
   } catch (error) {
     console.error("GET /api/config/promotions error:", error);
@@ -41,48 +46,53 @@ export async function PATCH(request) {
 
   try {
     const body = await request.json();
-    const currentBlock = await prisma.dynamicBlock.findFirst({
+    const currentSetting = await prisma.setting.findUnique({
       where: { key: "promotion_pricing_config" },
     });
 
+    let currentVal = DEFAULT_PROMOTION_CONFIG;
+    if (currentSetting?.value) {
+      try {
+        currentVal = JSON.parse(currentSetting.value);
+      } catch {}
+    }
+
     const merged = {
-      ...(currentBlock?.props || DEFAULT_PROMOTION_CONFIG),
+      ...currentVal,
       ...body,
     };
 
-    const saved = await prisma.dynamicBlock.upsert({
+    const saved = await prisma.setting.upsert({
       where: { key: "promotion_pricing_config" },
-      update: { props: merged, updatedAt: new Date() },
+      update: { value: JSON.stringify(merged), updatedAt: new Date() },
       create: {
         key: "promotion_pricing_config",
-        type: "pricing_config",
-        props: merged,
+        value: JSON.stringify(merged),
+        category: "promotions",
       },
     });
 
     // Also sync with listing_pricing_config for backward compatibility
-    await prisma.dynamicBlock.upsert({
+    const listingPricingSub = {
+      tier_1_day: merged.tier_1_day,
+      tier_15_days: merged.tier_15_days,
+      tier_30_days: merged.tier_30_days,
+    };
+
+    await prisma.setting.upsert({
       where: { key: "listing_pricing_config" },
       update: {
-        props: {
-          tier_1_day: merged.tier_1_day,
-          tier_15_days: merged.tier_15_days,
-          tier_30_days: merged.tier_30_days,
-        },
+        value: JSON.stringify(listingPricingSub),
         updatedAt: new Date(),
       },
       create: {
         key: "listing_pricing_config",
-        type: "pricing_config",
-        props: {
-          tier_1_day: merged.tier_1_day,
-          tier_15_days: merged.tier_15_days,
-          tier_30_days: merged.tier_30_days,
-        },
+        value: JSON.stringify(listingPricingSub),
+        category: "pricing",
       },
     });
 
-    return Response.json({ success: true, promotions: saved.props });
+    return Response.json({ success: true, promotions: JSON.parse(saved.value) });
   } catch (error) {
     console.error("PATCH /api/config/promotions error:", error);
     return Response.json({ error: "Qiymətlər yadda saxlanılmadı" }, { status: 500 });

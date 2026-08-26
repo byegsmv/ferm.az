@@ -10,7 +10,8 @@ import BlogSection from "@/components/home/BlogSection";
 import BundleCard from "@/components/BundleCard";
 import AdBanner from "@/components/AdBanner";
 import CategoriesSlider from "@/components/home/CategoriesSlider";
-
+import BrandsSlider from "@/components/home/BrandsSlider";
+import StoresSlider from "@/components/home/StoresSlider";
 export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode }) {
   const [blocks, setBlocks] = useState(initialBlocks);
 
@@ -55,6 +56,22 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
               subtitle={p.subtitle}
             />
           );
+        } else if (block.type === "BRANDS") {
+          content = (
+            <BrandsSlider
+              brands={homeData?.brands?.slice(0, p.count || 15)}
+              title={p.title}
+              subtitle={p.subtitle}
+            />
+          );
+        } else if (block.type === "STORES") {
+          content = (
+            <StoresSlider
+              stores={homeData?.stores?.slice(0, p.count || 15)}
+              title={p.title}
+              subtitle={p.subtitle}
+            />
+          );
         } else if (block.type === "PREMIUM_ADS") {
           if (!homeData?.premiumListings?.length) return null;
           content = (
@@ -79,12 +96,12 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
                     <ProductCard
                       tier={l.tier}
                       product={{
+                        ...l.product,
                         id: l.product?.id || l.id,
-                        slug: l.product?.slug,
                         title: l.product?.titleAz || "Elan",
                         price: Number(l.product?.price || 0),
-                        coverImage: Array.isArray(l.product?.images) ? l.product.images[0]?.url : null,
-                        region: l.product?.region,
+                        discountedPrice: l.product?.discountedPrice ? Number(l.product.discountedPrice) : null,
+                        coverImage: Array.isArray(l.product?.images) && l.product.images.length > 0 ? l.product.images[0]?.url : null,
                       }}
                     />
                   </div>
@@ -114,12 +131,11 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
                   <ProductCard
                     key={prod.id}
                     product={{
-                      id: prod.id,
-                      slug: prod.slug,
+                      ...prod,
                       title: prod.titleAz || "Elan",
                       price: Number(prod.price || 0),
-                      coverImage: Array.isArray(prod.images) ? prod.images[0]?.url : null,
-                      region: prod.region,
+                      discountedPrice: prod.discountedPrice ? Number(prod.discountedPrice) : null,
+                      coverImage: Array.isArray(prod.images) && prod.images.length > 0 ? prod.images[0]?.url : null,
                     }}
                   />
                 ))}

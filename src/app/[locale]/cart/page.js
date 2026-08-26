@@ -7,13 +7,24 @@ import Icon from "@/components/ui/Icon";
 
 export default function CartPage() {
   const [items, setItems] = useState([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setItems(getCart());
+    setMounted(true);
   }, []);
 
   function refresh(newItems) {
     setItems([...newItems]);
+  }
+
+  if (!mounted) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center text-gray-400">
+        <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin mx-auto mb-3" />
+        <p className="text-sm">Səbət yüklənir...</p>
+      </div>
+    );
   }
 
   if (items.length === 0) {

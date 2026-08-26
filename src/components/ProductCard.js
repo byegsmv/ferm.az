@@ -79,7 +79,11 @@ export default function ProductCard({ product, tier, compact = false, initialFav
         setFavorited(ids.includes(productId));
         window.dispatchEvent(new CustomEvent("fmk_favs_updated", { detail: ids }));
       })
-      .catch(() => {});
+      .catch(() => {
+        // Mark as loaded even on failure to prevent infinite setInterval polling loops
+        window._fmk_favs_loaded = true;
+        window._fmk_fetching_favs = false;
+      });
 
     const handleUpdate = (e) => {
       const ids = e.detail;

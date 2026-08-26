@@ -92,8 +92,8 @@ export default function AdminProductsPage() {
               <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    {p.images && p.images[0] ? (
-                      <img src={p.images[0]} alt={p.titleAz} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-200" />
+                    {p.images && (p.images[0]?.url || p.coverImage) ? (
+                      <img src={p.images[0]?.url || p.coverImage} alt={p.titleAz} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-200" />
                     ) : (
                       <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400">
                         <Icon name="image" size={20} />

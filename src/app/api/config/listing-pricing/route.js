@@ -10,12 +10,14 @@ export const DEFAULT_LISTING_PRICING = {
 // GET /api/config/listing-pricing — public endpoint to get current listing duration pricing
 export async function GET() {
   try {
-    const block = await prisma.dynamicBlock.findFirst({
+    const setting = await prisma.setting.findUnique({
       where: { key: "listing_pricing_config" },
     });
 
-    if (block?.props) {
-      return Response.json({ success: true, pricing: block.props });
+    if (setting?.value) {
+      try {
+        return Response.json({ success: true, pricing: JSON.parse(setting.value) });
+      } catch {}
     }
 
     return Response.json({ success: true, pricing: DEFAULT_LISTING_PRICING });
@@ -33,26 +35,33 @@ export async function PATCH(request) {
 
   try {
     const body = await request.json();
-    const currentBlock = await prisma.dynamicBlock.findFirst({
+    const currentSetting = await prisma.setting.findUnique({
       where: { key: "listing_pricing_config" },
     });
 
+    let currentVal = DEFAULT_LISTING_PRICING;
+    if (currentSetting?.value) {
+      try {
+        currentVal = JSON.parse(currentSetting.value);
+      } catch {}
+    }
+
     const merged = {
-      ...(currentBlock?.props || DEFAULT_LISTING_PRICING),
+      ...currentVal,
       ...body,
     };
 
-    const saved = await prisma.dynamicBlock.upsert({
+    const saved = await prisma.setting.upsert({
       where: { key: "listing_pricing_config" },
-      update: { props: merged, updatedAt: new Date() },
+      update: { value: JSON.stringify(merged), updatedAt: new Date() },
       create: {
         key: "listing_pricing_config",
-        type: "pricing_config",
-        props: merged,
+        value: JSON.stringify(merged),
+        category: "pricing",
       },
     });
 
-    return Response.json({ success: true, pricing: saved.props });
+    return Response.json({ success: true, pricing: JSON.parse(saved.value) });
   } catch (error) {
     console.error("PATCH /api/config/listing-pricing error:", error);
     return Response.json({ error: "Qiymətlər yadda saxlanılmadı" }, { status: 500 });

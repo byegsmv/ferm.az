@@ -90,8 +90,8 @@ export default function CheckoutPage() {
 
   const subtotal = cartTotal(items);
   const deliveryCost = getDeliveryCost();
-  const discount = getDiscount();
-  const total = subtotal - discount + deliveryCost;
+  const discount = Math.min(getDiscount(), subtotal);
+  const total = Math.max(0, subtotal - discount) + deliveryCost;
 
   const copyToClipboard = (text, fieldName) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {

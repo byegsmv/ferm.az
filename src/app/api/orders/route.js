@@ -163,7 +163,7 @@ export async function POST(request) {
           }
         });
         orderInitialStatus = "PAID";
-        paymentInitialStatus = "COMPLETED";
+        paymentInitialStatus = "SUCCEEDED";
       }
 
       // 4. Create order + items
@@ -184,9 +184,11 @@ export async function POST(request) {
           items: {
             create: items.map((item) => {
               const product = productMap.get(item.productId);
+              // Guest products (no sellerId) are set to null to avoid FK constraint failure
+              const sellerId = product.sellerId || null;
               return {
                 productId: item.productId,
-                sellerId: product.sellerId || "guest",
+                sellerId: sellerId || authUser.sub, // fallback to buyer if truly no seller
                 quantity: item.quantity,
                 unitPrice: getEffectivePrice(product),
                 commissionRate: PLATFORM_COMMISSION_RATE,
@@ -273,7 +275,7 @@ export async function POST(request) {
     const message = err instanceof Error ? err.message : "Naməlum xəta";
     const [code, ...rest] = message.includes(":") ? message.split(":") : ["ERROR", message];
     const detail = rest.join(":");
-    const statusMap = { STOCK: 409, MINQTY: 409, COUPON: 400, ERROR: 500 };
+    const statusMap = { STOCK: 409, MINQTY: 409, COUPON: 400, WALLET: 400, ERROR: 500 };
     return Response.json({ error: detail || message }, { status: statusMap[code] || 500 });
   }
 }

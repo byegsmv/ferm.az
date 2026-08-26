@@ -8,6 +8,7 @@ import { resolveCategorySlugs } from "@/lib/categoryFilter";
 import AdvancedFilterSidebar from "@/components/products/AdvancedFilterSidebar";
 import SideBanner from "@/components/Banners/SideBanner";
 import Icon from "@/components/ui/Icon";
+import StoresSlider from "@/components/home/StoresSlider";
 
 export const dynamic = "force-dynamic";
 
@@ -119,11 +120,11 @@ export default async function ProductsPage({ searchParams }) {
     ...(tags ? { tags: { hasSome: tags.split(',').map(t => t.trim()).filter(Boolean) } } : {}),
   };
 
-  let total = 0, products = [], categories = [], topAd = null, infeedAd = null, siteTextsList = [];
+  let total = 0, products = [], categories = [], topAd = null, infeedAd = null, siteTextsList = [], stores = [];
   let isFallback = false;
 
   try {
-    [total, products, categories, topAd, infeedAd, siteTextsList] = await Promise.all([
+    [total, products, categories, topAd, infeedAd, siteTextsList, stores] = await Promise.all([
       prisma.product.count({ where }),
       prisma.product.findMany({
         where,
@@ -152,6 +153,12 @@ export default async function ProductsPage({ searchParams }) {
       getAdSlotContent("PRODUCT_LIST_TOP", { region }),
       getAdSlotContent("PRODUCT_LIST_INFEED", { region }),
       prisma.siteText.findMany({ where: { isActive: true } }).catch(() => []),
+      prisma.store.findMany({
+        where: { isActive: true },
+        take: 12,
+        select: { id: true, name: true, slug: true, logoUrl: true },
+        orderBy: { createdAt: "desc" }
+      }),
     ]);
 
     // Fallback logic
@@ -200,20 +207,31 @@ export default async function ProductsPage({ searchParams }) {
         <div className="flex-1 min-w-0 w-full">
           <AdBanner content={topAd} className="mb-6" />
 
+          {stores?.length > 0 && (
+            <div className="mb-8">
+              <StoresSlider 
+                stores={stores} 
+                title={t('products.storesTitle', 'Tövsiyə olunan mağazalar')} 
+                subtitle={t('products.storesSubtitle', 'Məşhur satıcılarımız')} 
+              />
+            </div>
+          )}
+
           {showFallbackBanner && (
-            <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-800 mb-6">
+            <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-800 mb-6 shadow-sm">
               <Icon name="alert" size={18} className="shrink-0 text-amber-600" /> {t('products.fallbackCategoryNotice', 'Bu kateqoriyada dəqiq uyğun elan tapılmadı. Sizin üçün oxşar kateqoriyaların elanlarını göstəririk.')}
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 gap-4">
-            <h1 className="text-xl font-bold text-gray-900">
-              {search ? `"${search}" ${t('products.searchResultsSuffix', 'üzrə nəticələr')}` : t('products.allListings', 'Bütün Elanlar')}
-            </h1>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-xl border border-brand-100">
+          {/* Premium styled section header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-4 border-b border-gray-100 gap-4">
+            <div>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-1">
+                {search ? `"${search}" ${t('products.searchResultsSuffix', 'üzrə nəticələr')}` : t('products.allListings', 'Bütün Elanlar')}
+              </h1>
+              <p className="text-sm font-medium text-gray-500">
                 {total} {t('products.listingsFound', 'elan tapıldı')}
-              </span>
+              </p>
             </div>
           </div>
 
