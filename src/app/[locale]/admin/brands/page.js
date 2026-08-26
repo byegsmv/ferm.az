@@ -4,6 +4,7 @@ import Icon from '@/components/ui/Icon';
 import { apiFetch } from '@/lib/apiClient';
 import { useToast } from '@/components/ui/Toast';
 import SafeImage from '@/components/SafeImage';
+import ImageUploadField from '@/components/ui/ImageUploadField';
 
 const defaultForm = {
   name: "",
@@ -271,24 +272,22 @@ export default function AdminBrandsPage() {
                 />
               </div>
 
-              {/* Logo URL + Country */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
-                  <input
-                    value={form.logoUrl}
-                    onChange={e => setForm(p => ({ ...p, logoUrl: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
-                    placeholder="https://example.com/logo.png"
-                  />
-                </div>
+              {/* Logo Upload + Country */}
+              <div className="space-y-4">
+                <ImageUploadField
+                  label="Brend Logosu"
+                  value={form.logoUrl}
+                  onChange={(val) => setForm(p => ({ ...p, logoUrl: val }))}
+                  placeholder="https://example.com/logo.png"
+                />
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ölkə</label>
                   <input
                     value={form.country}
                     onChange={e => setForm(p => ({ ...p, country: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
-                    placeholder="Məs: ABŞ, Almaniya"
+                    placeholder="Məs: ABŞ, Almaniya, Azərbaycan"
                   />
                 </div>
               </div>

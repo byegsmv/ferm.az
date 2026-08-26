@@ -1,10 +1,14 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+
+import React, { useState, useEffect } from "react";
 import Icon from "@/components/ui/Icon";
 import { apiFetch } from "@/lib/apiClient";
 import { useToast } from "@/components/ui/Toast";
-
-// ─── Constants ────────────────────────────────────────────────────────────────
+import ImageUploadField from "@/components/ui/ImageUploadField";
+import {
+  Plus, Edit3, Trash2, ArrowUp, ArrowDown, Image as ImageIcon,
+  CheckCircle2, XCircle, Sparkles, Layout, Eye, Save
+} from "lucide-react";
 
 const SLOT_KEYS = [
   "HOMEPAGE_TOP",
@@ -46,300 +50,476 @@ const CAMPAIGN_TYPE_LABELS = {
   REGIONAL: "Regional",
 };
 
-// ─── AdSlotEditor Component ───────────────────────────────────────────────────
-
-function AdSlotEditor({ slotKey, slot, onSaved, toast }) {
-  const [mode, setMode] = useState(slot.mode || "off");
-  const [campaignType, setCampaignType] = useState(slot.campaignType || "HOMEPAGE_BANNER");
-  const [externalCode, setExternalCode] = useState(slot.externalCode || "");
-  const [saving, setSaving] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const hasCampaign = slot.hasLiveCampaign;
-
-  // Reset local state when slot data changes (e.g. after reload)
-  useEffect(() => {
-    if (slot && slot.key) {
-      setMode(slot.mode || "off");
-      setCampaignType(slot.campaignType || "HOMEPAGE_BANNER");
-      setExternalCode(slot.externalCode || "");
-    }
-  }, [slot.key, slot.mode, slot.campaignType, slot.externalCode]);
-
-  async function save() {
-    setSaving(true);
-    try {
-      const body = {
-        mode,
-        campaignType: mode === "internal" ? campaignType : null,
-        externalCode: mode === "external" ? externalCode : null,
-      };
-      await apiFetch(`/api/ad-slots/${slotKey}`, { method: "PATCH", body: JSON.stringify(body) });
-      toast("Reklam yeri yeniləndi", "success");
-      setOpen(false);
-      onSaved();
-    } catch (e) {
-      toast(e.message, "error");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function modeBadge() {
-    if (mode === "off") return <span className="badge badge-gray inline-flex items-center gap-1"><Icon name="closeCircle" size={12} />Deaktiv</span>;
-    if (mode === "internal") {
-      if (hasCampaign) return <span className="badge badge-green inline-flex items-center gap-1"><Icon name="checkCircle" size={12} />Aktiv kampaniya</span>;
-      return <span className="badge badge-yellow inline-flex items-center gap-1"><Icon name="alert" size={12} />Kampaniya yoxdur</span>;
-    }
-    // external
-    return <span className="badge badge-blue inline-flex items-center gap-1"><Icon name="checkCircle" size={12} />Xarici kod</span>;
-  }
-
-  function previewContent() {
-    if (mode === "off") return <p className="text-sm text-gray-400 italic">Bu slot deaktivdir — heç nə göstərilmir.</p>;
-    if (mode === "external" && externalCode) {
-      return (
-        <div className="w-full min-h-[120px] bg-gray-50 rounded-lg p-4 overflow-auto">
-          <div dangerouslySetInnerHTML={{ __html: externalCode }} />
-        </div>
-      );
-    }
-    if (mode === "internal") {
-      if (hasCampaign) {
-        return (
-          <div className="w-full min-h-[120px] bg-gradient-to-br from-brand-600 to-brand-800 rounded-lg p-6 text-white">
-            <span className="bg-white/20 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Reklam</span>
-            <h3 className="mt-3 font-bold text-xl">{slot.liveCampaignTitle || "Kampaniya"}</h3>
-            <p className="text-sm text-white/80 mt-1">Daxili kampaniya aktivdir</p>
-          </div>
-        );
-      }
-      return (
-        <div className="w-full min-h-[120px] bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-          <Icon name="alert" size={24} className="text-yellow-500 mx-auto mb-2" />
-          <p className="text-sm text-yellow-700 font-medium">Aktiv kampaniya tapılmadı</p>
-          <p className="text-xs text-yellow-600 mt-1">"{CAMPAIGN_TYPE_LABELS[campaignType] || campaignType}" tipində aktiv kampaniya yaradın.</p>
-        </div>
-      );
-    }
-    return null;
-  }
-
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      {/* Header — click to expand */}
-      <div className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setOpen(!open)}>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm text-gray-900">{AD_SLOT_LABELS[slotKey] || slotKey.replace(/_/g, " ")}</p>
-          <p className="text-xs text-gray-400 font-mono mt-0.5">{slotKey}</p>
-        </div>
-        <div className="flex items-center gap-3 ml-4">
-          {modeBadge()}
-          <button onClick={(e) => { e.stopPropagation(); setPreviewOpen(true); }} className="text-gray-400 hover:text-brand-600 transition-colors p-1" title="Önizləmə">
-            <Icon name="eye" size={18} />
-          </button>
-          <Icon name="chevronDown" size={18} className={`text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
-        </div>
-      </div>
-
-      {/* Expanded editor */}
-      {open && (
-        <div className="px-5 pb-5 pt-1 border-t border-gray-100 space-y-4">
-          {/* Mode selector */}
-          <div>
-            <label className="text-xs font-semibold text-gray-600 mb-2 block">Rejim</label>
-            <div className="flex gap-2">
-              {[
-                { value: "off", label: "Deaktiv", desc: "Heç nə göstərilmir" },
-                { value: "internal", label: "Daxili Kampaniya", desc: "Sistem kampaniyasından banner" },
-                { value: "external", label: "Xarici Kod", desc: "AdSense və s." },
-              ].map(m => (
-                <button key={m.value} onClick={() => setMode(m.value)}
-                  className={`flex-1 px-4 py-3 rounded-xl text-sm font-semibold text-left transition-all ${
-                    mode === m.value
-                      ? "bg-brand-600 text-white shadow-sm"
-                      : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
-                  }`}>
-                  <span className="block">{m.label}</span>
-                  <span className={`block text-xs mt-0.5 ${mode === m.value ? "text-white/70" : "text-gray-400"}`}>{m.desc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Internal mode config */}
-          {mode === "internal" && (
-            <div>
-              <label className="text-xs font-semibold text-gray-600 mb-2 block">Kampaniya Tipi</label>
-              <select value={campaignType} onChange={e => setCampaignType(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
-                {CAMPAIGN_TYPES.map(t => (
-                  <option key={t} value={t}>{CAMPAIGN_TYPE_LABELS[t] || t.replace(/_/g, " ")}</option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-400 mt-2">
-                Bu slotda göstərilməsi üçün <strong>Kampaniyalar</strong> bölməsində bu tipdə <strong>AKTİV</strong> bir kampaniya olmalıdır.
-              </p>
-              {hasCampaign && (
-                <p className="text-xs text-emerald-600 mt-1 font-medium flex items-center gap-1">
-                  <Icon name="checkCircle" size={14} /> Aktiv kampaniya tapıldı: {slot.liveCampaignTitle}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* External mode config */}
-          {mode === "external" && (
-            <div>
-              <label className="text-xs font-semibold text-gray-600 mb-2 block">Embed Kodu (HTML/JS)</label>
-              <textarea
-                value={externalCode}
-                onChange={e => setExternalCode(e.target.value)}
-                rows={6}
-                placeholder='<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle" ...></ins>
-<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>'
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 resize-y"
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                Google AdSense, Ad Manager və ya digər şəbəkələrin HTML/JS kodunu bura yapışdırın.
-              </p>
-            </div>
-          )}
-
-          {/* Save button */}
-          <div className="flex gap-2 pt-2">
-            <button onClick={save} disabled={saving}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
-              {saving ? <Icon name="loader" size={16} className="animate-spin" /> : <Icon name="check" size={16} />}
-              {saving ? "Saxlanılır..." : "Yadda Saxla"}
-            </button>
-            <button onClick={() => setOpen(false)} className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors">
-              Bağla
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Preview Modal */}
-      {previewOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setPreviewOpen(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900">{AD_SLOT_LABELS[slotKey] || slotKey} — Önizləmə</h3>
-              <button onClick={() => setPreviewOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                <Icon name="x" size={24} />
-              </button>
-            </div>
-            <div className="p-5">
-              {previewContent()}
-            </div>
-            <div className="px-5 pb-5 flex justify-end">
-              <button onClick={() => setPreviewOpen(false)} className="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700">
-                Bağla
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
 export default function AdminBannersPage() {
-  const [slots, setSlots] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("slides"); // 'slides' | 'adslots'
   const { toast, ToastContainer } = useToast();
 
-  function load() {
-    setLoading(true);
-    apiFetch("/api/ad-slots?includeCode=1")
-      .then(d => {
-        const arr = d.slots || [];
-        const obj = Array.isArray(arr) ? Object.fromEntries(arr.map(s => [s.key, s])) : arr;
-        setSlots(obj);
-      })
-      .catch(e => toast(e.message, "error"))
-      .finally(() => setLoading(false));
-  }
+  // Slides state
+  const [slides, setSlides] = useState([]);
+  const [loadingSlides, setLoadingSlides] = useState(true);
+  const [showSlideModal, setShowSlideModal] = useState(false);
+  const [editingSlide, setEditingSlide] = useState(null);
+  const [savingSlide, setSavingSlide] = useState(false);
+  const [slideForm, setSlideForm] = useState({
+    tag: "",
+    title: "",
+    subtitle: "",
+    cta: "Bax",
+    href: "/products",
+    bg: "from-brand-800 via-brand-700 to-emerald-800",
+    emoji: "🌾",
+    imageUrl: "",
+    isActive: true
+  });
 
-  useEffect(() => { load(); }, []);
+  // Ad Slots state
+  const [slots, setSlots] = useState({});
+  const [loadingSlots, setLoadingSlots] = useState(true);
 
-  // Summary stats
-  const slotValues = Object.values(slots);
-  const activeCount = slotValues.filter(s => s.mode !== "off").length;
-  const internalCount = slotValues.filter(s => s.mode === "internal").length;
-  const externalCount = slotValues.filter(s => s.mode === "external").length;
-  const offCount = slotValues.filter(s => s.mode === "off").length;
-  const liveCampaigns = slotValues.filter(s => s.hasLiveCampaign).length;
+  // Fetch Slides
+  const fetchSlides = async () => {
+    setLoadingSlides(true);
+    try {
+      const data = await apiFetch("/api/slides?all=1");
+      setSlides(data.slides || []);
+    } catch (err) {
+      toast(err.message || "Slayderlər yüklənmədi", "error");
+    } finally {
+      setLoadingSlides(false);
+    }
+  };
+
+  // Fetch Slots
+  const fetchSlots = async () => {
+    setLoadingSlots(true);
+    try {
+      const data = await apiFetch("/api/ad-slots?includeCode=1");
+      const arr = data.slots || [];
+      const obj = Array.isArray(arr) ? Object.fromEntries(arr.map(s => [s.key, s])) : arr;
+      setSlots(obj);
+    } catch (err) {
+      toast(err.message || "Reklam yerləri yüklənmədi", "error");
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSlides();
+    fetchSlots();
+  }, []);
+
+  const openCreateSlide = () => {
+    setEditingSlide(null);
+    setSlideForm({
+      tag: "YENİ TƏKLİF",
+      title: "",
+      subtitle: "",
+      cta: "Kataloqa Bax",
+      href: "/products",
+      bg: "from-brand-800 via-brand-700 to-emerald-800",
+      emoji: "🌾",
+      imageUrl: "",
+      isActive: true
+    });
+    setShowSlideModal(true);
+  };
+
+  const openEditSlide = (slide) => {
+    setEditingSlide(slide);
+    setSlideForm({
+      tag: slide.tag || "",
+      title: slide.title || "",
+      subtitle: slide.subtitle || "",
+      cta: slide.cta || "Bax",
+      href: slide.href || "/products",
+      bg: slide.bg || "from-brand-800 via-brand-700 to-emerald-800",
+      emoji: slide.emoji || "🌾",
+      imageUrl: slide.imageUrl || "",
+      isActive: slide.isActive ?? true
+    });
+    setShowSlideModal(true);
+  };
+
+  const handleSaveSlide = async (e) => {
+    e.preventDefault();
+    if (!slideForm.title.trim() || !slideForm.href.trim()) {
+      toast("Başlıq və Link mütləq daxil edilməlidir", "error");
+      return;
+    }
+
+    setSavingSlide(true);
+    try {
+      if (editingSlide) {
+        await apiFetch(`/api/slides/${editingSlide.id}`, {
+          method: "PATCH",
+          body: JSON.stringify(slideForm)
+        });
+        toast("Slayder yeniləndi", "success");
+      } else {
+        await apiFetch("/api/slides", {
+          method: "POST",
+          body: JSON.stringify(slideForm)
+        });
+        toast("Yeni slayder yaradıldı", "success");
+      }
+      setShowSlideModal(false);
+      fetchSlides();
+    } catch (err) {
+      toast(err.message || "Xəta baş verdi", "error");
+    } finally {
+      setSavingSlide(false);
+    }
+  };
+
+  const handleDeleteSlide = async (id) => {
+    if (!window.confirm("Bu slayderi silmək istədiyinizdən əminsiniz?")) return;
+    try {
+      await apiFetch(`/api/slides/${id}`, { method: "DELETE" });
+      toast("Slayder silindi", "success");
+      fetchSlides();
+    } catch (err) {
+      toast(err.message || "Silinmədi", "error");
+    }
+  };
+
+  const handleMoveSlide = async (index, direction) => {
+    const newSlides = [...slides];
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= newSlides.length) return;
+
+    const [moved] = newSlides.splice(index, 1);
+    newSlides.splice(targetIndex, 0, moved);
+    setSlides(newSlides);
+
+    // Save reorder
+    const orderPayload = newSlides.map((s, idx) => ({ id: s.id, sortOrder: idx }));
+    try {
+      await apiFetch("/api/slides", {
+        method: "PUT",
+        body: JSON.stringify({ order: orderPayload })
+      });
+      toast("Sıralama yadda saxlanıldı", "success");
+    } catch (err) {
+      toast("Sıralama yenilənmədi", "error");
+      fetchSlides();
+    }
+  };
+
+  const handleSaveSlot = async (slotKey, slotData) => {
+    try {
+      await apiFetch(`/api/ad-slots/${slotKey}`, {
+        method: "PATCH",
+        body: JSON.stringify(slotData)
+      });
+      toast("Reklam yeri yeniləndi", "success");
+      fetchSlots();
+    } catch (err) {
+      toast(err.message || "Yenilənmədi", "error");
+    }
+  };
 
   return (
     <div className="space-y-6">
       <ToastContainer />
 
-      {/* Page header */}
-      <div className="flex justify-between items-end">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-200/80 shadow-sm">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900">Bannerlər / Reklam Yerləri</h1>
-          <p className="text-gray-500 mt-1">Saytdakı bütün reklam yerlərini idarə edin: daxili kampaniya, xarici kod (AdSense) və ya deaktiv.</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center">
+              <ImageIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black text-gray-900 tracking-tight">Slayder & Reklam Bannerləri</h1>
+              <p className="text-xs text-gray-500">Ana səhifə slayderləri, promosyonlar və reklam yerlərinin idarəsi</p>
+            </div>
+          </div>
         </div>
-        <button onClick={load} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-600 transition-colors" title="Yenilə">
-          <Icon name="refresh" size={16} /> Yenilə
+
+        {activeTab === "slides" && (
+          <button
+            onClick={openCreateSlide}
+            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-md shadow-brand-600/20 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Yeni Slayder Əlavə Et</span>
+          </button>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-2 bg-gray-200/60 p-1.5 rounded-2xl max-w-md">
+        <button
+          onClick={() => setActiveTab("slides")}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            activeTab === "slides" ? "bg-white text-brand-700 shadow-sm" : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          <Layout className="w-4 h-4" />
+          <span>Ana Səhifə Slayderləri ({slides.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("adslots")}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            activeTab === "adslots" ? "bg-white text-brand-700 shadow-sm" : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Reklam Yerləri ({SLOT_KEYS.length})</span>
         </button>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-          <p className="text-2xl font-bold text-gray-900">{SLOT_KEYS.length}</p>
-          <p className="text-xs text-gray-500 mt-1">Ümumi Slot</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-          <p className="text-2xl font-bold text-emerald-600">{activeCount}</p>
-          <p className="text-xs text-gray-500 mt-1">Aktiv</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{internalCount}</p>
-          <p className="text-xs text-gray-500 mt-1">Daxili</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-          <p className="text-2xl font-bold text-purple-600">{externalCount}</p>
-          <p className="text-xs text-gray-500 mt-1">Xarici</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-          <p className="text-2xl font-bold text-amber-600">{liveCampaigns}</p>
-          <p className="text-xs text-gray-500 mt-1">Aktiv Kampaniya</p>
-        </div>
-      </div>
-
-      {/* Slot editors */}
-      {loading ? (
-        <div className="space-y-3">
-          {SLOT_KEYS.map(k => (
-            <div key={k} className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-48" />
-                  <div className="h-3 bg-gray-100 rounded w-24" />
-                </div>
-                <div className="h-6 bg-gray-200 rounded-full w-24" />
-              </div>
+      {/* Tab 1: Slides Management */}
+      {activeTab === "slides" && (
+        <div className="space-y-4">
+          {loadingSlides ? (
+            <div className="bg-white rounded-3xl border border-gray-200 p-12 text-center text-gray-400">
+              Slayderlər yüklənir...
             </div>
-          ))}
+          ) : slides.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-dashed border-gray-200 p-12 text-center">
+              <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <h3 className="text-base font-bold text-gray-800">Heç bir slayder tapılmadı</h3>
+              <p className="text-xs text-gray-400 mt-1">Ana səhifədə göstərmək üçün yeni slayder əlavə edin</p>
+              <button
+                onClick={openCreateSlide}
+                className="mt-4 px-4 py-2 bg-brand-600 text-white text-xs font-bold rounded-xl shadow-md"
+              >
+                İlk Slayderi Yarat
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {slides.map((slide, idx) => (
+                <div
+                  key={slide.id}
+                  className={`bg-white rounded-3xl border p-5 shadow-sm transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                    slide.isActive ? "border-gray-200/80" : "border-gray-200 bg-gray-50/60 opacity-70"
+                  }`}
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="flex flex-col gap-1 text-gray-400">
+                      <button
+                        onClick={() => handleMoveSlide(idx, -1)}
+                        disabled={idx === 0}
+                        className="p-1 hover:bg-gray-100 rounded disabled:opacity-20"
+                        title="Yuxarı"
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleMoveSlide(idx, 1)}
+                        disabled={idx === slides.length - 1}
+                        className="p-1 hover:bg-gray-100 rounded disabled:opacity-20"
+                        title="Aşağı"
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Preview Badge / Thumbnail */}
+                    <div className="w-20 h-16 rounded-2xl bg-gradient-to-br from-brand-600 to-emerald-800 flex items-center justify-center text-white shrink-0 overflow-hidden shadow-sm">
+                      {slide.imageUrl ? (
+                        <img src={slide.imageUrl} alt={slide.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-2xl">{slide.emoji || "🌾"}</span>
+                      )}
+                    </div>
+
+                    {/* Content info */}
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {slide.tag && (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-brand-100 text-brand-800 uppercase tracking-wide">
+                            {slide.tag}
+                          </span>
+                        )}
+                        <h4 className="text-sm font-bold text-gray-900 truncate">{slide.title}</h4>
+                        {!slide.isActive && (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 text-rose-700">
+                            Deaktiv
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 line-clamp-1">{slide.subtitle || "Açıqlama yoxdur"}</p>
+                      <div className="flex items-center gap-4 text-[11px] text-gray-400 font-mono">
+                        <span>Düymə: {slide.cta}</span>
+                        <span>Link: {slide.href}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 border-t md:border-t-0 pt-3 md:pt-0">
+                    <button
+                      onClick={() => openEditSlide(slide)}
+                      className="p-2 text-gray-500 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all"
+                      title="Düzəliş et"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSlide(slide.id)}
+                      className="p-2 text-gray-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                      title="Sil"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="space-y-3">
-          {SLOT_KEYS.map(key => (
-            <AdSlotEditor
-              key={key}
-              slotKey={key}
-              slot={slots[key] || { mode: "off" }}
-              onSaved={load}
-              toast={toast}
-            />
-          ))}
+      )}
+
+      {/* Tab 2: AdSlots Management */}
+      {activeTab === "adslots" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-3">
+            {SLOT_KEYS.map(key => {
+              const slot = slots[key] || { mode: "off" };
+              return (
+                <div key={key} className="bg-white rounded-3xl border border-gray-200/80 p-5 shadow-sm space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900">{AD_SLOT_LABELS[key] || key}</h4>
+                      <p className="text-xs text-gray-400 font-mono">Slot key: {key}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={slot.mode || "off"}
+                        onChange={(e) => handleSaveSlot(key, { ...slot, mode: e.target.value })}
+                        className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-gray-200 bg-gray-50 focus:bg-white"
+                      >
+                        <option value="off">Deaktiv</option>
+                        <option value="internal">Daxili Kampaniya</option>
+                        <option value="external">Xarici Kod (AdSense)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Create / Edit Slide Modal */}
+      {showSlideModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-gray-100 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-6 bg-gradient-to-r from-brand-700 to-emerald-700 text-white flex items-center justify-between shrink-0">
+              <h3 className="text-lg font-black tracking-tight">
+                {editingSlide ? "Slayderi Redaktə Et" : "Yeni Slayder Əlavə Et"}
+              </h3>
+              <button onClick={() => setShowSlideModal(false)} className="text-white/80 hover:text-white text-xl">
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSlide} className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Tag (Üst Etiket)</label>
+                <input
+                  type="text"
+                  value={slideForm.tag}
+                  onChange={(e) => setSlideForm(p => ({ ...p, tag: e.target.value }))}
+                  placeholder="Məs: YENİ MÖVSÜM, XÜSUSİ TƏKLİF"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">
+                  Əsas Başlıq <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={slideForm.title}
+                  onChange={(e) => setSlideForm(p => ({ ...p, title: e.target.value }))}
+                  placeholder="Məs: Kənd Təsərrüfatı Məhsullarının Rəqəmsal Bazarı"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Alt Açıqlama Mətni</label>
+                <textarea
+                  rows={2}
+                  value={slideForm.subtitle}
+                  onChange={(e) => setSlideForm(p => ({ ...p, subtitle: e.target.value }))}
+                  placeholder="Məs: Toxum, gübrə, dərman və texnika bir ünvanda"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-500 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Düymə Mətni (CTA)</label>
+                  <input
+                    type="text"
+                    value={slideForm.cta}
+                    onChange={(e) => setSlideForm(p => ({ ...p, cta: e.target.value }))}
+                    placeholder="Məs: Kataloqa Bax"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">
+                    Keçid Linki (Href) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={slideForm.href}
+                    onChange={(e) => setSlideForm(p => ({ ...p, href: e.target.value }))}
+                    placeholder="/products"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-500"
+                  />
+                </div>
+              </div>
+
+              {/* Image Upload with Direct File Upload & URL */}
+              <ImageUploadField
+                label="Slayder Şəkli / Banneri (İstəyə görə)"
+                value={slideForm.imageUrl || ""}
+                onChange={(val) => setSlideForm(p => ({ ...p, imageUrl: val }))}
+                placeholder="https://example.com/banner.png"
+              />
+
+              <div className="flex items-center gap-3 pt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={slideForm.isActive}
+                    onChange={(e) => setSlideForm(p => ({ ...p, isActive: e.target.checked }))}
+                    className="rounded text-brand-600 focus:ring-brand-500 h-4 w-4"
+                  />
+                  <span className="font-bold text-gray-800">Slayder aktiv olsun</span>
+                </label>
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSlideModal(false)}
+                  className="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-xl"
+                >
+                  Ləğv et
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingSlide}
+                  className="px-5 py-2.5 bg-brand-600 text-white font-bold rounded-xl shadow-md hover:bg-brand-700 disabled:opacity-50"
+                >
+                  {savingSlide ? "Saxlanılır..." : "Yadda Saxla"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

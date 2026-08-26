@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Monitor, Tablet, Smartphone, Undo2, Redo2, Eye,
   Save, Sparkles, FolderTree, Layers, ShieldCheck,
-  RefreshCw, Plus, CheckCircle, ArrowLeft
+  RefreshCw, Plus, CheckCircle, ArrowLeft, ChevronDown,
+  Search, Copy, Trash2, Globe, Layout, Settings
 } from 'lucide-react';
 import ComponentCatalog from './ComponentCatalog';
 import CanvasEditor from './CanvasEditor';
@@ -20,8 +21,18 @@ export default function VisualSystemBuilder() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showImpactModal, setShowImpactModal] = useState(false);
+  const [showCreatePageModal, setShowCreatePageModal] = useState(false);
+  const [showPageDropdown, setShowPageDropdown] = useState(false);
+  const [pageSearchTerm, setPageSearchTerm] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [notification, setNotification] = useState(null);
+
+  // New Page Modal Form State
+  const [newPageForm, setNewPageForm] = useState({
+    name: '',
+    slug: '',
+    module: 'CUSTOM'
+  });
 
   // History Stack for Undo/Redo
   const [history, setHistory] = useState([]);
@@ -83,7 +94,7 @@ export default function VisualSystemBuilder() {
     }
   };
 
-  const activePage = pages[activePageIndex] || null;
+  const activePage = pages[activePageIndex] || pages[0] || null;
 
   // Add Component from Catalog into current Section or create new section
   const handleAddComponent = (catalogItem) => {
@@ -107,7 +118,6 @@ export default function VisualSystemBuilder() {
         }
       ];
     } else {
-      // Add to selected section or last section
       const targetSecIndex = targetPage.sections.length - 1;
       targetPage.sections[targetSecIndex].components = [
         ...(targetPage.sections[targetSecIndex].components || []),
@@ -193,6 +203,77 @@ export default function VisualSystemBuilder() {
     setSelectedElement(updatedElement);
   };
 
+  // Create New Custom Page / Module
+  const handleCreatePage = (e) => {
+    e.preventDefault();
+    if (!newPageForm.name.trim() || !newPageForm.slug.trim()) {
+      showToast('Səhifə adı və URL slug daxil edilməlidir', 'error');
+      return;
+    }
+
+    const newPage = {
+      pageId: `page-${Date.now()}`,
+      name: newPageForm.name.trim(),
+      slug: newPageForm.slug.startsWith('/') ? newPageForm.slug.trim() : `/${newPageForm.slug.trim()}`,
+      module: newPageForm.module || 'CUSTOM',
+      status: 'PUBLISHED',
+      updatedAt: new Date().toISOString(),
+      sections: [
+        {
+          id: `sec-${Date.now()}`,
+          name: 'Əsas Bölmə',
+          columns: 1,
+          components: [
+            {
+              id: `c-${Date.now()}`,
+              type: 'Heading',
+              props: { text: newPageForm.name.trim(), level: 'h1', align: 'left' }
+            }
+          ]
+        }
+      ]
+    };
+
+    const newPages = [...pages, newPage];
+    pushHistory(newPages);
+    setActivePageIndex(newPages.length - 1);
+    setShowCreatePageModal(false);
+    setNewPageForm({ name: '', slug: '', module: 'CUSTOM' });
+    showToast(`'${newPage.name}' səhifəsi yaradıldı!`);
+  };
+
+  const handleDuplicatePage = (pageIdx) => {
+    const srcPage = pages[pageIdx];
+    if (!srcPage) return;
+
+    const clonedPage = {
+      ...srcPage,
+      pageId: `page-${Date.now()}`,
+      name: `${srcPage.name} (Kopya)`,
+      slug: `${srcPage.slug}-copy`,
+      updatedAt: new Date().toISOString()
+    };
+
+    const newPages = [...pages, clonedPage];
+    pushHistory(newPages);
+    setActivePageIndex(newPages.length - 1);
+    showToast(`'${clonedPage.name}' dublikasiya edildi!`);
+  };
+
+  const handleDeletePage = (pageIdx) => {
+    if (pages.length <= 1) {
+      showToast('Ən azı 1 səhifə qalmalıdır', 'error');
+      return;
+    }
+    const pageToDelete = pages[pageIdx];
+    if (!window.confirm(`'${pageToDelete.name}' səhifəsini silmək istədiyinizdən əminsiniz?`)) return;
+
+    const newPages = pages.filter((_, idx) => idx !== pageIdx);
+    pushHistory(newPages);
+    setActivePageIndex(0);
+    showToast(`'${pageToDelete.name}' səhifəsi silindi!`);
+  };
+
   const handleSaveDraft = async () => {
     setIsSaving(true);
     try {
@@ -226,6 +307,12 @@ export default function VisualSystemBuilder() {
     }
   };
 
+  const filteredPages = pages.filter(p =>
+    p.name.toLowerCase().includes(pageSearchTerm.toLowerCase()) ||
+    p.slug.toLowerCase().includes(pageSearchTerm.toLowerCase()) ||
+    (p.module && p.module.toLowerCase().includes(pageSearchTerm.toLowerCase()))
+  );
+
   if (isLoading) {
     return (
       <div className="h-[750px] flex items-center justify-center bg-white rounded-3xl border border-gray-200">
@@ -249,7 +336,7 @@ export default function VisualSystemBuilder() {
 
       {/* Top Action Studio Toolbar */}
       <div className="h-14 bg-white border-b border-gray-200 px-4 sm:px-6 flex items-center justify-between shrink-0 select-none">
-        {/* Page Switcher */}
+        {/* Comprehensive Page / Module Selector Dropdown */}
         <div className="flex items-center gap-3">
           <span className="text-xs font-extrabold uppercase tracking-wider text-brand-600 flex items-center gap-1.5">
             <Sparkles className="w-4 h-4" />
@@ -258,25 +345,105 @@ export default function VisualSystemBuilder() {
 
           <div className="h-4 w-px bg-gray-200" />
 
-          {/* Page Tabs */}
-          <div className="flex items-center gap-1 bg-gray-100/80 p-1 rounded-xl">
-            {pages.map((p, idx) => (
-              <button
-                key={p.pageId}
-                onClick={() => {
-                  setActivePageIndex(idx);
-                  setSelectedElement(null);
-                }}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                  activePageIndex === idx
-                    ? 'bg-white text-gray-900 shadow-xs'
-                    : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                {p.name}
-              </button>
-            ))}
+          {/* Active Page / Module Selector Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowPageDropdown(!showPageDropdown)}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gray-100/90 hover:bg-gray-200/70 text-gray-900 text-xs font-bold transition-all border border-gray-200 shadow-2xs"
+            >
+              <Layout className="w-3.5 h-3.5 text-brand-600" />
+              <span>{activePage?.name || 'Səhifə Seçin'}</span>
+              <span className="text-[10px] text-gray-400 font-mono">({activePage?.slug})</span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-500 ml-1" />
+            </button>
+
+            {/* Dropdown Menu with Search & All Pages */}
+            {showPageDropdown && (
+              <div className="absolute top-full left-0 mt-1.5 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 z-50 animate-fadeIn">
+                <div className="p-2 border-b border-gray-100">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Bütün səhifələrdə axtar..."
+                      value={pageSearchTerm}
+                      onChange={(e) => setPageSearchTerm(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="max-h-64 overflow-y-auto p-1.5 space-y-0.5">
+                  {filteredPages.map((p, idx) => {
+                    const originalIdx = pages.findIndex(pg => pg.pageId === p.pageId);
+                    const isSelected = activePageIndex === originalIdx;
+
+                    return (
+                      <div
+                        key={p.pageId}
+                        onClick={() => {
+                          setActivePageIndex(originalIdx);
+                          setSelectedElement(null);
+                          setShowPageDropdown(false);
+                        }}
+                        className={`p-2 rounded-xl text-xs font-medium cursor-pointer transition-all flex items-center justify-between group ${
+                          isSelected ? 'bg-brand-50 text-brand-900 font-bold' : 'hover:bg-gray-50 text-gray-700'
+                        }`}
+                      >
+                        <div className="truncate">
+                          <span className="block truncate">{p.name}</span>
+                          <span className="text-[10px] text-gray-400 font-mono">{p.slug}</span>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDuplicatePage(originalIdx);
+                            }}
+                            className="p-1 hover:bg-gray-200 rounded"
+                            title="Kopyala"
+                          >
+                            <Copy className="w-3 h-3 text-gray-500" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeletePage(originalIdx);
+                            }}
+                            className="p-1 hover:bg-rose-100 text-rose-600 rounded"
+                            title="Sil"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="p-2 border-t border-gray-100">
+                  <button
+                    onClick={() => {
+                      setShowPageDropdown(false);
+                      setShowCreatePageModal(true);
+                    }}
+                    className="w-full py-2 bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Yeni Səhifə / Modul Yarat</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
+
+          <button
+            onClick={() => setShowCreatePageModal(true)}
+            className="p-1.5 rounded-xl text-gray-500 hover:text-brand-600 hover:bg-brand-50 transition-colors"
+            title="Yeni Səhifə Əlavə Et"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Viewport Breakpoints & History Controls */}
@@ -380,6 +547,71 @@ export default function VisualSystemBuilder() {
           }}
         />
       </div>
+
+      {/* Create New Page Modal */}
+      {showCreatePageModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-gray-100 overflow-hidden">
+            <div className="p-5 bg-gradient-to-r from-brand-700 to-emerald-700 text-white flex items-center justify-between">
+              <h3 className="text-base font-black">Yeni Səhifə / Modul Yarat</h3>
+              <button onClick={() => setShowCreatePageModal(false)} className="text-white/80 hover:text-white">✕</button>
+            </div>
+            <form onSubmit={handleCreatePage} className="p-6 space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Səhifə / Modul Adı <span className="text-rose-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Məs: Aqrar Xəbərlər, Xüsusi Sifarişlər"
+                  value={newPageForm.name}
+                  onChange={(e) => setNewPageForm(p => ({ ...p, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-500"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">URL Path (Slug) <span className="text-rose-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  placeholder="/agro-news"
+                  value={newPageForm.slug}
+                  onChange={(e) => setNewPageForm(p => ({ ...p, slug: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-500"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Modul Kateqoriyası</label>
+                <select
+                  value={newPageForm.module}
+                  onChange={(e) => setNewPageForm(p => ({ ...p, module: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-500 bg-white"
+                >
+                  <option value="MARKETPLACE">Marketplace & Alış-Veriş</option>
+                  <option value="PRODUCTS">Məhsullar & Kataloq</option>
+                  <option value="ORDERS">Sifarişlər & Ödənişlər</option>
+                  <option value="AI_SERVICES">Süni İntellekt Xidmətləri</option>
+                  <option value="CUSTOM">Digər / Xüsusi Səhifə</option>
+                </select>
+              </div>
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreatePageModal(false)}
+                  className="px-4 py-2 font-bold text-gray-600 hover:bg-gray-100 rounded-xl"
+                >
+                  Ləğv et
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-brand-600 text-white font-bold rounded-xl shadow-md hover:bg-brand-700"
+                >
+                  Səhifəni Yarat
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Pre-Publish Impact Verification Modal */}
       <ImpactAnalysisModal
