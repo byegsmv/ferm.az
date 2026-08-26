@@ -16,13 +16,14 @@ import EmptyState from "@/components/ui/EmptyState";
 import SafeImage from "@/components/SafeImage";
 import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
-import { useSiteTexts } from "@/lib/siteTexts";
 import ImageUploadField from "@/components/ui/ImageUploadField";
+import BoostModal from "@/components/products/BoostModal";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ROLES = ["BUYER", "FARMER", "STORE", "AGRONOMIST", "DELIVERY_PARTNER", "MODERATOR", "ADMIN", "SUPER_ADMIN"];
 function getOrderStatusLabel(status, t) { const labels = { PENDING: "admin.order.pending", PAID: "admin.order.paid", PROCESSING: "admin.order.processing", SHIPPED: "admin.order.shipped", DELIVERED: "admin.order.delivered", CANCELLED: "admin.order.cancelled", REFUNDED: "admin.order.refunded" }; return t(labels[status] || status, status); }
 const ORDER_STATUS_COLORS = { PENDING: "badge-yellow", PAID: "badge-blue", PROCESSING: "badge-purple", SHIPPED: "badge-blue", DELIVERED: "badge-green", CANCELLED: "badge-red", REFUNDED: "badge-gray" };
+const ORDER_STATUS_LABELS = { PENDING: "Gözləyir", PAID: "Ödənilib", PROCESSING: "Hazırlanır", SHIPPED: "Göndərilib", DELIVERED: "Çatdırılıb", CANCELLED: "Ləğv edilib", REFUNDED: "Geri qaytarılıb" };
 const PRODUCT_STATUS_COLORS = { PENDING_REVIEW: "badge-yellow", ACTIVE: "badge-green", REJECTED: "badge-red", SOLD: "badge-blue", DRAFT: "badge-gray", EXPIRED: "badge-gray" };
 
 const SIDEBAR_GROUPS_DEF = [
@@ -230,16 +231,26 @@ function RecentActivity({ activity, loading }) {
 }
 
 // ─── Pending Products (Moderation) ───────────────────────────────────────────
-function PendingProducts() {
+function PendingProducts({ onRefreshStats }) {
   const [items, setItems] = useState([]); const [loading, setLoading] = useState(true);
   const { toast, ToastContainer } = useToast();
   const load = useCallback(() => {
     setLoading(true);
-    apiFetch("/api/products?status=PENDING_REVIEW&pageSize=50").then(d => setItems(d.products || [])).catch(e => toast(e.message, "error")).finally(() => setLoading(false));
-  }, []);
+    apiFetch("/api/products?status=PENDING_REVIEW&pageSize=50").then(d => {
+      setItems(d.products || []);
+      if (onRefreshStats) onRefreshStats();
+    }).catch(e => toast(e.message, "error")).finally(() => setLoading(false));
+  }, [onRefreshStats]);
   useEffect(() => { load(); }, [load]);
   async function decide(id, status) {
-    try { await apiFetch(`/api/products/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }); toast(status === "ACTIVE" ? "Elan təsdiqləndi" : "Elan rədd edildi", "success"); load(); } catch (e) { toast(e.message, "error"); }
+    try {
+      await apiFetch(`/api/products/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+      toast(status === "ACTIVE" ? "Elan təsdiqləndi" : "Elan rədd edildi", "success");
+      load();
+      if (onRefreshStats) onRefreshStats();
+    } catch (e) {
+      toast(e.message, "error");
+    }
   }
   if (loading) return <SkeletonList count={5} />;
   if (!items.length) return <EmptyState icon="checkCircle" title="Moderasiya gözləyən elan yoxdur" subtitle="Bütün elanlar yoxlanılmışdır" />;
@@ -539,6 +550,7 @@ function UsersManager() {
 function OrdersAll() {
   const [orders, setOrders] = useState([]); const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
+  const [receiptModal, setReceiptModal] = useState(null); // { url, note, orderId, total, paymentMethod }
   const { toast, ToastContainer } = useToast();
   useEffect(() => { load(); }, [statusFilter]);
   function load() {
@@ -549,6 +561,17 @@ function OrdersAll() {
   async function changeStatus(id, status) {
     try { await apiFetch(`/api/orders/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }); toast("Status dəyişdirildi"); load(); } catch (e) { toast(e.message, "error"); }
   }
+
+  const getPayMethodBadge = (provider) => {
+    switch (provider) {
+      case "BANK_CARD": return <span className="badge badge-blue">💳 Bank Kartı</span>;
+      case "M10": return <span className="badge badge-purple">📱 M10</span>;
+      case "WALLET": return <span className="badge badge-green">👛 Daxili Balans</span>;
+      case "CASH_ON_DELIVERY": return <span className="badge badge-yellow">💵 Qapıda Nağd</span>;
+      default: return <span className="badge badge-gray">{provider || "Nağd"}</span>;
+    }
+  };
+
   return (
     <div className="space-y-4">
       <ToastContainer />
@@ -561,30 +584,106 @@ function OrdersAll() {
       </select>
       {loading ? <SkeletonList count={5} /> : !orders.length ? <EmptyState icon="package" title="Sifariş tapılmadı" /> : (
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[600px] text-left">
+          <table className="w-full min-w-[700px] text-left">
             <thead className="table-header"><tr>
-              <th className="table-cell text-left w-36">Sifariş</th>
-              <th className="table-cell text-left hidden sm:table-cell min-w-[160px]">Alıcı</th>
-              <th className="table-cell text-left w-28">Məbləğ</th>
-              <th className="table-cell text-left w-32">Status</th>
-              <th className="table-cell text-right w-40">Dəyişdir</th>
+              <th className="table-cell text-left w-32">Sifariş</th>
+              <th className="table-cell text-left hidden sm:table-cell min-w-[140px]">Alıcı</th>
+              <th className="table-cell text-left w-24">Məbləğ</th>
+              <th className="table-cell text-left w-44">Ödəniş & Qəbz</th>
+              <th className="table-cell text-left w-28">Status</th>
+              <th className="table-cell text-right w-36">Dəyişdir</th>
             </tr></thead>
             <tbody>
-              {orders.map(o => (
-                <tr key={o.id} className="table-row">
-                  <td className="table-cell w-36"><p className="font-mono text-xs text-gray-500">#{o.id.slice(-8)}</p><p className="caption">{new Date(o.createdAt).toLocaleDateString("az-AZ")}</p></td>
-                  <td className="table-cell hidden sm:table-cell min-w-[160px] truncate">{o.buyer?.fullName || "—"}</td>
-                  <td className="table-cell font-semibold text-brand-700 w-28">₼{Number(o.total).toLocaleString("az-AZ")}</td>
-                  <td className="table-cell w-32"><span className={`badge ${ORDER_STATUS_COLORS[o.status] || "badge-gray"}`}>{ORDER_STATUS_LABELS[o.status]}</span></td>
-                  <td className="table-cell text-right w-40">
-                    <select defaultValue={o.status} onChange={e => changeStatus(o.id, e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-brand-400">
-                      {Object.entries(ORDER_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                    </select>
-                  </td>
-                </tr>
-              ))}
+              {orders.map(o => {
+                const receiptUrl = o.payment?.rawResponse?.receiptUrl || (o.payment?.providerRef?.startsWith("http") || o.payment?.providerRef?.startsWith("/uploads") ? o.payment?.providerRef : null);
+                const note = o.payment?.rawResponse?.transactionNote || (!receiptUrl ? o.payment?.providerRef : null);
+                return (
+                  <tr key={o.id} className="table-row">
+                    <td className="table-cell w-32">
+                      <p className="font-mono text-xs font-bold text-gray-800">#{o.id.slice(-8).toUpperCase()}</p>
+                      <p className="caption">{new Date(o.createdAt).toLocaleDateString("az-AZ")}</p>
+                    </td>
+                    <td className="table-cell hidden sm:table-cell min-w-[140px]">
+                      <p className="font-semibold text-xs text-gray-900">{o.buyer?.fullName || "—"}</p>
+                      {o.buyer?.phone && <p className="text-[11px] text-gray-500">{o.buyer?.phone}</p>}
+                      {o.shippingCity && <p className="text-[10px] text-gray-400 truncate max-w-[140px]">{o.shippingCity}, {o.shippingAddress}</p>}
+                    </td>
+                    <td className="table-cell font-bold text-brand-700 w-24">
+                      ₼{Number(o.total).toLocaleString("az-AZ")}
+                    </td>
+                    <td className="table-cell w-44">
+                      <div className="space-y-1">
+                        <div>{getPayMethodBadge(o.payment?.provider)}</div>
+                        {receiptUrl ? (
+                          <button
+                            type="button"
+                            onClick={() => setReceiptModal({ url: receiptUrl, note, orderId: o.id, total: o.total, paymentMethod: o.payment?.provider })}
+                            className="text-[11px] font-bold text-brand-600 hover:text-brand-700 underline flex items-center gap-1"
+                          >
+                            🧾 Qəbzə bax
+                          </button>
+                        ) : note ? (
+                          <p className="text-[10px] text-gray-500 italic truncate max-w-[120px]">Qeyd: {note}</p>
+                        ) : null}
+                      </div>
+                    </td>
+                    <td className="table-cell w-28">
+                      <span className={`badge ${ORDER_STATUS_COLORS[o.status] || "badge-gray"}`}>{ORDER_STATUS_LABELS[o.status] || o.status}</span>
+                    </td>
+                    <td className="table-cell text-right w-36">
+                      <select defaultValue={o.status} onChange={e => changeStatus(o.id, e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-brand-400">
+                        {Object.entries(ORDER_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      </select>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Receipt Modal Preview */}
+      {receiptModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4" onClick={() => setReceiptModal(null)}>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div>
+                <h3 className="font-extrabold text-base text-gray-900">Ödəniş Qəbzi</h3>
+                <p className="text-xs text-gray-500">Sifariş: #{receiptModal.orderId?.slice(-8).toUpperCase()} · ₼{Number(receiptModal.total).toFixed(2)}</p>
+              </div>
+              <button onClick={() => setReceiptModal(null)} className="btn-icon"><Icon name="x" size={18} /></button>
+            </div>
+
+            <div className="rounded-2xl border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center min-h-[250px]">
+              <img
+                src={receiptModal.url}
+                alt="Ödəniş Qəbzi"
+                className="max-h-[450px] w-auto object-contain rounded-xl"
+              />
+            </div>
+
+            {receiptModal.note && (
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs text-gray-700">
+                <span className="font-bold block text-gray-900 mb-0.5">Müştərinin qeydi / Tranzaksiya kodu:</span>
+                {receiptModal.note}
+              </div>
+            )}
+
+            <div className="flex gap-2 justify-end pt-2">
+              <a
+                href={receiptModal.url}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary px-4 py-2 text-xs font-bold rounded-xl"
+              >
+                Orijinal faylı aç
+              </a>
+              <button onClick={() => setReceiptModal(null)} className="btn-primary px-4 py-2 text-xs font-bold rounded-xl">
+                Bağla
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -858,18 +957,31 @@ function BrandsManager() {
   async function handleSubmit(e) {
     e.preventDefault(); setErr("");
     try {
-      const payload = { name: form.name.trim(), logoUrl: form.logoUrl.trim() || undefined, country: form.country.trim() || undefined, website: form.website.trim() || undefined, description: form.description.trim() || undefined, isActive: form.isActive };
+      const payload = {
+        name: form.name.trim(),
+        logoUrl: form.logoUrl?.trim() || undefined,
+        country: form.country?.trim() || undefined,
+        website: form.website?.trim() || undefined,
+        description: form.description?.trim() || undefined,
+        isActive: form.isActive
+      };
       if (editingId) {
-        await apiFetch(`/api/brands/${editingId}`, { method: "PATCH", body: JSON.stringify(payload) });
-        toast("Brend yeniləndi");
+        const d = await apiFetch(`/api/brands/${editingId}`, { method: "PATCH", body: JSON.stringify(payload) });
+        setItems(p => p.map(b => b.id === editingId ? { ...b, ...d.brand } : b));
+        toast("Brend yeniləndi", "success");
       } else {
         const d = await apiFetch("/api/brands", { method: "POST", body: JSON.stringify(payload) });
-        setItems(p => [...p, d.brand]);
-        toast("Brend əlavə edildi");
+        if (d?.brand) {
+          setItems(p => [...p, d.brand]);
+        }
+        toast("Brend əlavə edildi", "success");
       }
       setForm({ name: "", logoUrl: "", country: "", website: "", description: "", isActive: true });
       setEditingId(null); setShowModal(false);
-    } catch (e) { setErr(e.message); toast(e.message, "error"); }
+    } catch (e) {
+      setErr(e.message || "Xəta baş verdi");
+      toast(e.message || "Xəta baş verdi", "error");
+    }
   }
   function openEdit(b) { setEditingId(b.id); setForm({ name: b.name || "", logoUrl: b.logoUrl || "", country: b.country || "", website: b.website || "", description: b.description || "", isActive: b.isActive ?? true }); setErr(""); setShowModal(true); }
   function openCreate() { setEditingId(null); setForm({ name: "", logoUrl: "", country: "", website: "", description: "", isActive: true }); setErr(""); setShowModal(true); }
@@ -897,8 +1009,12 @@ function BrandsManager() {
                 <tr key={b.id} className="table-row">
                   <td className="table-cell min-w-[180px]">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
-                        {b.logoUrl ? <SafeImage src={b.logoUrl} alt={b.name} fill className="object-contain p-0.5" /> : <span className="text-xs font-black text-brand-600">{b.name[0]}</span>}
+                      <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden p-1">
+                        {b.logoUrl ? (
+                          <img src={b.logoUrl} alt={b.name} className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
+                        ) : (
+                          <span className="text-xs font-black text-brand-600">{b.name?.[0]}</span>
+                        )}
                       </div>
                       <div className="min-w-0"><p className="font-medium text-sm truncate">{b.name}</p><p className="caption truncate">{b.slug}</p></div>
                     </div>
@@ -1112,76 +1228,355 @@ function BundlesManager() {
 // ─── All Listings ─────────────────────────────────────────────────────────────
 function AllListingsManager() {
   const [items, setItems] = useState([]); const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState(""); const [statusFilter, setStatusFilter] = useState("PENDING_REVIEW");
+  const [search, setSearch] = useState(""); const [statusFilter, setStatusFilter] = useState("");
+  const [editProduct, setEditProduct] = useState(null);
+  const [boostProduct, setBoostProduct] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
   const { toast, ToastContainer } = useToast();
+
   useEffect(() => { load(); }, [search, statusFilter]);
+
   function load() {
     setLoading(true);
     const q = new URLSearchParams({ pageSize: 100, ...(search && { search }), ...(statusFilter && { status: statusFilter }) });
     apiFetch(`/api/products?${q}`).then(d => setItems(d.products || [])).catch(e => toast(e.message, "error")).finally(() => setLoading(false));
   }
+
   async function changeStatus(id, status) {
     try {
       await apiFetch(`/api/products/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
       setItems(p => p.map(x => x.id === id ? { ...x, status } : x));
-      toast(status === "ACTIVE" ? "Elan təsdiqləndi" : "Elan rədd edildi");
+      toast(status === "ACTIVE" ? "Elan aktivləşdirildi" : "Elan statusu dəyişdirildi", "success");
     } catch (e) { toast(e.message, "error"); }
   }
-  async function del(id) { if (!confirm("Bu elanı silmək istədiyinizə əminsiniz?")) return; try { await apiFetch(`/api/products/${id}`, { method: "DELETE" }); setItems(p => p.filter(x => x.id !== id)); toast("Silindi"); } catch (e) { toast(e.message, "error"); } }
+
+  async function saveProductEdit(e) {
+    e.preventDefault();
+    if (!editProduct) return;
+    setSavingEdit(true);
+    try {
+      const payload = {
+        titleAz: editProduct.titleAz,
+        price: parseFloat(editProduct.price),
+        discountedPrice: editProduct.discountedPrice ? parseFloat(editProduct.discountedPrice) : null,
+        stock: parseInt(editProduct.stock) || 1,
+        city: editProduct.city || null,
+        region: editProduct.region || null,
+        unit: editProduct.unit || "ədəd",
+        isCorporate: !!editProduct.isCorporate,
+        minOrderQty: editProduct.minOrderQty ? parseInt(editProduct.minOrderQty) : null,
+        status: editProduct.status,
+        descriptionAz: editProduct.descriptionAz || "",
+      };
+      await apiFetch(`/api/products/${editProduct.id}`, { method: "PATCH", body: JSON.stringify(payload) });
+      toast("Məhsul məlumatları yeniləndi", "success");
+      setEditProduct(null);
+      load();
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function del(id) {
+    if (!confirm("Bu elanı silmək istədiyinizə əminsiniz? Bu geri qaytarıla bilməz!")) return;
+    try {
+      await apiFetch(`/api/products/${id}`, { method: "DELETE" });
+      setItems(p => p.filter(x => x.id !== id));
+      toast("Elan silindi", "success");
+    } catch (e) { toast(e.message, "error"); }
+  }
+
   const STATUSES = ["ACTIVE", "PENDING_REVIEW", "REJECTED", "SOLD", "DRAFT", "EXPIRED"];
   const pendingCount = items.filter(p => p.status === "PENDING_REVIEW").length;
+
   return (
     <div className="space-y-4">
       <ToastContainer />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="section-title">Bütün Elanlar</h2>
-          {pendingCount > 0 && statusFilter === "PENDING_REVIEW" && <p className="text-xs text-amber-600 font-medium mt-0.5 inline-flex items-center gap-1"><Icon name="clock" size={12} />{pendingCount} elan təsdiq gözləyir</p>}
+          <h2 className="section-title">Bütün Elanlar & İdarəetmə</h2>
+          <p className="section-subtitle">Admin səlahiyyətləri ilə elanları tam redaktə edin, VIP/Premium təyin edin və ya silin</p>
+          {pendingCount > 0 && <p className="text-xs text-amber-600 font-bold mt-1 inline-flex items-center gap-1"><Icon name="clock" size={12} />{pendingCount} elan təsdiq gözləyir</p>}
         </div>
         <span className="badge badge-gray">{items.length} nəticə</span>
       </div>
+
+      {/* Filter Controls */}
       <div className="flex gap-2 flex-wrap">
-        <input placeholder="Ad, region, satıcı axtar..." value={search} onChange={e => setSearch(e.target.value)} className="input-sm flex-1 min-w-40" />
+        <input
+          placeholder="Məhsul adı, kateqoriya, satıcı və ya şəhər axtar..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="input-sm flex-1 min-w-48"
+        />
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="select-field w-auto text-xs py-2">
           <option value="">Bütün statuslar</option>
-          {STATUSES.map(s => <option key={s} value={s}>{s === "PENDING_REVIEW" ? "Gözləyən" : s === "ACTIVE" ? "Aktiv" : s === "REJECTED" ? "Rədd" : s === "SOLD" ? "Satılıb" : s === "DRAFT" ? "Qaralama" : "Bitmib"}</option>)}
+          <option value="PENDING_REVIEW">⏳ Moderasiyada olanlar (Gözləyən)</option>
+          <option value="ACTIVE">✅ Aktiv Elanlar</option>
+          <option value="REJECTED">❌ Rədd edilmiş</option>
+          <option value="SOLD">💰 Satılmış</option>
+          <option value="EXPIRED">⌛ Vaxtı bitmiş</option>
+          <option value="DRAFT">📝 Qaralamalar</option>
         </select>
       </div>
+
       {loading ? <SkeletonList count={5} /> : !items.length ? <EmptyState icon="clipboard" title="Elan tapılmadı" /> : (
-        <div className="space-y-2">
-          {items.map(p => (
-            <div key={p.id} className={`card p-4 ${p.status === "PENDING_REVIEW" ? "border-l-4 border-amber-400" : ""}`}>
-              <div className="flex items-start gap-3">
-                {(p.coverImage || p.images?.[0]?.url) && <img src={p.coverImage || p.images[0].url} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 flex-wrap">
-                    <div>
-                      <p className="font-semibold text-sm line-clamp-1">{p.titleAz}</p>
-                      <p className="caption">₼{Number(p.price).toLocaleString("az-AZ")} · {p.region || ""} {p.city || ""}</p>
-                      <p className="text-xs text-gray-500 mt-0.5 inline-flex items-center gap-1"><Icon name="user" size={12} />{p.seller?.fullName || "—"} {p.seller?.phone && <span className="text-brand-600 font-medium">· {p.seller.phone}</span>}</p>
-                      <p className="text-[11px] text-gray-400">{new Date(p.createdAt).toLocaleDateString("az-AZ")}</p>
+        <div className="space-y-3">
+          {items.map(p => {
+            const hasDiscount = p.discountedPrice && Number(p.discountedPrice) > 0 && Number(p.discountedPrice) < Number(p.price);
+            return (
+              <div key={p.id} className={`card p-4 transition-all hover:border-brand-300 ${p.status === "PENDING_REVIEW" ? "border-l-4 border-amber-400 bg-amber-50/20" : "bg-white"}`}>
+                <div className="flex items-start gap-4">
+                  {(p.coverImage || p.images?.[0]?.url) ? (
+                    <img src={p.coverImage || p.images[0].url} alt="" className="w-16 h-16 rounded-2xl object-cover shrink-0 border border-gray-100" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 shrink-0"><Icon name="sprout" size={24} /></div>
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-bold text-sm text-gray-900 line-clamp-1">{p.titleAz}</p>
+                          {p.isCorporate && (
+                            <span className="badge badge-purple text-[10px]">🏢 Korporativ (Min: {p.minOrderQty || 1})</span>
+                          )}
+                          {p.tier && p.tier !== "STANDARD" && (
+                            <span className="badge badge-green text-[10px]">✨ {p.tier}</span>
+                          )}
+                        </div>
+
+                        <div className="flex items-baseline gap-2 mt-0.5">
+                          {hasDiscount ? (
+                            <>
+                              <span className="text-xs font-black text-brand-700">₼{Number(p.discountedPrice).toLocaleString("az-AZ")}</span>
+                              <span className="text-[11px] text-gray-400 line-through">₼{Number(p.price).toLocaleString("az-AZ")}</span>
+                              <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 rounded">-{Math.round((1 - Number(p.discountedPrice) / Number(p.price)) * 100)}%</span>
+                            </>
+                          ) : (
+                            <span className="text-xs font-black text-brand-700">₼{Number(p.price).toLocaleString("az-AZ")}</span>
+                          )}
+                          <span className="text-[11px] text-gray-400">· Stok: {p.stock} {p.unit || "ədəd"} · {p.city || p.region || "Məkan yoxdur"}</span>
+                        </div>
+
+                        <p className="text-xs text-gray-500 mt-1 inline-flex items-center gap-1">
+                          <Icon name="user" size={12} />
+                          <strong>{p.seller?.fullName || p.guestName || "Fərdi elan"}</strong>
+                          {p.seller?.phone && <span className="text-brand-600 font-medium">· {p.seller.phone}</span>}
+                          {p.store && <span className="text-purple-600 font-medium">· 🏪 {p.store.name}</span>}
+                        </p>
+                      </div>
+
+                      <span className={`badge shrink-0 ${PRODUCT_STATUS_COLORS[p.status] || "badge-gray"}`}>{p.status}</span>
                     </div>
-                    <span className={`badge flex-shrink-0 ${PRODUCT_STATUS_COLORS[p.status] || "badge-gray"}`}>{p.status}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    {p.status === "PENDING_REVIEW" && (
-                      <>
-                        <button onClick={() => changeStatus(p.id, "ACTIVE")} className="btn-primary btn-xs flex items-center gap-1"><Icon name="check" size={12} />Təsdiqlə</button>
-                        <button onClick={() => changeStatus(p.id, "REJECTED")} className="btn-danger btn-xs flex items-center gap-1"><Icon name="close" size={12} />Rədd et</button>
-                      </>
-                    )}
-                    {p.status !== "PENDING_REVIEW" && (
-                      <select defaultValue={p.status} onChange={e => changeStatus(p.id, e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none">
+
+                    {/* Admin Action Bar */}
+                    <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-gray-100 flex-wrap">
+                      {p.status === "PENDING_REVIEW" && (
+                        <>
+                          <button onClick={() => changeStatus(p.id, "ACTIVE")} className="btn-primary btn-xs flex items-center gap-1">
+                            <Icon name="check" size={12} /> Təsdiqlə
+                          </button>
+                          <button onClick={() => changeStatus(p.id, "REJECTED")} className="btn-danger btn-xs flex items-center gap-1">
+                            <Icon name="close" size={12} /> Rədd et
+                          </button>
+                        </>
+                      )}
+
+                      {/* Status Dropdown */}
+                      <select
+                        value={p.status}
+                        onChange={e => changeStatus(p.id, e.target.value)}
+                        className="text-xs border border-gray-200 rounded-xl px-2.5 py-1.5 bg-white font-semibold focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      >
                         {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
-                    )}
-                    <a href={`/products/${p.slug}`} target="_blank" rel="noopener" className="btn-secondary btn-xs flex items-center gap-1"><Icon name="eye" size={12} />Bax</a>
-                    <button onClick={() => del(p.id)} className="btn-danger btn-xs flex items-center gap-1"><Icon name="trash" size={12} />Sil</button>
+
+                      {/* Boost / VIP Button */}
+                      <button
+                        type="button"
+                        onClick={() => setBoostProduct(p)}
+                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all"
+                      >
+                        🚀 Boost / VIP Et
+                      </button>
+
+                      {/* Edit Button */}
+                      <button
+                        type="button"
+                        onClick={() => setEditProduct({ ...p, price: p.price.toString(), discountedPrice: p.discountedPrice ? p.discountedPrice.toString() : "" })}
+                        className="btn-secondary btn-xs flex items-center gap-1"
+                      >
+                        <Icon name="edit" size={12} /> Redaktə
+                      </button>
+
+                      {/* View Link */}
+                      <a href={`/products/${p.slug}`} target="_blank" rel="noopener" className="btn-secondary btn-xs flex items-center gap-1">
+                        <Icon name="eye" size={12} /> Bax
+                      </a>
+
+                      {/* Delete Button */}
+                      <button onClick={() => del(p.id)} className="btn-danger btn-xs flex items-center gap-1 ml-auto">
+                        <Icon name="trash" size={12} /> Sil
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Boost Modal for Product */}
+      {boostProduct && (
+        <BoostModal
+          isOpen={true}
+          onClose={() => setBoostProduct(null)}
+          targetType="PRODUCT"
+          targetItem={boostProduct}
+          onSuccess={() => {
+            setBoostProduct(null);
+            load();
+          }}
+        />
+      )}
+
+      {/* Admin Edit Product Modal */}
+      {editProduct && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4" onClick={() => setEditProduct(null)}>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="font-extrabold text-base text-gray-900 flex items-center gap-2">
+                <Icon name="edit" size={18} className="text-brand-600" /> Elanı Redaktə Et (Admin)
+              </h3>
+              <button onClick={() => setEditProduct(null)} className="btn-icon"><Icon name="x" size={18} /></button>
             </div>
-          ))}
+
+            <form onSubmit={saveProductEdit} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Məhsulun Adı (Başlıq) *</label>
+                <input
+                  required
+                  value={editProduct.titleAz || ""}
+                  onChange={e => setEditProduct({ ...editProduct, titleAz: e.target.value })}
+                  className="input-field text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Standart Qiymət (₼) *</label>
+                  <input
+                    required
+                    type="number"
+                    step="0.01"
+                    value={editProduct.price || ""}
+                    onChange={e => setEditProduct({ ...editProduct, price: e.target.value })}
+                    className="input-field text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Endirimli Qiymət (₼)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="İstəyə bağlı"
+                    value={editProduct.discountedPrice || ""}
+                    onChange={e => setEditProduct({ ...editProduct, discountedPrice: e.target.value })}
+                    className="input-field text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Stok Miqdarı</label>
+                  <input
+                    type="number"
+                    value={editProduct.stock || 1}
+                    onChange={e => setEditProduct({ ...editProduct, stock: e.target.value })}
+                    className="input-field text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Şəhər / Rayon</label>
+                  <input
+                    value={editProduct.city || ""}
+                    onChange={e => setEditProduct({ ...editProduct, city: e.target.value })}
+                    className="input-field text-xs"
+                    placeholder="Bakı, Gəncə..."
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Ölçü Vahidi</label>
+                  <input
+                    value={editProduct.unit || "ədəd"}
+                    onChange={e => setEditProduct({ ...editProduct, unit: e.target.value })}
+                    className="input-field text-xs"
+                    placeholder="ədəd, kq, litr, ton..."
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Status</label>
+                  <select
+                    value={editProduct.status}
+                    onChange={e => setEditProduct({ ...editProduct, status: e.target.value })}
+                    className="input-field text-xs bg-white"
+                  >
+                    {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Korporativ Ayarlar */}
+              <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-100 space-y-3">
+                <label className="flex items-center gap-2 text-xs font-bold text-purple-900 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!editProduct.isCorporate}
+                    onChange={e => setEditProduct({ ...editProduct, isCorporate: e.target.checked })}
+                    className="rounded border-purple-300 text-purple-600 focus:ring-purple-500 w-4 h-4"
+                  />
+                  <span>🏢 Korporativ / Toplu Satış Elanıdır</span>
+                </label>
+                {editProduct.isCorporate && (
+                  <div>
+                    <label className="text-xs font-bold text-purple-800 block mb-1">Minimum Sifariş Miqdarı (ədəd)</label>
+                    <input
+                      type="number"
+                      value={editProduct.minOrderQty || 1}
+                      onChange={e => setEditProduct({ ...editProduct, minOrderQty: e.target.value })}
+                      className="input-field text-xs bg-white max-w-xs"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Açıqlama / Təsvir</label>
+                <textarea
+                  rows={4}
+                  value={editProduct.descriptionAz || ""}
+                  onChange={e => setEditProduct({ ...editProduct, descriptionAz: e.target.value })}
+                  className="input-field text-xs"
+                  placeholder="Məhsul haqqında ətraflı məlumat..."
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end pt-3 border-t border-gray-100">
+                <button type="button" onClick={() => setEditProduct(null)} className="btn-secondary px-4 py-2 text-xs font-bold rounded-xl">
+                  İmtina
+                </button>
+                <button type="submit" disabled={savingEdit} className="btn-primary px-5 py-2 text-xs font-bold rounded-xl flex items-center gap-1.5 disabled:opacity-50">
+                  <Icon name="check" size={14} />
+                  <span>{savingEdit ? "Saxlanılır..." : "Yadda Saxla"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
@@ -1824,12 +2219,16 @@ export default function AdminPanel() {
   const [collapsed, setCollapsed] = useState(false);
   const { toast, ToastContainer } = useToast();
 
-  useEffect(() => {
+  const refreshStats = useCallback(() => {
     apiFetch("/api/admin/stats")
       .then(d => { setStats(d.stats); setActivity(d.recentActivity || []); })
       .catch(e => toast(e.message, "error"))
       .finally(() => setStatsLoading(false));
   }, []);
+
+  useEffect(() => {
+    refreshStats();
+  }, [refreshStats]);
 
   const badges = { pendingProducts: stats?.products?.pending || 0, pendingReviews: stats?.reviews?.pending || 0 };
 
@@ -1838,7 +2237,8 @@ export default function AdminPanel() {
     switch (tab) {
       case "stats": return <DashboardStats stats={stats} loading={statsLoading} />;
       case "activity": return <RecentActivity activity={activity} loading={statsLoading} />;
-      case "pending": return <PendingProducts />;
+      case "pending": return <PendingProducts onRefreshStats={refreshStats} />;
+      case "allListings":
       case "all-listings": return <AllListingsManager />;
       case "corporate": return <CorporateListingsManager />;
       case "categories": return <CategoriesManager />;

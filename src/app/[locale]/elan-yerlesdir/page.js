@@ -45,12 +45,21 @@ export default function PostListingPage() {
   const [selectedSubSubCat, setSelectedSubSubCat] = useState("");
 
   const [brands, setBrands] = useState([]);
+  const [selectedDuration, setSelectedDuration] = useState(1);
+  const [pricingConfig, setPricingConfig] = useState({
+    tier_1_day: { days: 1, price: 0 },
+    tier_15_days: { days: 15, price: 7 },
+    tier_30_days: { days: 30, price: 15 },
+  });
 
   useEffect(() => {
     setUser(getUser());
     Promise.all([
       apiFetch("/api/categories").then((d) => setCategories(d.categories || [])).catch(() => { }),
-      apiFetch("/api/brands?withProducts=false").then((d) => setBrands(d.brands || [])).catch(() => { })
+      apiFetch("/api/brands?withProducts=false").then((d) => setBrands(d.brands || [])).catch(() => { }),
+      apiFetch("/api/config/listing-pricing").then((d) => {
+        if (d?.pricing) setPricingConfig(d.pricing);
+      }).catch(() => { })
     ]);
   }, []);
 
@@ -186,6 +195,7 @@ export default function PostListingPage() {
         payload.guestName = form.guestName;
         payload.guestPhone = form.guestPhone;
       }
+      payload.durationDays = selectedDuration;
       await apiFetch("/api/products", { method: "POST", body: JSON.stringify(payload) });
       setSuccess(true);
     } catch (err) {
@@ -586,6 +596,74 @@ export default function PostListingPage() {
             />
           </div>
         )}
+
+        {/* Duration Packages Selection */}
+        <div className="border-t border-gray-100 pt-4 mt-2">
+          <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2.5">
+            Elanın Yayımlanma Müddəti & Paketi
+          </label>
+          <div className="grid grid-cols-3 gap-2.5">
+            {/* 1 Day Package */}
+            <div
+              onClick={() => setSelectedDuration(1)}
+              className={`cursor-pointer rounded-2xl p-3 border-2 transition-all text-center flex flex-col justify-between ${
+                selectedDuration === 1
+                  ? "border-brand-600 bg-brand-50/50 shadow-xs"
+                  : "border-gray-200 hover:border-gray-300 bg-white"
+              }`}
+            >
+              <div>
+                <span className="text-[11px] font-bold text-gray-500 block">1 Günlük</span>
+                <span className="text-sm font-black text-brand-700 mt-1 block">
+                  {pricingConfig?.tier_1_day?.price === 0 ? "Pulsuz" : `${pricingConfig?.tier_1_day?.price} ₼`}
+                </span>
+              </div>
+              <span className="text-[9px] font-medium text-gray-400 mt-1.5 block">Sınaq</span>
+            </div>
+
+            {/* 15 Days Package */}
+            <div
+              onClick={() => setSelectedDuration(15)}
+              className={`cursor-pointer rounded-2xl p-3 border-2 transition-all text-center flex flex-col justify-between relative ${
+                selectedDuration === 15
+                  ? "border-brand-600 bg-brand-50/50 shadow-xs"
+                  : "border-gray-200 hover:border-gray-300 bg-white"
+              }`}
+            >
+              <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
+                TÖVSİYƏ
+              </span>
+              <div>
+                <span className="text-[11px] font-bold text-gray-500 block">15 Günlük</span>
+                <span className="text-sm font-black text-brand-700 mt-1 block">
+                  {pricingConfig?.tier_15_days?.price} ₼
+                </span>
+              </div>
+              <span className="text-[9px] font-medium text-gray-400 mt-1.5 block">Standart</span>
+            </div>
+
+            {/* 30 Days Package */}
+            <div
+              onClick={() => setSelectedDuration(30)}
+              className={`cursor-pointer rounded-2xl p-3 border-2 transition-all text-center flex flex-col justify-between relative ${
+                selectedDuration === 30
+                  ? "border-brand-600 bg-brand-50/50 shadow-xs"
+                  : "border-gray-200 hover:border-gray-300 bg-white"
+              }`}
+            >
+              <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
+                VIP
+              </span>
+              <div>
+                <span className="text-[11px] font-bold text-gray-500 block">30 Günlük</span>
+                <span className="text-sm font-black text-brand-700 mt-1 block">
+                  {pricingConfig?.tier_30_days?.price} ₼
+                </span>
+              </div>
+              <span className="text-[9px] font-medium text-gray-400 mt-1.5 block">Maksimum</span>
+            </div>
+          </div>
+        </div>
 
         <button disabled={loading} className="btn-primary w-full mt-2">
           {loading ? "Göndərilir..." : "Elanı Göndər"}

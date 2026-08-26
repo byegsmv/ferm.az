@@ -144,6 +144,8 @@ export default function ProductCard({ product, tier, compact = false, initialFav
   }
 
   const badge = tier && tier !== "STANDARD" ? TIER_CONFIG[tier] : null;
+  const hasDiscount = product.discountedPrice && Number(product.discountedPrice) > 0 && Number(product.discountedPrice) < Number(product.price);
+  const discountPercent = hasDiscount ? Math.round((1 - Number(product.discountedPrice) / Number(product.price)) * 100) : 0;
 
   return (
     <div className="group card-hover overflow-hidden flex flex-col relative h-full bg-white rounded-2xl border border-gray-100">
@@ -167,7 +169,11 @@ export default function ProductCard({ product, tier, compact = false, initialFav
         )}
 
         {/* Tier badge */}
-        {badge && (
+        {hasDiscount ? (
+          <span className="absolute top-2 left-2 text-[10px] font-black px-2 py-0.5 rounded-lg bg-red-500 text-white shadow-xs z-10">
+            -{discountPercent}%
+          </span>
+        ) : badge && (
           <span className={`absolute top-2 left-2 text-[10px] font-extrabold px-2 py-0.5 rounded-lg ${badge.bg}`}>
             {badge.label === "ÖNE ÇIXAN" ? t('products.featuredBadge', 'ÖNE ÇIXAN') : badge.label}
           </span>
@@ -208,9 +214,20 @@ export default function ProductCard({ product, tier, compact = false, initialFav
             <Icon name="building" size={11} /> {t('products.corporateBadge', 'Korporativ')}
           </span>
         )}
-        <p className={`font-extrabold text-brand-700 mt-auto ${compact ? "text-sm" : "text-base"}`}>
-          {Number(product.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} <span className="font-semibold text-xs">{product.currency || t('products.currencyAzn', 'AZN')}</span>
-        </p>
+        {hasDiscount ? (
+          <div className="mt-auto flex items-baseline gap-1.5 flex-wrap">
+            <span className={`font-black text-brand-700 ${compact ? "text-sm" : "text-base"}`}>
+              {Number(product.discountedPrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} <span className="font-semibold text-xs">{product.currency || t('products.currencyAzn', 'AZN')}</span>
+            </span>
+            <span className="text-xs text-gray-400 line-through font-medium">
+              {Number(product.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} ₼
+            </span>
+          </div>
+        ) : (
+          <p className={`font-extrabold text-brand-700 mt-auto ${compact ? "text-sm" : "text-base"}`}>
+            {Number(product.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} <span className="font-semibold text-xs">{product.currency || t('products.currencyAzn', 'AZN')}</span>
+          </p>
+        )}
         {product.isCorporate && product.minOrderQty && (
           <p className="text-[10px] text-orange-600 font-medium">{t('products.minOrderLabel', 'Min:')} {product.minOrderQty} {t('products.unitPiece', 'ədəd')}</p>
         )}

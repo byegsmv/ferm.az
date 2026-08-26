@@ -6,11 +6,13 @@ import { apiFetch } from "@/lib/apiClient";
 import { useToast } from "@/components/ui/Toast";
 import {
   Globe, Share2, Phone, Mail, MapPin, Settings, ShoppingBag,
-  FileText, ShieldCheck, Check, Save, RefreshCw
+  FileText, ShieldCheck, Check, Save, RefreshCw, Coins, Rocket, CreditCard
 } from "lucide-react";
 
 const SECTION_ORDER = [
   { key: "social", label: "Sosial Şəbəkələr & Əlaqə", icon: <Share2 className="w-4 h-4 text-pink-500" /> },
+  { key: "pricing", label: "Qiymətlər & Paketlər (Boost)", icon: <Coins className="w-4 h-4 text-amber-500" /> },
+  { key: "payments", label: "Ödəniş Hesabları (Bank & M10)", icon: <CreditCard className="w-4 h-4 text-emerald-600" /> },
   { key: "general", label: "Ümumi Ayarlar", icon: <Settings className="w-4 h-4 text-blue-500" /> },
   { key: "commerce", label: "Ticarət & Bazarlıq", icon: <ShoppingBag className="w-4 h-4 text-emerald-500" /> },
   { key: "content", label: "Məzmun & Modullar", icon: <FileText className="w-4 h-4 text-purple-500" /> },
@@ -28,6 +30,38 @@ const FIELD_DEFS = {
     { key: "phone", label: "Əlaqə Telefon Nömrəsi", type: "text", placeholder: "+994 10 521 09 09" },
     { key: "email", label: "Rəsmi Əlaqə E-maili", type: "text", placeholder: "info@fermermarket.az" },
     { key: "address", label: "Şirkət Ünvanı", type: "text", placeholder: "Bakı şəhəri, Azərbaycan" },
+  ],
+  pricing: [
+    { key: "tier_1_day_price", label: "1 Günlük Elan Qiyməti (₼)", type: "number", placeholder: "0" },
+    { key: "tier_1_day_active", label: "1 Günlük Elan Paketi Aktivdir", type: "toggle" },
+    { key: "tier_15_days_price", label: "15 Günlük Elan Qiyməti (₼)", type: "number", placeholder: "7" },
+    { key: "tier_15_days_active", label: "15 Günlük Elan Paketi Aktivdir", type: "toggle" },
+    { key: "tier_30_days_price", label: "30 Günlük Elan Qiyməti (₼)", type: "number", placeholder: "15" },
+    { key: "tier_30_days_active", label: "30 Günlük Elan Paketi Aktivdir", type: "toggle" },
+    { key: "product_featured_price", label: "Önə Çıxan Elan (FEATURED) Qiyməti (₼)", type: "number", placeholder: "5" },
+    { key: "product_featured_active", label: "Önə Çıxan Elan Xidməti Aktivdir", type: "toggle" },
+    { key: "product_premium_price", label: "Premium Elan (PREMIUM) Qiyməti (₼)", type: "number", placeholder: "10" },
+    { key: "product_premium_active", label: "Premium Elan Xidməti Aktivdir", type: "toggle" },
+    { key: "product_vip_price", label: "VIP Vitrin & Baş Səhifə Qiyməti (₼)", type: "number", placeholder: "20" },
+    { key: "product_vip_active", label: "VIP Vitrin Xidməti Aktivdir", type: "toggle" },
+    { key: "product_banner_price", label: "Baş Səhifə Reklam Banneri Qiyməti (₼)", type: "number", placeholder: "30" },
+    { key: "product_banner_active", label: "Reklam Banneri Xidməti Aktivdir", type: "toggle" },
+    { key: "store_verified_vip_price", label: "VIP Təsdiqlənmiş Mağaza Qiyməti (₼)", type: "number", placeholder: "25" },
+    { key: "store_verified_vip_active", label: "VIP Mağaza Xidməti Aktivdir", type: "toggle" },
+    { key: "store_banner_ad_price", label: "Mağaza Banner Reklamı Qiyməti (₼)", type: "number", placeholder: "40" },
+    { key: "store_banner_ad_active", label: "Mağaza Banner Reklamı Aktivdir", type: "toggle" },
+  ],
+  payments: [
+    { key: "bankName", label: "Bank Adı", type: "text", placeholder: "ABB Bank / Kapital Bank" },
+    { key: "bankCardNumber", label: "Bank Kart Nömrəsi (16 rəqəm)", type: "text", placeholder: "4169 7388 0000 0000" },
+    { key: "bankCardHolder", label: "Kart Sahibi (Ad Soyad / Şirkət)", type: "text", placeholder: "Fermer Market MMC" },
+    { key: "m10Number", label: "M10 Mobil Nömrəsi", type: "text", placeholder: "+994 10 521 09 09" },
+    { key: "m10Holder", label: "M10 Qəbul Edən Şəxs / Mağaza", type: "text", placeholder: "Fermer Market" },
+    { key: "paymentInstructions", label: "Ödəniş Təlimatı", type: "text", placeholder: "Ödəniş etdikdən sonra qəbzin şəklini yükləyin." },
+    { key: "allowCardTransfer", label: "Bank Kartı ilə ödəniş aktivdir", type: "toggle" },
+    { key: "allowM10", label: "M10 ilə ödəniş aktivdir", type: "toggle" },
+    { key: "allowCash", label: "Qapıda Nağd ödəniş aktivdir", type: "toggle" },
+    { key: "allowWallet", label: "Daxili Pul Kisəsi ilə ödəniş aktivdir", type: "toggle" },
   ],
   general: [
     { key: "siteName", label: "Sayt adı", type: "text" },
@@ -202,10 +236,10 @@ export default function NoCodeAdminStudio() {
                         </select>
                       ) : (
                         <input
-                          type="text"
-                          value={value || ""}
+                          type={field.type || "text"}
+                          value={value ?? ""}
                           placeholder={field.placeholder || ""}
-                          onChange={(e) => updateField(field.key, e.target.value)}
+                          onChange={(e) => updateField(field.key, field.type === "number" ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value)}
                           className="w-full rounded-xl border border-gray-200 px-3 py-2 text-xs bg-white outline-none focus:border-brand-500 font-medium"
                         />
                       )}

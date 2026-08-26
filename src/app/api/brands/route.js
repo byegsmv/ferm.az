@@ -18,10 +18,11 @@ export async function GET(request) {
   return Response.json({ brands });
 }
 
-// POST /api/brands — admin only
+// POST /api/brands — admin/super_admin only
 export async function POST(request) {
-  const user = await requireRole(request, ["ADMIN", "SUPER_ADMIN"]);
-  if (user.error) return Response.json({ error: user.error }, { status: user.status || 403 });
+  const authUser = await getAuthUser(request);
+  const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN"]);
+  if (denied) return denied;
 
   try {
     const body = await request.json();
@@ -34,10 +35,27 @@ export async function POST(request) {
     }
 
     const { name, country, website, description, logoUrl, isActive, sortOrder } = parsed.data;
-    const slug = slugify(name, { lower: true, strict: true });
+    
+    // Generate clean slug
+    let baseSlug = slugify(name, { lower: true, strict: true }) || `brand-${Date.now()}`;
+    let slug = baseSlug;
+    let counter = 1;
+    while (await prisma.brand.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
 
     const brand = await prisma.brand.create({
-      data: { name, slug, country, website, description, logoUrl, isActive, sortOrder },
+      data: {
+        name,
+        slug,
+        country: country || null,
+        website: website || null,
+        description: description || null,
+        logoUrl: logoUrl || null,
+        isActive: isActive ?? true,
+        sortOrder: sortOrder ?? 0
+      },
     });
 
     return Response.json({ brand }, { status: 201 });
@@ -45,6 +63,6 @@ export async function POST(request) {
     if (error.code === "P2002") {
       return Response.json({ error: "Bu brend artıq mövcuddur" }, { status: 409 });
     }
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message || "Xəta baş verdi" }, { status: 500 });
   }
 }

@@ -1,4 +1,16 @@
 services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: azveb_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   fermermarket:
     image: fermermarket
     build:
@@ -7,4 +19,9 @@ services:
     environment:
       NODE_ENV: production
     ports:
-      - 3000:3000
+      - "3000:3000"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

@@ -67,6 +67,7 @@ export default function Header() {
       const u = getUser();
       setUser(u);
       if (u) {
+        fetchUserProfile();
         fetchUnreadCount();
         fetchWalletData();
       } else {
@@ -95,6 +96,23 @@ export default function Header() {
       document.removeEventListener("mousedown", onClickOut);
     };
   }, []);
+
+  async function fetchUserProfile() {
+    try {
+      const { apiFetch } = await import("@/lib/apiClient");
+      const data = await apiFetch("/api/users/me");
+      if (data?.user) {
+        setUser((prev) => ({ ...prev, ...data.user }));
+        const stored = localStorage.getItem("user");
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            localStorage.setItem("user", JSON.stringify({ ...parsed, ...data.user }));
+          } catch {}
+        }
+      }
+    } catch {}
+  }
 
   async function fetchUnreadCount() {
     try {

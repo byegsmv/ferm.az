@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/apiClient";
 import Icon from "@/components/ui/Icon";
 
 import ImageUploader from "@/components/ImageUploader";
+import BoostModal from "@/components/products/BoostModal";
 // Existing subcomponents
 import StoreProfileHeader from "@/components/dashboard/store/StoreProfileHeader";
 import StoreAnalytics from "@/components/dashboard/store/StoreAnalytics";
@@ -40,6 +41,7 @@ export default function StoreDashboard({ user }) {
   });
 
   const [toastMsg, setToastMsg] = useState(null);
+  const [boostModalData, setBoostModalData] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createForm, setCreateForm] = useState({ titleAz: "", price: "", stock: "1", categoryId: "", region: "", city: "", descriptionAz: "", images: [], tags: [], isCorporate: false, minOrderQty: "" });
   const [creating, setCreating] = useState(false);
@@ -191,6 +193,8 @@ export default function StoreDashboard({ user }) {
       } catch (err) {
         showToast(err.message || "Xəta baş verdi");
       }
+    } else if (action === "promote") {
+      setBoostModalData({ targetType: "PRODUCT", targetItem: target });
     } else if (action === "share") {
       const shareUrl =
         typeof window !== "undefined"
@@ -434,16 +438,26 @@ export default function StoreDashboard({ user }) {
           {activeTab === "products" && (
             <div className="space-y-4">
               {/* YENI ELAN DUYMESI */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <h2 className="text-lg font-extrabold text-gray-900">Məhsullarım</h2>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateForm(s => !s)}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white text-sm font-bold rounded-xl hover:bg-brand-700 transition-colors shadow-sm"
-                >
-                  <Icon name="plus" size={18} />
-                  Yeni Elan
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setBoostModalData({ targetType: "STORE", targetItem: store })}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold rounded-xl border border-purple-200 transition-colors shadow-xs"
+                  >
+                    <Icon name="sparkles" size={16} />
+                    Mağazanı VIP Et
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateForm(s => !s)}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white text-sm font-bold rounded-xl hover:bg-brand-700 transition-colors shadow-sm"
+                  >
+                    <Icon name="plus" size={18} />
+                    Yeni Elan
+                  </button>
+                </div>
               </div>
 
               {/* YENI ELAN FORMASI */}
@@ -723,6 +737,17 @@ export default function StoreDashboard({ user }) {
           )}
         </div>
       </div>
+
+      <BoostModal
+        isOpen={!!boostModalData}
+        onClose={() => setBoostModalData(null)}
+        targetType={boostModalData?.targetType || "PRODUCT"}
+        targetItem={boostModalData?.targetItem || {}}
+        onSuccess={() => {
+          loadProducts();
+          loadStore();
+        }}
+      />
     </div>
   );
 }

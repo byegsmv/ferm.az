@@ -278,6 +278,9 @@ export default async function ProductDetailPage({ params }) {
     otherListings
   } : null;
 
+  const hasDiscount = product.discountedPrice && Number(product.discountedPrice) > 0 && Number(product.discountedPrice) < Number(product.price);
+  const effectivePrice = hasDiscount ? Number(product.discountedPrice) : Number(product.price);
+
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-20 md:pb-6">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -299,9 +302,23 @@ export default async function ProductDetailPage({ params }) {
           
           <p className="text-sm text-brand-700 font-semibold">{product.category?.nameAz || "Ümumi"}</p>
           <h1 className="text-xl sm:text-2xl font-extrabold mt-1">{product.titleAz}</h1>
-          <p className="text-2xl sm:text-3xl font-extrabold text-brand-700 mt-2 sm:mt-3">
-            {Number(product.price).toLocaleString("az-AZ")} {product.currency}
-          </p>
+          {hasDiscount ? (
+            <div className="flex items-baseline gap-3 mt-2 sm:mt-3 flex-wrap">
+              <p className="text-2xl sm:text-3xl font-black text-brand-700">
+                {Number(product.discountedPrice).toLocaleString("az-AZ")} {product.currency}
+              </p>
+              <p className="text-base sm:text-lg text-gray-400 line-through font-semibold">
+                {Number(product.price).toLocaleString("az-AZ")} {product.currency}
+              </p>
+              <span className="text-xs font-black bg-red-100 text-red-600 px-2.5 py-1 rounded-full">
+                -{Math.round((1 - Number(product.discountedPrice) / Number(product.price)) * 100)}% Endirim
+              </span>
+            </div>
+          ) : (
+            <p className="text-2xl sm:text-3xl font-extrabold text-brand-700 mt-2 sm:mt-3">
+              {Number(product.price).toLocaleString("az-AZ")} {product.currency}
+            </p>
+          )}
           <p className="text-sm text-gray-500 mt-1">
             {product.city || product.region || "Qeyd olunmayıb"} · Stok: {product.stock}
           </p>
@@ -357,9 +374,9 @@ export default async function ProductDetailPage({ params }) {
               </>
             ) : (
               <>
-                <AddToCartButton product={{ id: product.id, title: product.titleAz, price: Number(product.price), coverImage: product.images[0]?.url, isCorporate: product.isCorporate, minOrderQty: product.minOrderQty }} />
+                <AddToCartButton product={{ id: product.id, title: product.titleAz, price: effectivePrice, coverImage: product.images[0]?.url, isCorporate: product.isCorporate, minOrderQty: product.minOrderQty }} />
                 {product.allowInstallment && product.store?.installmentEnabled && (
-                  <CreditRequestModal product={{ id: product.id, title: product.titleAz, price: Number(product.price), code: product.productCode || product.id, store: product.store }} />
+                  <CreditRequestModal product={{ id: product.id, title: product.titleAz, price: effectivePrice, code: product.productCode || product.id, store: product.store }} />
                 )}
               </>
             )}
@@ -659,11 +676,11 @@ export default async function ProductDetailPage({ params }) {
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 p-3 flex items-center justify-between gap-3 shadow-lg">
         <div>
           <span className="text-[10px] text-gray-400 font-bold block uppercase tracking-wider">Qiymət</span>
-          <span className="text-lg font-black text-brand-700">₼{Number(product.price).toLocaleString("az-AZ")}</span>
+          <span className="text-lg font-black text-brand-700">₼{Number(effectivePrice).toLocaleString("az-AZ")}</span>
         </div>
         <div className="flex items-center gap-2">
           {!isGuestListing && !product.isCorporate && (
-            <AddToCartButton product={{ id: product.id, title: product.titleAz, price: Number(product.price), coverImage: product.images[0]?.url, isCorporate: product.isCorporate, minOrderQty: product.minOrderQty }} />
+            <AddToCartButton product={{ id: product.id, title: product.titleAz, price: effectivePrice, coverImage: product.images[0]?.url, isCorporate: product.isCorporate, minOrderQty: product.minOrderQty }} />
           )}
           <WhatsAppButton phone={whatsappNumber} message={`Salam, "${product.titleAz}" elanı haqqında məlumat almaq istəyirəm.`} />
         </div>

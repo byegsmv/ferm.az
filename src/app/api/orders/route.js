@@ -70,7 +70,7 @@ export async function POST(request) {
     );
   }
 
-  const { items, couponCode, shippingAddress, shippingRegion, shippingCity, deliveryMethod } = parsed.data;
+  const { items, couponCode, shippingAddress, shippingRegion, shippingCity, deliveryMethod, paymentMethod, receiptUrl, transactionNote } = parsed.data;
 
   try {
     const order = await prisma.$transaction(async (tx) => {
@@ -97,10 +97,16 @@ export async function POST(request) {
         }
       }
 
+      const getEffectivePrice = (product) => {
+        return product.discountedPrice && Number(product.discountedPrice) > 0 && Number(product.discountedPrice) < Number(product.price)
+          ? Number(product.discountedPrice)
+          : Number(product.price);
+      };
+
       // 2. Compute subtotal from server-side prices (never trust client price)
       const subtotal = items.reduce((sum, item) => {
         const product = productMap.get(item.productId);
-        return sum + Number(product.price) * item.quantity;
+        return sum + getEffectivePrice(product) * item.quantity;
       }, 0);
 
       // 3. Apply coupon if provided
@@ -135,6 +141,31 @@ export async function POST(request) {
 
       const total = subtotal - discount + deliveryCost;
 
+      let orderInitialStatus = "PENDING";
+      let paymentInitialStatus = "PENDING";
+
+      if (paymentMethod === "WALLET") {
+        const buyerWallet = await tx.wallet.findUnique({ where: { userId: authUser.sub } });
+        if (!buyerWallet || Number(buyerWallet.balance) < Number(total)) {
+          throw new Error(`WALLET:Balansınız kifayət etmir (${Number(buyerWallet?.balance || 0).toFixed(2)} AZN). Sifariş məbləği: ${total.toFixed(2)} AZN`);
+        }
+        await tx.wallet.update({
+          where: { userId: authUser.sub },
+          data: { balance: { decrement: total } }
+        });
+        await tx.walletTransaction.create({
+          data: {
+            walletId: buyerWallet.id,
+            type: "PURCHASE",
+            amount: total,
+            description: "Məhsul sifarişi üçün ödəniş",
+            status: "COMPLETED"
+          }
+        });
+        orderInitialStatus = "PAID";
+        paymentInitialStatus = "COMPLETED";
+      }
+
       // 4. Create order + items
       const newOrder = await tx.order.create({
         data: {
@@ -149,7 +180,7 @@ export async function POST(request) {
           shippingCity,
           deliveryMethod,
           deliveryCost,
-          status: "PENDING",
+          status: orderInitialStatus,
           items: {
             create: items.map((item) => {
               const product = productMap.get(item.productId);
@@ -157,13 +188,28 @@ export async function POST(request) {
                 productId: item.productId,
                 sellerId: product.sellerId || "guest",
                 quantity: item.quantity,
-                unitPrice: product.price,
+                unitPrice: getEffectivePrice(product),
                 commissionRate: PLATFORM_COMMISSION_RATE,
               };
             }),
           },
+          payment: {
+            create: {
+              provider: paymentMethod || "CASH_ON_DELIVERY",
+              providerRef: receiptUrl || transactionNote || null,
+              amount: total,
+              currency: "AZN",
+              status: paymentInitialStatus,
+              rawResponse: {
+                receiptUrl: receiptUrl || null,
+                transactionNote: transactionNote || null,
+                paymentMethod: paymentMethod || "CASH_ON_DELIVERY",
+                submittedAt: new Date().toISOString()
+              }
+            }
+          }
         },
-        include: { items: true },
+        include: { items: true, payment: true },
       });
 
       // 5. Decrement stock

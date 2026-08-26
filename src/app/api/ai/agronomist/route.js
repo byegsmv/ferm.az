@@ -62,7 +62,8 @@ export async function POST(req) {
       const orConditions = productNames.flatMap(name => [
         { titleAz: { contains: name, mode: "insensitive" } },
         { titleEn: { contains: name, mode: "insensitive" } },
-        { description: { contains: name, mode: "insensitive" } },
+        { titleRu: { contains: name, mode: "insensitive" } },
+        { descriptionAz: { contains: name, mode: "insensitive" } },
       ]);
 
       if (orConditions.length > 0) {

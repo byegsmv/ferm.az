@@ -130,6 +130,7 @@ export default async function ProductsPage({ searchParams }) {
         orderBy: (() => {
           if (sort === "price_asc") return { price: "asc" };
           if (sort === "price_desc") return { price: "desc" };
+          if (sort === "popular") return { viewCount: "desc" };
           if (sort === "oldest") return { createdAt: "asc" };
           return { createdAt: "desc" };
         })(),
@@ -229,7 +230,7 @@ export default async function ProductsPage({ searchParams }) {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
               {products.map((p, i) => (
                 <Fragment key={p.id}>
-                  <ProductCard product={{ id: p.id, slug: p.slug, title: p.titleAz, titleAz: p.titleAz, price: Number(p.price), coverImage: p.images[0]?.url || p.images?.[0]?.url, region: p.region, city: p.city, isCorporate: p.isCorporate, tags: p.tags }} />
+                  <ProductCard product={{ id: p.id, slug: p.slug, title: p.titleAz, titleAz: p.titleAz, price: Number(p.price), discountedPrice: p.discountedPrice ? Number(p.discountedPrice) : null, currency: p.currency, coverImage: p.images[0]?.url || p.images?.[0]?.url, region: p.region, city: p.city, isCorporate: p.isCorporate, tags: p.tags, store: p.store }} />
                   {infeedAd && i === 7 && (
                     <div key="infeed-ad" className="col-span-2 md:col-span-2 lg:col-span-3 xl:col-span-4">
                       <AdBanner content={infeedAd} label={t('products.sponsoredLabel', 'Sponsorlu')} imgClassName="w-full h-40 md:h-48 object-cover rounded-2xl" />

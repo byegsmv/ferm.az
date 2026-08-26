@@ -1,0 +1,28 @@
+.git
+    .gitignore
+    .env
+    .env.local
+    .env.*.local
+node_modules
+npm - debug.log
+yarn - debug.log
+yarn - error.log
+    .vscode
+    .idea
+    *.md
+DEPLOY_INSTRUCTIONS.md
+prisma / migrations
+    .dockerignore
+Dockerfile
+compose.yaml
+compose.debug.yaml
+cloudflare
+__pycache__
+    *.pyc
+        .venv
+venv
+process_admin_panel.py
+extract - keys.js
+seed - all - keys.js
+seed - site - texts.js
+translation - keys - seed.json

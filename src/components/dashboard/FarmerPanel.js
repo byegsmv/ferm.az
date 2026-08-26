@@ -6,6 +6,7 @@ import Icon from "@/components/ui/Icon";
 import MessagingPanel from "@/components/chat/MessagingPanel";
 import AnalyticsPanel from "@/components/dashboard/AnalyticsPanel";
 import CatalogPanel from "@/components/dashboard/CatalogPanel";
+import BoostModal from "@/components/products/BoostModal";
 
 const STATUS_LABELS = {
   DRAFT: "Qaralama",
@@ -1353,63 +1354,15 @@ export default function FarmerPanel({ user }) {
         </div>
       )}
 
-      {promoteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
-            <button
-              onClick={() => setPromoteModal(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold"
-            >
-              &times;
-            </button>
-            <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
-              <span>Premium Paketlər</span>
-            </h3>
-            <p className="text-sm text-gray-500 mb-4">Elanınızı ana səhifədə Premium bölməsinə çıxararaq daha çox müştəri cəlb edin.</p>
-            {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-2 mb-3">{error}</p>}
-            
-            <div className="space-y-3">
-              <button 
-                disabled={promoteLoading}
-                onClick={() => promoteProduct("1")} 
-                className="w-full text-left p-3 border border-gray-200 rounded-xl hover:border-brand-500 hover:bg-brand-50 transition-colors flex justify-between items-center"
-              >
-                <div>
-                  <p className="font-bold text-gray-900">1 Günlük Premium</p>
-                  <p className="text-xs text-gray-500">100 Coin və ya 1 AZN</p>
-                </div>
-                <span className="bg-brand-100 text-brand-700 px-3 py-1 rounded-full text-xs font-bold">Seç</span>
-              </button>
-
-              <button 
-                disabled={promoteLoading}
-                onClick={() => promoteProduct("2")} 
-                className="w-full relative text-left p-3 border-2 border-amber-400 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors flex justify-between items-center overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 bg-amber-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">Fürsət Kampaniyası</div>
-                <div>
-                  <p className="font-bold text-amber-900">15 Günlük Premium</p>
-                  <p className="text-xs text-amber-700">500 Coin və ya 5 AZN</p>
-                </div>
-                <span className="bg-amber-400 text-white px-3 py-1 rounded-full text-xs font-bold">Seç</span>
-              </button>
-
-              <button 
-                disabled={promoteLoading}
-                onClick={() => promoteProduct("3")} 
-                className="w-full relative text-left p-3 border border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-colors flex justify-between items-center overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">Ən Çox Seçilən</div>
-                <div>
-                  <p className="font-bold text-blue-900">10 Günlük Premium</p>
-                  <p className="text-xs text-blue-700">1000 Coin və ya 10 AZN</p>
-                </div>
-                <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold">Seç</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <BoostModal
+        isOpen={!!promoteModal}
+        onClose={() => setPromoteModal(null)}
+        targetType="PRODUCT"
+        targetItem={myProducts.find(p => p.id === promoteModal) || { id: promoteModal }}
+        onSuccess={() => {
+          apiFetch("/api/products?mine=1").then((d) => setMyProducts(d.products || [])).catch(() => {});
+        }}
+      />
     </div>
   );
 }

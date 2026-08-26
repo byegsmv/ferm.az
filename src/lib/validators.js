@@ -30,11 +30,14 @@ export const orderCreateSchema = z.object({
       })
     )
     .min(1, "Sifarişdə ən azı 1 məhsul olmalıdır"),
-  couponCode: z.string().optional(),
-  shippingAddress: z.string().optional(),
-  shippingRegion: z.string().optional(),
-  shippingCity: z.string().optional(),
+  couponCode: z.string().optional().nullable(),
+  shippingAddress: z.string().optional().nullable(),
+  shippingRegion: z.string().optional().nullable(),
+  shippingCity: z.string().optional().nullable(),
   deliveryMethod: z.enum(["STANDARD", "EXPRESS", "PICKUP"]).default("STANDARD"),
+  paymentMethod: z.string().default("CASH_ON_DELIVERY"),
+  receiptUrl: z.string().optional().nullable(),
+  transactionNote: z.string().optional().nullable(),
 });
 
 export const couponCreateSchema = z.object({
@@ -162,43 +165,41 @@ export const adminUserUpdateSchema = z.object({
 });
 
 export const categoryCreateSchema = z.object({
-  nameAz: z.string().min(2),
-  nameEn: z.string().optional(),
-  nameRu: z.string().optional(),
-  description: z.string().optional(),
-  icon: z.string().optional(),
-  parentId: z.string().cuid().optional().nullable(),
-  sortOrder: z.number().int().optional(),
-  isActive: z.boolean().optional(),
+  nameAz: z.string().min(1, "Kateqoriya adı tələb olunur"),
+  nameEn: z.string().optional().nullable().or(z.literal("")),
+  nameRu: z.string().optional().nullable().or(z.literal("")),
+  description: z.string().optional().nullable().or(z.literal("")),
+  icon: z.string().optional().nullable().or(z.literal("")),
+  parentId: z.string().optional().nullable().or(z.literal("")).transform(v => v || null),
+  sortOrder: z.number().int().optional().default(0),
+  isActive: z.boolean().optional().default(true),
 });
 
 const productRawSchema = z.object({
-  titleAz: z.string().min(3),
-  titleEn: z.string().optional(),
-  titleRu: z.string().optional(),
-  descriptionAz: z.string().optional(),
-  descriptionEn: z.string().optional(),
-  descriptionRu: z.string().optional(),
+  titleAz: z.string().min(2, "Məhsul adı ən azı 2 simvol olmalıdır"),
+  titleEn: z.string().optional().nullable().or(z.literal("")),
+  titleRu: z.string().optional().nullable().or(z.literal("")),
+  descriptionAz: z.string().optional().nullable().or(z.literal("")),
+  descriptionEn: z.string().optional().nullable().or(z.literal("")),
+  descriptionRu: z.string().optional().nullable().or(z.literal("")),
   price: z.number().positive("Qiymət müsbət olmalıdır"),
   currency: z.string().optional(),
   stock: z.number().int().nonnegative().optional(),
-  categoryId: z.string().min(1),
-  storeId: z.string().min(1).optional().nullable(),
-  region: z.string().optional(),
-  city: z.string().optional(),
+  categoryId: z.string().min(1, "Kateqoriya seçilməlidir"),
+  storeId: z.string().optional().nullable().or(z.literal("")).transform(v => v || null),
+  region: z.string().optional().nullable().or(z.literal("")),
+  city: z.string().optional().nullable().or(z.literal("")),
+  durationDays: z.number().int().optional().default(1),
   // Dynamic fields from form builder
   attributes: z.any().optional(),
-  // Guest classified listing (no account) — required only when posting without login.
-  guestName: z.string().min(2, "Ad tələb olunur").optional(),
-  guestPhone: z
-    .string()
-    .regex(/^[+0-9][0-9\s-]{6,14}$/, "Düzgün telefon nömrəsi daxil edin")
-    .optional(),
+  // Guest classified listing (no account)
+  guestName: z.string().optional().nullable().or(z.literal("")),
+  guestPhone: z.string().optional().nullable().or(z.literal("")),
   images: z
     .array(
       z.object({
         url: z.string().min(1),
-        altText: z.string().optional(),
+        altText: z.string().optional().nullable().or(z.literal("")),
       })
     )
     .optional(),
@@ -209,7 +210,7 @@ const productRawSchema = z.object({
   wholesalePrice: z.number().positive().optional().nullable(),
   wholesaleMinQty: z.number().int().positive().optional().nullable(),
   discountedPrice: z.number().positive().optional().nullable(),
-  brandId: z.string().optional().nullable(),
+  brandId: z.string().optional().nullable().or(z.literal("")).transform(v => v || null),
   tags: z.array(z.string().max(50)).max(10).optional(),
   allowInstallment: z.boolean().optional(),
 });
@@ -222,6 +223,7 @@ export const productCreateSchema = productRawSchema.extend({
   unit: z.string().default("ədəd"),
   tags: z.array(z.string().max(50)).max(10).default([]),
   allowInstallment: z.boolean().optional().default(false),
+  durationDays: z.number().int().optional().default(1),
 });
 
 export const productUpdateSchema = productRawSchema
@@ -231,49 +233,47 @@ export const productUpdateSchema = productRawSchema
   });
 
 export const brandCreateSchema = z.object({
-  name: z.string().min(2, "Brend adı ən azı 2 simvol olmalıdır"),
-  logoUrl: z.string().url().optional().or(z.literal("")),
-  country: z.string().optional(),
-  website: z.string().url().optional().or(z.literal("")),
-  description: z.string().optional(),
-  isActive: z.boolean().optional(),
-  sortOrder: z.number().int().optional(),
+  name: z.string().min(1, "Brend adı tələb olunur"),
+  logoUrl: z.string().optional().nullable().or(z.literal("")),
+  country: z.string().optional().nullable().or(z.literal("")),
+  website: z.string().optional().nullable().or(z.literal("")),
+  description: z.string().optional().nullable().or(z.literal("")),
+  isActive: z.boolean().optional().default(true),
+  sortOrder: z.number().int().optional().default(0),
 });
 
-export const brandUpdateSchema = brandCreateSchema.partial().extend({
-  isActive: z.boolean().optional(),
-});
+export const brandUpdateSchema = brandCreateSchema.partial();
 
 export const storeCreateSchema = z.object({
   name: z.string().min(2, "Mağaza adı ən azı 2 simvol olmalıdır"),
-  description: z.string().optional(),
-  logoUrl: z.string().url().or(z.literal("")).optional().nullable(),
-  coverUrl: z.string().url().or(z.literal("")).optional().nullable(),
-  address: z.string().optional(),
+  description: z.string().optional().nullable().or(z.literal("")),
+  logoUrl: z.string().optional().nullable().or(z.literal("")),
+  coverUrl: z.string().optional().nullable().or(z.literal("")),
+  address: z.string().optional().nullable().or(z.literal("")),
   lat: z.number().optional().nullable(),
   lng: z.number().optional().nullable(),
-  whatsapp: z.string().optional(),
-  phone: z.string().optional(),
-  website: z.string().url().or(z.literal("")).optional().nullable(),
+  whatsapp: z.string().optional().nullable().or(z.literal("")),
+  phone: z.string().optional().nullable().or(z.literal("")),
+  website: z.string().optional().nullable().or(z.literal("")),
   installmentEnabled: z.boolean().optional().default(false),
-  installmentWhatsapp: z.string().optional().nullable(),
-  email: z.string().email().or(z.literal("")).optional().nullable(),
-  facebook: z.string().optional().nullable(),
-  instagram: z.string().optional().nullable(),
-  tiktok: z.string().optional().nullable(),
-  linkedin: z.string().optional().nullable(),
-  youtube: z.string().optional().nullable(),
-  telegram: z.string().optional().nullable(),
+  installmentWhatsapp: z.string().optional().nullable().or(z.literal("")),
+  email: z.string().optional().nullable().or(z.literal("")),
+  facebook: z.string().optional().nullable().or(z.literal("")),
+  instagram: z.string().optional().nullable().or(z.literal("")),
+  tiktok: z.string().optional().nullable().or(z.literal("")),
+  linkedin: z.string().optional().nullable().or(z.literal("")),
+  youtube: z.string().optional().nullable().or(z.literal("")),
+  telegram: z.string().optional().nullable().or(z.literal("")),
   workingHours: z.any().optional().nullable(),
   deliveryRegions: z.array(z.string()).optional(),
-  taxInfo: z.string().optional().nullable(),
-  bankName: z.string().optional().nullable(),
-  bankAccount: z.string().optional().nullable(),
-  iban: z.string().optional().nullable(),
-  supportEmail: z.string().email().or(z.literal("")).optional().nullable(),
-  supportPhone: z.string().optional().nullable(),
-  primaryColor: z.string().optional().nullable(),
-  secondaryColor: z.string().optional().nullable(),
+  taxInfo: z.string().optional().nullable().or(z.literal("")),
+  bankName: z.string().optional().nullable().or(z.literal("")),
+  bankAccount: z.string().optional().nullable().or(z.literal("")),
+  iban: z.string().optional().nullable().or(z.literal("")),
+  supportEmail: z.string().optional().nullable().or(z.literal("")),
+  supportPhone: z.string().optional().nullable().or(z.literal("")),
+  primaryColor: z.string().optional().nullable().or(z.literal("")),
+  secondaryColor: z.string().optional().nullable().or(z.literal("")),
   themeMode: z.enum(["light", "dark"]).optional(),
   followerCount: z.number().int().optional().default(0),
   storeViewCount: z.number().int().optional().default(0),
@@ -284,7 +284,6 @@ export const storeUpdateSchema = storeCreateSchema.partial().extend({
   isActive: z.boolean().optional(),
   isVerified: z.boolean().optional(),
 });
-
 
 export const reviewCreateSchema = z.object({
   rating: z.number().int().min(1, "Reytinq 1-5 arası olmalıdır").max(5, "Reytinq 1-5 arası olmalıdır"),
@@ -300,8 +299,8 @@ export const walletWithdrawSchema = z.object({
 
 export const bundleCreateSchema = z.object({
   title: z.string().min(3),
-  description: z.string().optional(),
-  storeId: z.string().cuid().optional().nullable(),
+  description: z.string().optional().nullable().or(z.literal("")),
+  storeId: z.string().optional().nullable().or(z.literal("")).transform(v => v || null),
   discountType: z.enum(["PERCENTAGE", "FIXED"]),
   discountValue: z.number().positive(),
   productIds: z.array(z.string().cuid()).min(2, "Bağlamada ən azı 2 məhsul olmalıdır"),
@@ -309,7 +308,7 @@ export const bundleCreateSchema = z.object({
 
 export const bundleUpdateSchema = z.object({
   title: z.string().min(3).optional(),
-  description: z.string().optional(),
+  description: z.string().optional().nullable().or(z.literal("")),
   discountType: z.enum(["PERCENTAGE", "FIXED"]).optional(),
   discountValue: z.number().positive().optional(),
   isActive: z.boolean().optional(),
@@ -318,13 +317,13 @@ export const bundleUpdateSchema = z.object({
 
 export const blogCreateSchema = z.object({
   titleAz: z.string().min(3),
-  titleEn: z.string().optional(),
-  titleRu: z.string().optional(),
+  titleEn: z.string().optional().nullable().or(z.literal("")),
+  titleRu: z.string().optional().nullable().or(z.literal("")),
   contentAz: z.string().min(10),
-  contentEn: z.string().optional(),
-  contentRu: z.string().optional(),
-  coverUrl: z.string().url().optional().nullable(),
-  category: z.string().optional(),
+  contentEn: z.string().optional().nullable().or(z.literal("")),
+  contentRu: z.string().optional().nullable().or(z.literal("")),
+  coverUrl: z.string().optional().nullable().or(z.literal("")),
+  category: z.string().optional().nullable().or(z.literal("")),
   isPublished: z.boolean().optional(),
 });
 
@@ -338,7 +337,7 @@ export const messageCreateSchema = z.object({
 });
 
 export const pushSubscribeSchema = z.object({
-  endpoint: z.string().url(),
+  endpoint: z.string().min(1),
   keys: z.object({
     p256dh: z.string(),
     auth: z.string(),

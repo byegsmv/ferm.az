@@ -324,7 +324,50 @@ export async function POST(request) {
       );
     }
 
-    const { images, guestName, guestPhone, ...data } = parsed.data;
+    const { images, guestName, guestPhone, durationDays: rawDuration, ...data } = parsed.data;
+    const durationDays = Number(rawDuration) || 1;
+
+    // Fetch dynamic listing pricing
+    let packagePrice = 0;
+    try {
+      const priceBlock = await prisma.dynamicBlock.findFirst({
+        where: { key: "listing_pricing_config" },
+      });
+      const pricing = priceBlock?.props || {
+        tier_1_day: { days: 1, price: 0 },
+        tier_15_days: { days: 15, price: 7 },
+        tier_30_days: { days: 30, price: 15 },
+      };
+
+      if (durationDays === 30) packagePrice = Number(pricing.tier_30_days?.price ?? 15);
+      else if (durationDays === 15) packagePrice = Number(pricing.tier_15_days?.price ?? 7);
+      else packagePrice = Number(pricing.tier_1_day?.price ?? 0);
+    } catch {
+      packagePrice = durationDays === 30 ? 15 : durationDays === 15 ? 7 : 0;
+    }
+
+    const isStaff = authUser && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(authUser.role);
+
+    if (!isStaff && packagePrice > 0 && canPostAsSeller) {
+      const wallet = await prisma.wallet.findUnique({ where: { userId: authUser.sub } });
+      if (!wallet || Number(wallet.balance) < packagePrice) {
+        return Response.json(
+          {
+            error: `Balansınızda kifayət qədər vəsait yoxdur. Tələb olunan: ${packagePrice} ₼ (Balansınız: ${Number(wallet?.balance || 0).toFixed(2)} ₼). Zəhmət olmasa balansınızı artırın.`,
+            needTopup: true,
+            requiredAmount: packagePrice,
+            currentBalance: Number(wallet?.balance || 0),
+          },
+          { status: 400 }
+        );
+      }
+
+      // Deduct from wallet
+      await prisma.wallet.update({
+        where: { userId: authUser.sub },
+        data: { balance: { decrement: packagePrice } },
+      });
+    }
 
     if (!canPostAsSeller) {
       // Guest path — require contact info instead of an account.
@@ -369,7 +412,7 @@ export async function POST(request) {
         sellerId: canPostAsSeller ? authUser.sub : null,
         guestName: canPostAsSeller ? undefined : guestName,
         guestPhone: canPostAsSeller ? undefined : guestPhone,
-        status: "PENDING_REVIEW",
+        status: isStaff ? "ACTIVE" : "PENDING_REVIEW",
         images: images?.length
           ? {
             create: images.map((img, idx) => ({
@@ -383,20 +426,46 @@ export async function POST(request) {
       include: { images: true },
     });
 
+    // Create listing duration record
+    const startDate = new Date();
+    const endDate = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+    const tier = durationDays >= 30 ? "PREMIUM" : durationDays >= 15 ? "FEATURED" : "STANDARD";
+
+    await prisma.listing.upsert({
+      where: { productId: product.id },
+      create: {
+        productId: product.id,
+        tier,
+        startDate,
+        endDate,
+      },
+      update: {
+        tier,
+        startDate,
+        endDate,
+      },
+    });
+
     await prisma.auditLog.create({
       data: {
         userId: authUser?.sub ?? null,
         action: "PRODUCT_CREATED",
         entity: "Product",
         entityId: product.id,
-        metadata: canPostAsSeller ? undefined : { guest: true, guestName, guestPhone },
+        metadata: {
+          guest: !canPostAsSeller,
+          guestName,
+          guestPhone,
+          durationDays,
+          packagePrice,
+        },
       },
     });
 
     // Extract and save keywords for SEO
     await extractAndSaveKeywords({ ...product, category });
 
-    return Response.json({ product }, { status: 201 });
+    return Response.json({ product, listing: { durationDays, endDate, tier } }, { status: 201 });
   } catch (error) {
     console.error("POST product error:", error);
     return Response.json({ error: "Məhsul yaradılarkən daxili xəta baş verdi" }, { status: 500 });
