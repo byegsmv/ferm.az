@@ -2294,14 +2294,40 @@ export default function AdminPanel() {
       .finally(() => setStatsLoading(false));
   }, []);
 
+  const [activeModules, setActiveModules] = useState([]);
+
   useEffect(() => {
     refreshStats();
+    apiFetch("/api/admin/modules").then(d => {
+       const active = [];
+       const traverse = (arr) => {
+         for (const m of arr) {
+           if (m.slug && m.slug.includes('?tab=')) {
+              active.push(m.slug.split('?tab=')[1]);
+           } else if (m.slug) {
+              active.push(m.slug.split('/').pop()); // e.g. /admin/campaigns -> campaigns
+           }
+           if (m.children) traverse(m.children);
+         }
+       };
+       if (d.modules) traverse(d.modules);
+       setActiveModules(active);
+    }).catch(() => {});
   }, [refreshStats]);
 
   const badges = { pendingProducts: stats?.products?.pending || 0, pendingReviews: stats?.reviews?.pending || 0 };
 
   // Lazy render: only create the active panel component (avoids all useEffects firing at once)
   function renderPanel() {
+    const restrictedTabs = ['emails', 'notify', 'slider', 'campaigns']; // Modullar hissəsindən deaktiv edilə bilən əsas tablar
+    if (restrictedTabs.includes(tab) && activeModules.length > 0 && !activeModules.includes(tab)) {
+       return (
+         <div className="flex items-center justify-center h-[60vh]">
+            <EmptyState icon="lock" title="Modul Deaktivdir" description="Bu modul sistem tənzimləmələrindən deaktiv edilmişdir. Admin paneldən və ya AI vasitəsilə aktivləşdirin." />
+         </div>
+       );
+    }
+
     switch (tab) {
       case "stats": return <DashboardStats stats={stats} loading={statsLoading} />;
       case "activity": return <RecentActivity activity={activity} loading={statsLoading} />;
