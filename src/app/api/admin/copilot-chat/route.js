@@ -52,7 +52,9 @@ Diqqət: JSON blokunda admin üçün "Zərərin Açıqlaması" və əməliyyatı
 \`\`\`
 
 QAYDALAR:
-1. "prismaCode" mütləq işlək prisma əmri olmalıdır. Setting cədvəlinin sahələri: id, key, value, category (default: "general"). Başqa sahə (məs: description) yoxdur! Modulları aktiv/deaktiv edərkən db-də "module_adi_active" açarından istifadə et (məs: email_module_active = "false").
+1. "prismaCode" mütləq işlək prisma əmri olmalıdır. 
+- Əgər məqsəd nömrə, e-poçt, mətn və ya kontenti dəyişməkdirsə, \`prisma.siteText.upsert\` istifadə et. (Cədvəl sahələri: key, valueAz, group, label). Nümunə: \`where: { key: 'footer.phone' }, update: { valueAz: '+994 50 111 22 33' }, create: { key: 'footer.phone', valueAz: '+994 50 111 22 33', group: 'footer', label: 'Əlaqə Nömrəsi' }\`
+- Əgər məqsəd hər hansı modulu deaktiv/aktiv etməkdirsə, \`prisma.setting.upsert\` istifadə et. (Cədvəl sahələri: key, value, category="general"). Məs: \`key: 'email_module_active', value: 'false'\`.
 2. Yalnız "admin" istəyərsə JSON qaytar, sadəcə "neçə sifariş var" soruşarsa normal mətn qaytar.
 
 SİSTEM STATİSTİKASI:
