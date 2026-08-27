@@ -120,7 +120,7 @@ export default function AdminCopilotWidget() {
           }]);
         }
       } else {
-        setMessages((prev) => [...prev, { role: "ai", content: Xəta:  }]);
+        setMessages((prev) => [...prev, { role: "ai", content: "❌ Xəta baş verdi" }]);
       }
     } catch (e) {
       setMessages((prev) => [...prev, { role: "ai", content: "Bağlantı xətası baş verdi." }]);
@@ -158,7 +158,7 @@ export default function AdminCopilotWidget() {
         setTimeout(() => window.location.reload(), 800);
         setMessages((prev) => [...prev, { role: "ai", content: "✅ Əməliyyat uğurla icra olundu!\n" + (data.result ? JSON.stringify(data.result) : "") }]);
       } else {
-        setMessages((prev) => [...prev, { role: "ai", content: ❌ İcra xətası:  }]);
+        setMessages((prev) => [...prev, { role: "ai", content: "❌ İcra xətası: " }]);
       }
     } catch(e) {
       setMessages((prev) => [...prev, { role: "ai", content: "Bağlantı xətası baş verdi." }]);
