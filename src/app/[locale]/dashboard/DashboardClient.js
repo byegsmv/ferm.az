@@ -101,6 +101,18 @@ export default function DashboardClient({ searchParams }) {
         </div>
       )}
 
+      {!showCreateStore && ADMIN_ROLES.includes(user.role) && (
+        <div className="mb-6">
+          <button 
+            onClick={() => router.push("/admin")}
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl px-6 py-4 font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+          >
+            <Icon name="layoutDashboard" size={20} className="text-brand-400" />
+            Admin Panelə Keçid
+          </button>
+        </div>
+      )}
+
       {showCreateStore && !hasStore ? (
         <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
           <div className="mb-4">

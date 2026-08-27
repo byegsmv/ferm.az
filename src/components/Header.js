@@ -438,6 +438,16 @@ export default function Header() {
           ))}
           <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
             <WeatherWidget />
+            {user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'MODERATOR') && (
+              <Link
+                href="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex flex-1 items-center justify-center gap-1.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 shadow-sm min-h-[44px]"
+              >
+                <Icon name="layoutDashboard" size={16} strokeWidth={2.3} />
+                {st("header.adminPanel", "Admin Panel")}
+              </Link>
+            )}
             {!user && (
               <Link
                 href="/elan-yerlesdir"
