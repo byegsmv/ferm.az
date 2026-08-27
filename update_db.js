@@ -145,6 +145,7 @@ const DEFAULT_MODULE_TREE = [
     permission: 'MANAGE_SETTINGS',
     isSystem: true,
     children: [
+      { id: 'sub-ai-settings', name: 'AI Ayarları', icon: 'Bot', slug: '/admin?tab=ai-settings', status: 'ACTIVE' },
       { id: 'sub-emails', name: 'E-poçt İdarəsi', icon: 'Mail', slug: '/admin?tab=emails', status: 'ACTIVE' },
       { id: 'sub-site-texts', name: 'Məzmun İdarəsi', icon: 'FileText', slug: '/admin?tab=site-texts', status: 'ACTIVE' },
       { id: 'sub-slider', name: 'Slayderlər', icon: 'Image', slug: '/admin?tab=slider', status: 'ACTIVE' },

@@ -118,6 +118,9 @@ export const ICONS = {
   Mail: Mail,
   MonitorPlay: MonitorPlay,
   LineChart: LineChart,
+  Bell: Bell,
+  FileText: FileText,
+  Bot: Cpu,
 
   // Added for admin modules
   LayoutDashboard: LayoutDashboard,
