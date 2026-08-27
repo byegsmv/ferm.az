@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Link, usePathname } from "@/i18n/routing";
+import { useSearchParams } from "next/navigation";
 import Icon from '@/components/ui/Icon';
 import { apiFetch } from '@/lib/apiClient';
 
@@ -13,9 +14,15 @@ function NavItem({ item, pathname, depth = 0 }) {
   const hasChildren = item.children && item.children.length > 0;
   
   const basePath = item.slug ? item.slug.split('?')[0] : '';
-  const isActive = item.slug === '/admin' 
-    ? pathname === basePath
-    : basePath && pathname.startsWith(basePath);
+  const isTab = item.slug && item.slug.includes('?tab=');
+    const tabName = isTab ? item.slug.split('?tab=')[1] : null;
+    const currentTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+    
+    const isActive = isTab 
+      ? (currentTab === tabName && pathname === '/admin')
+      : item.slug === '/admin'
+        ? (pathname === basePath && (!currentTab || currentTab === 'stats' || currentTab === 'activity'))
+        : basePath && pathname.startsWith(basePath);
 
   const toggleOpen = (e) => {
     if (hasChildren) {
@@ -84,6 +91,7 @@ function NavItem({ item, pathname, depth = 0 }) {
 
 export default function AdminSidebarNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [modules, setModules] = useState([
     { slug: "/admin", icon: "dashboard", label: "Dashboard", exact: true, status: 'ACTIVE' },
