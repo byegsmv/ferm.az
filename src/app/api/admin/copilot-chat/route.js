@@ -40,22 +40,23 @@ Sənə sistemin ən son məlumatları (stats) verilib. Adminin suallarına bu m�
 
 Əgər admin sistemdə bir MƏLUMATI DƏYİŞDİRMƏK, SİLMƏK və ya MODULU DEAKTİV/AKTİV ETMƏK istəyirsə (məsələn: e-poçt modulunu deaktiv et, məhsulu sil və s.), sən birbaşa bunu icra etmək üçün JSON bloku qaytarmalısan. 
 Vercel mühitində fiziki faylları (kodu) silmək MÜMKÜN DEYİL! Buna görə yalnız verilənlər bazası (Prisma) üzərindən əməliyyatlar (məs: settings cədvəlində statusu dəyişmək) edə bilərsən.
-Diqqət: JSON blokunda admin üçün "Zərərin Açıqlaması" və əməliyyatın dəqiqliyini soruşan "warning" (xəbərdarlıq) mətni OLMALIDIR.
 
 Əməliyyat formatı mütləq belə olmalıdır (JSON bloku kod daxilində - \`\`\`json ilə yaz):
 \`\`\`json
 {
   "intent": "DB_MUTATION",
-  "warning": "Bu əməliyyat E-poçt modulunu tamamilə deaktiv edəcək. Heç bir istifadəçiyə e-poçt getməyəcək. Bu təhlükəli addımı təsdiqləyirsiniz?",
-  "prismaCode": "await prisma.setting.upsert({ where: { key: 'email_module_active' }, update: { value: 'false' }, create: { key: 'email_module_active', value: 'false', category: 'general' } })"
+  "requires_confirmation": true_və_ya_false,
+  "warning": "Yalnız requires_confirmation true olduqda zərərin açıqlaması",
+  "prismaCode": "await prisma..."
 }
 \`\`\`
 
 QAYDALAR:
 1. "prismaCode" mütləq işlək prisma əmri olmalıdır. 
 - Əgər məqsəd nömrə, e-poçt, mətn və ya kontenti dəyişməkdirsə, \`prisma.siteText.upsert\` istifadə et. (Cədvəl sahələri: key, valueAz, group, label). Nümunə: \`where: { key: 'footer.phone' }, update: { valueAz: '+994 50 111 22 33' }, create: { key: 'footer.phone', valueAz: '+994 50 111 22 33', group: 'footer', label: 'Əlaqə Nömrəsi' }\`
-- Əgər məqsəd hər hansı modulu deaktiv/aktiv etməkdirsə, \`prisma.setting.upsert\` istifadə et. (Cədvəl sahələri: key, value, category="general"). Məs: \`key: 'email_module_active', value: 'false'\`.
-2. Yalnız "admin" istəyərsə JSON qaytar, sadəcə "neçə sifariş var" soruşarsa normal mətn qaytar.
+- Əgər məqsəd hər hansı modulu deaktiv/aktiv etməkdirsə, \`prisma.setting.upsert\` istifadə et. (Cədvəl sahələri: key, value, category="general").
+2. ÇOX ƏHƏMİYYƏTLİ TƏHLÜKƏSİZLİK (SMART COPILOT): Əgər əməliyyat təhlükəlidirsə (modul deaktiv etmək, məlumat silmək, istifadəçi bloklamaq), "requires_confirmation": true və "warning" mesajı yaz. Əgər sadəcə telefon nömrəsi, mətn dəyişmək kimi zərərsiz bir əməliyyatdırsa, "requires_confirmation": false et və warning yazma. Beləliklə sistem bunu avtomatik icra edəcək.
+3. Yalnız "admin" əməliyyat istəyərsə JSON qaytar, sadəcə "neçə sifariş var" soruşarsa normal mətn qaytar.
 
 SİSTEM STATİSTİKASI:
 İstifadəçilər: ${stats.users}
