@@ -8,7 +8,37 @@ export async function GET(request) {
   if (denied) return denied;
 
   try {
-    const modules = await getSystemModuleTree();
+    const { prisma } = await import('@/lib/prisma');
+    let modules = await getSystemModuleTree();
+    
+    // Check if any modules were deactivated via Copilot (Settings table)
+    const settings = await prisma.setting.findMany({
+      where: { key: { endsWith: '_module_active' }, value: 'false' }
+    });
+    
+    if (settings.length > 0) {
+      const disabledKeys = settings.map(s => s.key);
+      // Helper to recursively disable modules
+      const filterModules = (mods) => {
+        return mods.filter(m => {
+          // If a setting like 'email_module_active' is false, hide the module with id 'sub-emails' or name containing 'E-poçt'
+          // Very naive checking for demo purposes based on Copilot's typical keys
+          const disableMatch = disabledKeys.some(k => {
+             const base = k.replace('_module_active', '').toLowerCase();
+             return m.id.toLowerCase().includes(base) || m.name.toLowerCase().includes(base) || (base === 'email' && m.id === 'sub-emails');
+          });
+          if (disableMatch) return false;
+          
+          if (m.children) {
+            m.children = filterModules(m.children);
+          }
+          return true;
+        });
+      };
+      
+      modules = filterModules(modules);
+    }
+    
     return Response.json({ success: true, modules });
   } catch (error) {
     console.error('Error in GET /api/admin/modules:', error);
