@@ -4,7 +4,8 @@ import { useRouter, Link, usePathname } from "@/i18n/routing";
 import { useLocale } from "next-intl";
 import { useSearchParams } from "next/navigation";
 
-import { apiFetch, saveSession } from "@/lib/apiClient";
+import { useEffect } from "react";
+import { apiFetch, saveSession, getToken } from "@/lib/apiClient";
 import PasswordInput from "@/components/PasswordInput";
 import Icon from "@/components/ui/Icon";
 
@@ -14,8 +15,26 @@ function LoginContent() {
   const [form, setForm] = useState({ login: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [checking, setChecking] = useState(true);
 
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (getToken()) {
+        const callbackUrl = searchParams.get("callbackUrl");
+        let target = callbackUrl || "/dashboard";
+        if (locale === 'az') {
+          target = target.replace(/^\/az(\/|$)/, "/");
+        } else if (!target.startsWith(`/${locale}`)) {
+          target = `/${locale}${target.startsWith('/') ? '' : '/'}${target}`;
+        }
+        window.location.href = target;
+      } else {
+        setChecking(false);
+      }
+    }
+  }, [locale, searchParams]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -48,6 +67,8 @@ function LoginContent() {
       setLoading(false);
     }
   }
+
+  if (checking) return null;
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 px-3 sm:px-4 pb-24">

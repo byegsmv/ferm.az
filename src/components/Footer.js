@@ -15,6 +15,19 @@ export default function Footer() {
   const facebookUrl = st("footer.facebookUrl", "https://www.facebook.com/people/Fermer-MarketAz/100092373625442");
   const instagramUrl = st("footer.instagramUrl", "https://www.instagram.com/fermermarket.mmc/");
   
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("fmk_access_token");
+      setIsLoggedIn(!!token);
+      
+      const handleAuthChange = () => setIsLoggedIn(!!localStorage.getItem("fmk_access_token"));
+      window.addEventListener("fmk-auth-changed", handleAuthChange);
+      return () => window.removeEventListener("fmk-auth-changed", handleAuthChange);
+    }
+  }, []);
+
   return (
     <footer className="relative bg-gray-900 text-gray-300 pt-12 md:pt-16 pb-16 md:pb-20 mt-8 md:mt-12">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/60 to-transparent" />
@@ -73,7 +86,9 @@ export default function Footer() {
             <li><Link href="/about" className="hover:text-brand-400 transition-colors">Haqqımızda</Link></li>
             <li><Link href="/contact" className="hover:text-brand-400 transition-colors">Əlaqə</Link></li>
             <li><Link href="/dashboard" className="hover:text-brand-400 transition-colors">Hesabım</Link></li>
-            <li><Link href="/register" className="hover:text-brand-400 transition-colors">Qeydiyyat</Link></li>
+            {!isLoggedIn && (
+              <li><Link href="/register" className="hover:text-brand-400 transition-colors">Qeydiyyat</Link></li>
+            )}
             <li>
               <a href={`tel:${phoneTel}`} className="flex items-center gap-2 hover:text-brand-400 transition-colors">
                 <Icon name="phone" size={16} className="text-brand-500" /> {phone}
