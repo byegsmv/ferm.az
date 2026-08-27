@@ -1,4 +1,4 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { geminiGenerate } from "@/lib/gemini";
 import { NextResponse } from "next/server";
 
@@ -24,28 +24,28 @@ export async function GET(req) {
     });
 
     // 2. Prepare Prompt
-    const prompt = Sən FermerMarket.az üçün peşəkar SEO mütəxəssisisən.
+    const prompt = `Sən FermerMarket.az üçün peşəkar SEO mütəxəssisisən.
 Məqsədin saytın ana səhifəsi üçün bugünkü məhsul və trendlərə əsasən ən optimal, klik cəlb edən (CTR yüksək), Google axtarışlarına uyğun SEO Meta Title, Meta Description və Keywords yaratmaqdır.
 
 Hazırda platformaya əlavə olunan son məhsullar:
-
+${recentProducts.map(p => p.titleAz + " (" + (p.category?.nameAz || "") + ")").join(", ")}
 
 Ən çox baxılan məhsullar:
-
+${trendingProducts.map(p => p.titleAz).join(", ")}
 
 Tələblər:
 1. Title: 50-60 simvol arası, cəlbedici olsun, əsas sözləri saxlasın (məs: "FermerMarket - ...").
 2. Description: 150-160 simvol, insanları cəlb etsin, kənd təsərrüfatı texnikası, toxum, gübrə və s. vurğulansın.
 3. Keywords: Vergüllə ayrılmış 10-15 ən axtarılan aqrar söz (məsələn: fermer, kənd təsərrüfatı, toxumlar, traktor...).
 Cavabı yalnız aşağıdakı formatda tam və düzgün JSON olaraq qaytar:
-\\\json
+\`\`\`json
 {
   "title": "Ana Səhifə Başlığı",
   "description": "Meta description mətni",
   "keywords": "açar söz, ikinci söz, üçüncü..."
 }
-\\\
-;
+\`\`\`
+`;
 
     // 3. Get AI generation
     const aiResponse = await geminiGenerate({
@@ -53,7 +53,7 @@ Cavabı yalnız aşağıdakı formatda tam və düzgün JSON olaraq qaytar:
       maxOutputTokens: 1000
     });
 
-    let jsonMatch = aiResponse.match(/`json\n([\s\S]*?)\n`/);
+    let jsonMatch = aiResponse.match(/```json\n([\s\S]*?)\n```/);
     if (!jsonMatch) {
        const fallbackMatch = aiResponse.match(/\{[\s\S]*\}/);
        if (fallbackMatch) {
