@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, Link } from "@/i18n/routing";
-import { apiFetch, saveSession } from "@/lib/apiClient";
+import { apiFetch, saveSession, getToken } from "@/lib/apiClient";
 import Icon from "@/components/ui/Icon";
 
 function EyeIcon({ visible }) {
@@ -23,6 +23,18 @@ export default function RegisterPage() {
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (getToken()) {
+        window.location.href = "/dashboard";
+      } else {
+        setChecking(false);
+      }
+    }
+  }, []);
+
   const [error, setError] = useState("");
 
   async function handleSubmit(e) {
@@ -45,6 +57,8 @@ export default function RegisterPage() {
       setLoading(false);
     }
   }
+
+  if (checking) return null;
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 px-4 py-8 pb-24">
