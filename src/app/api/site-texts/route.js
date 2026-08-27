@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -18,7 +19,7 @@ export async function GET() {
     }
 
     return Response.json(map, {
-      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
+      headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
     });
   } catch (error) {
     return Response.json({}, { status: 200 }); // Return empty map on error — frontend uses fallbacks
