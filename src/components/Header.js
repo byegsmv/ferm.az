@@ -396,15 +396,6 @@ export default function Header() {
 
         {/* Mobile  icons */}
         <div className="md:hidden flex items-center gap-2 ml-auto">
-          {/* Hamburger Menu */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm active:scale-95 transition-transform"
-            aria-label="Menyu"
-          >
-            <Icon name={mobileMenuOpen ? "close" : "menu"} size={20} />
-          </button>
-
           {user && <NotificationBell />}
 
           {/* Mobile Cart  */}
@@ -523,18 +514,29 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile search bar */}
+      {/* Mobile search bar and menu button */}
       <div className="md:hidden w-full pb-3 px-3 mt-1 bg-white">
-        <form onSubmit={handleSearch} className="flex h-11 shadow-sm rounded-xl overflow-hidden border border-gray-200 focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-50 transition-all bg-gray-50">
-          <div className="flex items-center justify-center w-11 text-gray-400">
-            <Icon name="search" size={18} strokeWidth={2.2} />
-          </div>
-          <input
-            name="search"
-            placeholder={st("header.searchPlaceholder", "Məhsul, şirkət, gübrə, texnika axtar...")}
-            className="flex-1 min-w-0 h-full text-sm bg-transparent focus:outline-none text-gray-800 pr-4"
-          />
-        </form>
+        <div className="flex items-center gap-2">
+          {/* Hamburger Menu (Moved to bottom row) */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm active:scale-95 transition-transform"
+            aria-label="Menyu"
+          >
+            <Icon name={mobileMenuOpen ? "close" : "menu"} size={22} />
+          </button>
+
+          <form onSubmit={handleSearch} className="flex-1 flex h-11 shadow-sm rounded-xl overflow-hidden border border-gray-200 focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-50 transition-all bg-gray-50">
+            <div className="flex items-center justify-center w-11 text-gray-400">
+              <Icon name="search" size={18} strokeWidth={2.2} />
+            </div>
+            <input
+              name="search"
+              placeholder={st("header.searchPlaceholder", "Məhsul, şirkət, gübrə, texnika axtar...")}
+              className="flex-1 min-w-0 h-full text-sm bg-transparent focus:outline-none text-gray-800 pr-4"
+            />
+          </form>
+        </div>
       </div>
     </header>
 
