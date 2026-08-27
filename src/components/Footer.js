@@ -8,12 +8,12 @@ import { useSiteTexts } from "@/lib/siteTexts";
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { t: st } = useSiteTexts();
-  const phone = st("footer.phone", "+994 10 521 09 09");
+  const phone = st("footer.phone", "+994 10 223 89 89");
   const phoneTel = phone.replace(/[^\d+]/g, "");
   const whatsappPhone = st("footer.whatsappPhone", phoneTel);
   const email = st("footer.email", "info@fermermarket.az");
-  const facebookUrl = st("footer.facebookUrl", "https://facebook.com");
-  const instagramUrl = st("footer.instagramUrl", "https://instagram.com");
+  const facebookUrl = st("footer.facebookUrl", "https://www.facebook.com/people/Fermer-MarketAz/100092373625442");
+  const instagramUrl = st("footer.instagramUrl", "https://www.instagram.com/fermermarket.mmc/");
   
   return (
     <footer className="relative bg-gray-900 text-gray-300 pt-12 md:pt-16 pb-16 md:pb-20 mt-8 md:mt-12">
@@ -90,7 +90,7 @@ export default function Footer() {
       </div>
       
       <div className="max-w-6xl mx-auto px-4 mt-12 pt-6 border-t border-gray-800 text-sm flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-gray-500">© {currentYear} FermerMarket. Bütün hüquqlar qorunur. Designed By AzVeb Media MArketing Agency</p>
+        <p className="text-gray-500">© {currentYear} FermerMarket. Bütün hüquqlar qorunur. Designed By AzVeb Media Marketing Agency</p>
         <div className="flex gap-4">
           <Link href="/terms" className="text-gray-500 hover:text-white transition-colors">İstifadə qaydaları</Link>
           <Link href="/privacy" className="text-gray-500 hover:text-white transition-colors">Məxfilik siyasəti</Link>
