@@ -6,7 +6,7 @@ import Icon from "@/components/ui/Icon";
 export default function AdminCopilotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "ai", content: "Salam Admin! Mən sizin AI köməkçinizəm. Sistemdəki məlumatları öyrənmək üçün mənə sual verin (Məs: \"Bu gün neçə sifariş var?\", \"Aktiv istifadəçiləri say\")." }
+    { role: "ai", content: "Salam Admin! Mən sizin AI köməkçinizəm. Sistemdəki məlumatları öyrənmək üçün mənə sual verin (Məs: \"Bu gün neçə sifariş var?\"). Və ya modul idarəetməsi (məs: \"E-poçt modulunu deaktiv et\") əmrləri verə bilərsiniz." }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,27 @@ export default function AdminCopilotWidget() {
       const data = await res.json();
       
       if (res.ok) {
-        setMessages((prev) => [...prev, { role: "ai", content: data.reply, dataView: data.dataView }]);
+        let aiText = data.reply;
+        let mutationAction = null;
+
+        // Təhlükəli əməliyyat JSON-u olub-olmadığını yoxla
+        const jsonMatch = aiText.match(/```json\n([\s\S]*?)\n```/);
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[1]);
+            if (parsed.intent === "DB_MUTATION") {
+              mutationAction = parsed;
+              aiText = aiText.replace(/```json\n[\s\S]*?\n```/, "").trim();
+            }
+          } catch (e) { console.error("JSON parse error:", e); }
+        }
+
+        setMessages((prev) => [...prev, { 
+          role: "ai", 
+          content: aiText, 
+          dataView: data.dataView,
+          mutationAction 
+        }]);
       } else {
         setMessages((prev) => [...prev, { role: "ai", content: `Xəta: ${data.error}` }]);
       }
@@ -36,6 +56,39 @@ export default function AdminCopilotWidget() {
       setMessages((prev) => [...prev, { role: "ai", content: "Bağlantı xətası baş verdi." }]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExecute = async (idx, code) => {
+    // İşarələ ki yüklənir
+    setMessages((prev) => {
+      const copy = [...prev];
+      copy[idx].isExecuting = true;
+      return copy;
+    });
+
+    try {
+      const res = await fetch("/api/admin/copilot-chat/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      
+      setMessages((prev) => {
+        const copy = [...prev];
+        copy[idx].isExecuting = false;
+        copy[idx].executed = true;
+        return copy;
+      });
+
+      if (res.ok) {
+        setMessages((prev) => [...prev, { role: "ai", content: "✅ Əməliyyat uğurla icra olundu!\n" + (data.result ? JSON.stringify(data.result) : "") }]);
+      } else {
+        setMessages((prev) => [...prev, { role: "ai", content: `❌ İcra xətası: ${data.error}` }]);
+      }
+    } catch(e) {
+      setMessages((prev) => [...prev, { role: "ai", content: "Bağlantı xətası baş verdi." }]);
     }
   };
 
@@ -69,9 +122,31 @@ export default function AdminCopilotWidget() {
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[90%] rounded-xl p-3 text-sm ${msg.role === "user" ? "bg-brand-600 text-white rounded-br-sm" : "bg-white border border-gray-200 text-gray-800 shadow-sm rounded-bl-sm"}`}>
-                  <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  {msg.content && <p className="whitespace-pre-wrap leading-relaxed mb-2">{msg.content}</p>}
                   
-                  {msg.dataView && (
+                  {msg.mutationAction && !msg.executed && (
+                    <div className="mt-2 border border-red-200 bg-red-50 rounded-xl p-3">
+                      <div className="flex items-center gap-2 text-red-600 font-bold mb-2">
+                        <Icon name="alert-triangle" size={16} /> DİQQƏT
+                      </div>
+                      <p className="text-xs text-red-800 mb-3">{msg.mutationAction.warning}</p>
+                      
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleExecute(idx, msg.mutationAction.prismaCode)}
+                          disabled={msg.isExecuting}
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 rounded-lg transition-colors flex justify-center items-center gap-2"
+                        >
+                          {msg.isExecuting ? "İcra olunur..." : "Təsdiqlə və İcra Et"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {msg.executed && (
+                    <div className="mt-2 text-xs text-green-600 font-medium">Əməliyyat icra edildi.</div>
+                  )}
+
+                  {msg.dataView && !msg.mutationAction && (
                     <div className="mt-2 p-2 bg-gray-900 text-green-400 font-mono text-[10px] rounded-lg overflow-x-auto">
                       <pre>{JSON.stringify(msg.dataView, null, 2)}</pre>
                     </div>
