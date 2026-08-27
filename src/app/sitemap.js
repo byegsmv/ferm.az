@@ -27,7 +27,7 @@ export default async function sitemap() {
     });
 
     // Build URLs for all locales
-    const allUrls = [];
+    const blogs = await prisma.blogPost.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }); const allUrls = [];
 
     for (const locale of locales) {
       const localePrefix = locale === routing.defaultLocale ? '' : `/${locale}`;
@@ -38,6 +38,8 @@ export default async function sitemap() {
         changeFrequency: "daily",
         priority: 0.8,
       }));
+
+      const blogUrls = blogs.map(b => ({ url: \\\/blog/\\, lastModified: b.updatedAt, changeFrequency: 'daily', priority: 0.8 }));
 
       const categoryUrls = categories.map((c) => ({
         url: `${baseUrl}${localePrefix}/products?category=${c.slug}`,
@@ -74,7 +76,8 @@ export default async function sitemap() {
         },
         ...categoryUrls,
         ...storeUrls,
-        ...productUrls
+        ...productUrls,
+        ...blogUrls
       );
     }
 

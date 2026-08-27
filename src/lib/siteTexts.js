@@ -23,6 +23,11 @@ export async function getSiteTexts() {
   return fetchPromise;
 }
 
+export function clearSiteTextsCache() {
+  cache = null;
+  fetchPromise = null;
+}
+
 export function t(key, fallback = "") {
   if (!cache || !cache[key]) return fallback;
   return cache[key].az || fallback;

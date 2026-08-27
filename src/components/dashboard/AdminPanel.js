@@ -11,7 +11,6 @@ import MessagingPanel from "@/components/chat/MessagingPanel";
 import AdminProfile from "@/components/dashboard/AdminProfile";
 import ContentHub from "@/components/dashboard/ContentHub";
 import AIAgentPanel from "@/components/dashboard/AIAgentPanel";
-import AdminCopilotWidget from "@/components/dashboard/AdminCopilotWidget";
 import AdminSupport from "@/components/dashboard/AdminSupport";
 import AISettingsManager from "@/components/dashboard/AISettingsManager";
 import EmptyState from "@/components/ui/EmptyState";
@@ -2387,9 +2386,6 @@ export default function AdminPanel() {
           </div>
         </main>
       </div>
-      
-      {/* Admin AI Copilot Bot */}
-      <AdminCopilotWidget />
     </div>
   );
 }
