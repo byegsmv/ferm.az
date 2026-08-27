@@ -1,4 +1,4 @@
-﻿
+
 import { prisma } from "@/lib/prisma";
 import { geminiGenerate } from "@/lib/gemini";
 import { getAuthUser, requireRole } from "@/lib/auth";
@@ -20,7 +20,7 @@ export async function POST(req) {
       prisma.product.count(),
       prisma.product.count({ where: { status: "ACTIVE" } }),
       prisma.order.count(),
-      prisma.order.aggregate({ _sum: { totalAmount: true } }),
+      prisma.order.aggregate({ _sum: { total: true } }),
       prisma.store.count(),
     ]);
 
@@ -29,7 +29,7 @@ export async function POST(req) {
       totalProducts: productCount,
       activeProducts: activeProducts,
       orders: orderCount,
-      revenue: totalRevenueAggr._sum.totalAmount || 0,
+      revenue: totalRevenueAggr._sum.total || 0,
       stores: storeCount
     };
 
