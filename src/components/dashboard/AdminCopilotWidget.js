@@ -44,7 +44,7 @@ export default function AdminCopilotWidget() {
       const res = await fetch("/api/admin/copilot-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...messages, newMsg] }),
+        body: JSON.stringify({ message: input, history: messages }),
       });
       const data = await res.json();
       
@@ -53,34 +53,39 @@ export default function AdminCopilotWidget() {
         let mutationAction = null;
         let autoExecuteCode = null;
 
-        const jsonMatch = aiText.match(/`json\n([\s\S]*?)\n`/);
+        const jsonMatch = aiText.match(/```json\n([\s\S]*?)\n```/);
         if (jsonMatch) {
           try {
             const parsed = JSON.parse(jsonMatch[1]);
             if (parsed.intent === "DB_MUTATION") {
               mutationAction = parsed;
-              aiText = aiText.replace(/`json\n[\s\S]*?\n`/, "").trim();
+              aiText = aiText.replace(/```json\n[\s\S]*?\n```/, "").trim();
               
               if (parsed.requires_confirmation === false) {
                  autoExecuteCode = parsed.prismaCode;
               }
             }
-          } catch (e) { console.error("JSON parse error:", e); }
+          } catch(e) {}
         }
 
-        const msgIndex = messages.length + 1; // current length + 1 (newMsg)
-        
+        setMessages((prev) => {
+          const arr = [...prev, { 
+            role: "ai", 
+            content: aiText, 
+            dataView: data.dataView,
+            mutationAction 
+          }];
+          return arr;
+        });
+
         if (autoExecuteCode) {
-           // Auto execute immediately
-           setMessages((prev) => [...prev, { 
-             role: "ai", 
-             content: aiText || "Əməliyyat avtomatik icra olunur...", 
-             dataView: data.dataView,
-             mutationAction,
-             isExecuting: true 
-           }]);
-           
-           // call the backend execute
+           const msgIndex = messages.length + 1; 
+           setMessages((prev) => {
+             const copy = [...prev];
+             copy[msgIndex] = { ...copy[msgIndex], isExecuting: true };
+             return copy;
+           });
+
            try {
              const execRes = await fetch("/api/admin/copilot-chat/execute", {
                method: "POST",
@@ -95,7 +100,7 @@ export default function AdminCopilotWidget() {
                   ...copy[msgIndex],
                   isExecuting: false,
                   executed: true,
-                  content: copy[msgIndex].content + (execRes.ok ? "\n\n✅ Əməliyyat uğurla və avtomatik icra edildi!" : "\n\n❌ İcra xətası: " + (execData?.error || "Xəta baş verdi"))
+                  content: copy[msgIndex].content + (execRes.ok ? "\n\n✅ Əməliyyat uğurla və avtomatik icra edildi!" : `\n\n❌ İcra xətası: ${execData.error}`)
                };
                return copy;
              });
@@ -111,16 +116,9 @@ export default function AdminCopilotWidget() {
                  return copy;
                });
            }
-        } else {
-          setMessages((prev) => [...prev, { 
-            role: "ai", 
-            content: aiText, 
-            dataView: data.dataView,
-            mutationAction 
-          }]);
         }
       } else {
-        setMessages((prev) => [...prev, { role: "ai", content: "❌ Xəta baş verdi" }]);
+        setMessages((prev) => [...prev, { role: "ai", content: `Xəta: ${data.error}` }]);
       }
     } catch (e) {
       setMessages((prev) => [...prev, { role: "ai", content: "Bağlantı xətası baş verdi." }]);
@@ -130,7 +128,6 @@ export default function AdminCopilotWidget() {
   };
 
   const handleExecute = async (idx, code) => {
-    // Şərtlə ki yüklənir
     setMessages((prev) => {
       const copy = [...prev];
       copy[idx].isExecuting = true;
@@ -158,7 +155,7 @@ export default function AdminCopilotWidget() {
         setTimeout(() => window.location.reload(), 800);
         setMessages((prev) => [...prev, { role: "ai", content: "✅ Əməliyyat uğurla icra olundu!\n" + (data.result ? JSON.stringify(data.result) : "") }]);
       } else {
-        setMessages((prev) => [...prev, { role: "ai", content: "❌ İcra xətası: " }]);
+        setMessages((prev) => [...prev, { role: "ai", content: `❌ İcra xətası: ${data.error}` }]);
       }
     } catch(e) {
       setMessages((prev) => [...prev, { role: "ai", content: "Bağlantı xətası baş verdi." }]);
@@ -193,8 +190,8 @@ export default function AdminCopilotWidget() {
 
           <div ref={chatRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
             {messages.map((msg, idx) => (
-              <div key={idx} className={lex }>
-                <div className={max-w-[90%] rounded-xl p-3 text-sm }>
+              <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[90%] rounded-xl p-3 text-sm ${msg.role === "user" ? "bg-brand-600 text-white rounded-br-sm" : "bg-white border border-gray-200 text-gray-800 shadow-sm rounded-bl-sm"}`}>
                   {msg.content && <p className="whitespace-pre-wrap leading-relaxed mb-2">{msg.content}</p>}
                   
                   {msg.mutationAction && !msg.executed && (
