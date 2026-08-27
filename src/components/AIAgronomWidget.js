@@ -15,10 +15,6 @@ export default function AIAgronomWidget() {
   const [loading, setLoading] = useState(false);
   const chatRef = useRef(null);
 
-  if (pathname?.includes("/admin") || pathname?.includes("/dashboard")) {
-    return null;
-  }
-
   const handleSend = async () => {
     if (!input.trim() || loading) return;
     const newMsg = { role: "user", content: input };
@@ -51,6 +47,10 @@ export default function AIAgronomWidget() {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages, isOpen]);
+
+  if (pathname?.includes("/admin") || pathname?.includes("/dashboard")) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-[100] flex flex-col items-end">
