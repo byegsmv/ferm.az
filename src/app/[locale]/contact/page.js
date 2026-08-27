@@ -2,11 +2,16 @@
 import React, { useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import toast from 'react-hot-toast';
-
-// (Metadata is normally not allowed in 'use client' pages if not exported separately, but since layout handles title, we can just remove this export or split. For now, removing metadata export so Next.js doesn't throw error on use client.)
+import { useSiteTexts } from "@/lib/siteTexts";
 
 export default function ContactPage() {
   const [loading, setLoading] = useState(false);
+  const { t: st } = useSiteTexts();
+  
+  // Dynamic fields
+  const phone = st("footer.phone", "+994 10 223 89 89");
+  const phoneTel = phone.replace(/[^\d+]/g, "");
+  const email = st("footer.email", "info@fermermarket.az");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,7 +61,7 @@ export default function ContactPage() {
               <div>
                 <h3 className="font-bold text-gray-900 mb-1">Müştəri Xidmətləri</h3>
                 <p className="text-gray-500 text-sm mb-2">Həftəiçi: 09:00 - 18:00</p>
-                <a href="tel:+994500000000" className="text-brand-600 font-bold hover:underline">+994 50 000 00 00</a>
+                <a href={`tel:${phoneTel}`} className="text-brand-600 font-bold hover:underline">{phone}</a>
               </div>
             </div>
 
@@ -67,7 +72,7 @@ export default function ContactPage() {
               <div>
                 <h3 className="font-bold text-gray-900 mb-1">Elektron Poçt</h3>
                 <p className="text-gray-500 text-sm mb-2">Bizə 7/24 yaza bilərsiniz</p>
-                <a href="mailto:info@fermermarket.az" className="text-brand-600 font-bold hover:underline">info@fermermarket.az</a>
+                <a href={`mailto:${email}`} className="text-brand-600 font-bold hover:underline">{email}</a>
               </div>
             </div>
 
