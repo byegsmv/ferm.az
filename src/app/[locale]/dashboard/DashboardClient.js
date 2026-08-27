@@ -30,11 +30,13 @@ export default function DashboardClient({ searchParams }) {
     const localUser = getUser();
     if (!localUser) { router.push("/login"); return; }
 
-    // Admin-level users are redirected to /admin unless they explicitly want to create a store
+    // Removed admin auto-redirect to allow admins to view user dashboard if they navigate here
+    /*
     if (ADMIN_ROLES.includes(localUser.role) && searchParams?.tab !== "create-store") {
       router.push("/admin");
       return;
     }
+    */
 
     apiFetch("/api/wallet")
       .then(d => {
