@@ -10,7 +10,8 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }) {
   const p = await params;
-  const store = await prisma.store.findUnique({ where: { slug: p.slug }, select: { name: true, description: true } });
+  const slug = decodeURIComponent(p.slug);
+  const store = await prisma.store.findUnique({ where: { slug }, select: { name: true, description: true } });
   if (!store) return { title: "Mağaza tapılmadı" };
   return {
     title: `${store.name} | FermerMarket`,
@@ -24,8 +25,9 @@ export default async function StorePage({ params }) {
   // Check if visitor is the store owner
   const authUser = await getServerAuthUser();
 
+  const slug = decodeURIComponent(p.slug);
   const store = await prisma.store.findUnique({
-    where: { slug: p.slug },
+    where: { slug },
     include: {
       owner: { select: { id: true, fullName: true, createdAt: true } },
       subscription: { select: { status: true, plan: true } },

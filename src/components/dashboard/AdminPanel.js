@@ -1762,7 +1762,7 @@ function AdSlotEditor({ slotKey, slot, onSaved, toast }) {
         <div className="flex items-center gap-2">
           <span className={`badge ${mode === "off" ? "badge-gray" : mode === "internal" ? (hasCampaign ? "badge-green" : "badge-yellow") : "badge-blue"} inline-flex items-center gap-1`}>
             {mode === "off" && <><Icon name="closeCircle" size={12} />Deaktiv</>}
-            {mode === "internal" && (hasCampaign ? <><Icon name="checkCircle" size={12} />Aktiv kampaniya</> : <><Icon name="alert" size={12} />Kampaniya yoxdur</>)}
+            {mode === "internal" && (hasCampaign ? <><Icon name="checkCircle" size={12} />Aktiv kampaniya</> : <><Icon name="alert" size={12} />Slot aktivdir (Kampaniya yoxdur)</>)}
             {mode === "external" && <><Icon name="checkCircle" size={12} />Xarici kod</>}
           </span>
           <Icon name="chevronDown" size={16} className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
