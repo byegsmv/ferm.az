@@ -1,4 +1,4 @@
-﻿
+
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Icon from "@/components/ui/Icon";
@@ -30,8 +30,8 @@ export default function AdminCopilotWidget() {
       if (res.ok) {
         let aiText = data.reply;
         let mutationAction = null;
+        let autoExecuteCode = null;
 
-        // Təhlükəli əməliyyat JSON-u olub-olmadığını yoxla
         const jsonMatch = aiText.match(/```json\n([\s\S]*?)\n```/);
         if (jsonMatch) {
           try {
@@ -39,16 +39,60 @@ export default function AdminCopilotWidget() {
             if (parsed.intent === "DB_MUTATION") {
               mutationAction = parsed;
               aiText = aiText.replace(/```json\n[\s\S]*?\n```/, "").trim();
+              
+              if (parsed.requires_confirmation === false) {
+                 autoExecuteCode = parsed.prismaCode;
+              }
             }
           } catch (e) { console.error("JSON parse error:", e); }
         }
 
-        setMessages((prev) => [...prev, { 
-          role: "ai", 
-          content: aiText, 
-          dataView: data.dataView,
-          mutationAction 
-        }]);
+        const msgIndex = messages.length + 1; // current length + 1 (newMsg)
+        
+        if (autoExecuteCode) {
+           // Auto execute immediately
+           setMessages((prev) => [...prev, { 
+             role: "ai", 
+             content: aiText || "Əməliyyat avtomatik icra olunur...", 
+             dataView: data.dataView,
+             mutationAction,
+             isExecuting: true 
+           }]);
+           
+           // call the backend execute
+           try {
+             const execRes = await fetch("/api/admin/copilot-chat/execute", {
+               method: "POST",
+               headers: { "Content-Type": "application/json" },
+               body: JSON.stringify({ code: autoExecuteCode }),
+             });
+             const execData = await execRes.json();
+             
+             setMessages((prev) => {
+               const copy = [...prev];
+               copy[msgIndex] = {
+                  ...copy[msgIndex],
+                  isExecuting: false,
+                  executed: true,
+                  content: copy[msgIndex].content + (execRes.ok ? "\n\n✅ Əməliyyat uğurla və avtomatik icra edildi!" : `\n\n❌ İcra xətası: ${execData.error}`)
+               };
+               return copy;
+             });
+           } catch(e) {
+               setMessages((prev) => {
+                 const copy = [...prev];
+                 copy[msgIndex] = { ...copy[msgIndex], isExecuting: false, executed: true, content: copy[msgIndex].content + "\n❌ İcra xətası (Bağlantı)" };
+                 return copy;
+               });
+           }
+        } else {
+          setMessages((prev) => [...prev, { 
+            role: "ai", 
+            content: aiText, 
+            dataView: data.dataView,
+            mutationAction 
+          }]);
+        }
       } else {
         setMessages((prev) => [...prev, { role: "ai", content: `Xəta: ${data.error}` }]);
       }
