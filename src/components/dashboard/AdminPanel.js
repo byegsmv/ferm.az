@@ -1,4 +1,5 @@
 "use client";
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, useCallback } from "react";
 import Icon from "@/components/ui/Icon";
 import { apiFetch, getToken } from "@/lib/apiClient";
@@ -2276,7 +2277,9 @@ function AgroServicesManager() {
 
 export default function AdminPanel() {
   const { t } = useSiteTexts();
-  const [tab, setTab] = useState("stats");
+  const searchParams = useSearchParams();
+  const tab = searchParams?.get('tab') || 'stats';
+  const setTab = (t) => { window.history.pushState(null, '', `?tab=${t}`); };
   const [stats, setStats] = useState(null);
   const [activity, setActivity] = useState([]);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -2345,11 +2348,11 @@ export default function AdminPanel() {
     <div className="flex min-h-screen bg-[var(--bg)]">
       <ToastContainer />
       {/* Desktop sidebar — sticky, full height, own scroll */}
-      <AdminSidebar tab={tab} setTab={setTab} badges={badges} collapsed={collapsed} setCollapsed={setCollapsed} t={t} />
+      {/* AdminSidebar Removed */}
       {/* Content area */}
       <div className="flex flex-col min-w-0 flex-1">
         {/* Mobile horizontal tab nav */}
-        <AdminMobileNav tab={tab} setTab={setTab} />
+        {/* AdminMobileNav Removed */}
         {/* Main content — proper padding, no extra whitespace */}
         <main className="flex-1 py-4 md:py-6 px-4 sm:px-6 lg:px-8 min-w-0">
           <div className="w-full max-w-[1440px] mx-auto space-y-5">

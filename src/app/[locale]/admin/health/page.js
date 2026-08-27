@@ -77,7 +77,7 @@ export default function SystemHealthPage() {
               <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                 <Database className="w-4 h-4" />
               </div>
-              <h4 className="font-bold text-gray-900 text-sm">PostgreSQL (Supabase)</h4>
+              <h4 className="font-bold text-gray-900 text-sm">PostgreSQL (Neon)</h4>
             </div>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
               {health?.services?.database?.status || 'HEALTHY'}
