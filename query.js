@@ -1,0 +1,1 @@
+const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); prisma.dynamicBlock.findFirst({ where: { page: 'system', type: 'module_hierarchy_tree' } }).then(b => { console.log('RESULT:', b ? JSON.stringify(b.props.modules).substring(0, 500) : 'NULL'); prisma.$disconnect(); }).catch(console.error);

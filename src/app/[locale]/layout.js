@@ -1,4 +1,4 @@
-import { Inter } from "next/font/google";
+﻿import { Inter } from "next/font/google";
 import "../globals.css";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
@@ -13,88 +13,98 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { Toaster } from "react-hot-toast";
+import { prisma } from "@/lib/prisma";
 
 const inter = Inter({ subsets: ["latin"] });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://fermermarket.az");
+  (process.env.VERCEL_URL ? \https://\\ : "https://fermermarket.az");
 
-export const metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: "FermerMarket — Aqrar Bazar Platforması | Heyvan, Gübrə, Texnika Satışı",
-    template: "%s | FermerMarket",
-  },
-  description:
-    "FermerMarket — Azərbaycanda fermerlər, mağazalar, aqronomlar və alıcıları birləşdirən AI dəstəkli kənd təsərrüfatı marketplace-i. Mal-qara, gübrə, toxum, texnika elanları, AI aqronom məsləhəti.",
-  keywords: ["kənd təsərrüfatı", "gübrə", "traktor satılır", "dana satılır", "qoyun satılır", "bal satışı", "aqronom", "fermer bazarı", "azərbaycan marketplace"],
-  manifest: "/manifest.json",
-  openGraph: {
-    type: "website",
-    locale: "az_AZ",
-    siteName: "FermerMarket",
-    title: "FermerMarket — Aqrar Bazar Platforması",
-    description: "Fermerlər, mağazalar, aqronomlar və alıcılar üçün AI dəstəkli vahid kənd təsərrüfatı ekosistemi.",
-  },
-  twitter: {
-    card: "summary_large_image",
-  },
-  robots: { index: true, follow: true },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "FermerMarket",
-  },
-  alternates: {
-    canonical: SITE_URL,
-    languages: {
-      'x-default': SITE_URL,
-      ...Object.fromEntries(
-        routing.locales.map((loc) => [
-          loc,
-          loc === routing.defaultLocale ? SITE_URL : `${SITE_URL}/${loc}`,
-        ])
-      ),
+export async function generateMetadata() {
+  let dbTitle = "FermerMarket — Aqrar Bazar Platforması | Heyvan, Gübrə, Texnika Satışı";
+  let dbDesc = "FermerMarket — Azərbaycanda fermerlər, mağazalar, aqronomlar və alıcıları birləşdirən AI dəstəkli kənd təsərrüfatı marketplace-i. Mal-qara, gübrə, toxum, texnika elanları, AI aqronom məsləhəti.";
+  let dbKeywords = ["kənd təsərrüfatı", "gübrə", "traktor satılır", "dana satılır", "qoyun satılır", "bal satışı", "aqronom", "fermer bazarı", "azərbaycan marketplace"];
+
+  try {
+    const titleSet = await prisma.setting.findUnique({ where: { key: "seo.homepage.title" } });
+    if (titleSet?.value) dbTitle = titleSet.value;
+
+    const descSet = await prisma.setting.findUnique({ where: { key: "seo.homepage.description" } });
+    if (descSet?.value) dbDesc = descSet.value;
+
+    const keySet = await prisma.setting.findUnique({ where: { key: "seo.homepage.keywords" } });
+    if (keySet?.value) dbKeywords = keySet.value.split(",").map(s => s.trim());
+  } catch(e) {}
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: dbTitle,
+      template: "%s | FermerMarket",
     },
-  },
-};
-
-export const revalidate = 300;
-
-export const viewport = {
-  themeColor: "#16a34a",
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-};
+    description: dbDesc,
+    keywords: dbKeywords,
+    manifest: "/manifest.json",
+    openGraph: {
+      type: "website",
+      locale: "az_AZ",
+      siteName: "FermerMarket",
+      title: dbTitle,
+      description: dbDesc,
+    },
+    twitter: {
+      card: "summary_large_image",
+    },
+    robots: { index: true, follow: true },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: "FermerMarket",
+    },
+  };
+}
 
 export default async function RootLayout({ children, params }) {
   const { locale } = await params;
 
-  let footerAd = null;
-  try { footerAd = await getAdSlotContent("FOOTER_STRIP"); } catch (_) {}
+  if (!routing.locales.includes(locale)) {
+    return (
+      <html lang="az">
+        <body>{children}</body>
+      </html>
+    );
+  }
 
   const messages = await getMessages();
+  const topAd = await getAdSlotContent("home_top");
+  const bottomAd = await getAdSlotContent("home_bottom");
 
   return (
-    <html lang={locale}>
-      <body className={`min-h-screen flex flex-col overflow-x-hidden ${inter.className}`} style={{ overflowX: 'hidden' }}>
+    <html lang={locale} dir="ltr">
+      <head>
+        <meta name="theme-color" content="#4f46e5" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+      </head>
+      <body className={\\ min-h-screen flex flex-col bg-gray-50 text-gray-900\}>
         <NextIntlClientProvider messages={messages}>
           <ServiceWorkerRegister />
-          <Header />
-          <main className="flex-1 pb-20 md:pb-0">{children}</main>
-          {footerAd && (
-            <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-4 pb-24 md:pb-4">
-              <AdBanner content={footerAd} className="w-full h-16 sm:h-20 md:h-24 overflow-hidden rounded-xl" imgClassName="w-full h-16 sm:h-20 md:h-24 object-cover" />
-            </div>
-          )}
-          <Footer />
-          <AIAgronomWidget />
           <PWAInstallPrompt />
+          <Toaster position="top-center" />
+          
+          {topAd && <AdBanner ad={topAd} position="top" />}
+          
+          <Header />
+          <main className="flex-1 w-full max-w-[1440px] mx-auto pb-16 md:pb-0">
+            {children}
+          </main>
+          
+          {bottomAd && <AdBanner ad={bottomAd} position="bottom" />}
+          
+          <Footer />
           <BottomNav />
+          <AIAgronomWidget />
           <Analytics />
         </NextIntlClientProvider>
-        <Toaster position="top-right" toastOptions={{ duration: 4000, style: { borderRadius: '12px', fontSize: '14px' } }} />
       </body>
     </html>
   );

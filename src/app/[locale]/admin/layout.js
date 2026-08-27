@@ -1,5 +1,6 @@
 import React from 'react';
 import AdminSidebarNav from '@/components/dashboard/AdminSidebarNav';
+import AdminCopilotWidget from '@/components/dashboard/AdminCopilotWidget';
 
 export const metadata = {
   title: 'Admin Panel | FermerMarket',
@@ -19,6 +20,7 @@ export default function AdminLayout({ children }) {
           </div>
         </main>
       </div>
+      <AdminCopilotWidget />
     </div>
   );
 }
