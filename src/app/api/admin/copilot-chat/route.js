@@ -47,12 +47,12 @@ Diqqət: JSON blokunda admin üçün "Zərərin Açıqlaması" və əməliyyatı
 {
   "intent": "DB_MUTATION",
   "warning": "Bu əməliyyat E-poçt modulunu tamamilə deaktiv edəcək. Heç bir istifadəçiyə e-poçt getməyəcək. Bu təhlükəli addımı təsdiqləyirsiniz?",
-  "prismaCode": "await prisma.setting.upsert({ where: { key: 'email_module_active' }, update: { value: 'false' }, create: { key: 'email_module_active', value: 'false', description: 'E-poçt modulu' } })"
+  "prismaCode": "await prisma.setting.upsert({ where: { key: 'email_module_active' }, update: { value: 'false' }, create: { key: 'email_module_active', value: 'false', category: 'general' } })"
 }
 \`\`\`
 
 QAYDALAR:
-1. "prismaCode" mütləq işlək prisma əmri olmalıdır. 
+1. "prismaCode" mütləq işlək prisma əmri olmalıdır. Setting cədvəlinin sahələri: id, key, value, category (default: "general"). Başqa sahə (məs: description) yoxdur! Modulları aktiv/deaktiv edərkən db-də "module_adi_active" açarından istifadə et (məs: email_module_active = "false").
 2. Yalnız "admin" istəyərsə JSON qaytar, sadəcə "neçə sifariş var" soruşarsa normal mətn qaytar.
 
 SİSTEM STATİSTİKASI:
