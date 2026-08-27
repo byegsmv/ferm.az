@@ -137,7 +137,7 @@ export default function AIAgronomWidget() {
           onClick={() => setIsOpen(true)}
           className="group relative flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-2xl hover:scale-105 transition-all duration-300 border-2 border-brand-500 overflow-hidden"
         >
-          <img src="/icons/icon-192.png" alt="AI Aqronom" className="w-12 h-12 object-contain group-hover:scale-110 transition-transform" />
+          <img src="https://www.fermermarket.az/logo.png" alt="AI Aqronom" className="w-12 h-12 object-contain group-hover:scale-110 transition-transform" />
           <div className="absolute inset-0 rounded-full border-2 border-brand-500 animate-ping opacity-20"></div>
           <div className="absolute bottom-1 right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
             <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
