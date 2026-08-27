@@ -1,7 +1,4 @@
 {
-  "outputDirectory": ".next",
-  "framework": "nextjs",
-  "regions": [
-    "cdg1"
-  ]
+    "installCommand":  "npm install",
+    "buildCommand":  "npm run build"
 }
