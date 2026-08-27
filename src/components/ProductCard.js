@@ -217,11 +217,11 @@ export default function ProductCard({ product, tier, compact = false, initialFav
           {product.titleAz || product.title}
         </h3>
 
-        {/* Pricing Area */}
-        <div className="mt-1 mb-2">
+        {/* Pricing Area - Fixed height to prevent vertical shifting */}
+        <div className="mt-1 mb-2 h-[44px] flex flex-col justify-end">
           {hasDiscount ? (
             <div className="flex flex-col">
-              <span className="text-[11px] text-gray-400 line-through font-medium">
+              <span className="text-[11px] text-gray-400 line-through font-medium leading-none mb-0.5">
                 {Number(product.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} ₼
               </span>
               <div className="flex items-baseline gap-1">
@@ -232,7 +232,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
               </div>
             </div>
           ) : (
-            <div className="flex items-baseline gap-1 pt-3">
+            <div className="flex items-baseline gap-1">
               <span className="font-extrabold text-brand-700 text-lg sm:text-xl tracking-tight">
                 {Number(product.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
               </span>
@@ -242,7 +242,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
         </div>
 
         {/* Metadata Row (Corporate, Min Qty, Location) - Pushed to absolute bottom */}
-        <div className="mt-auto pt-2 flex flex-wrap items-center gap-1.5 border-t border-gray-50">
+        <div className="mt-auto pt-2 flex flex-wrap items-center gap-1.5 border-t border-gray-50 min-h-[32px]">
           {product.isCorporate && (
             <span className="inline-flex items-center gap-1 text-[9px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">
               <Icon name="building" size={9} /> Korporativ

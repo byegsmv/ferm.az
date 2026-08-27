@@ -6,6 +6,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import AdBanner from "@/components/AdBanner";
 import { getAdSlotContent } from "@/lib/adSlots";
 import Footer from "@/components/Footer";
+import AIAgronomWidget from "@/components/AIAgronomWidget";
 import { Analytics } from "@vercel/analytics/next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
@@ -87,6 +88,7 @@ export default async function RootLayout({ children, params }) {
             </div>
           )}
           <Footer />
+          <AIAgronomWidget />
           <BottomNav />
           <Analytics />
         </NextIntlClientProvider>
