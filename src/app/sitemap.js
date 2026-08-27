@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+﻿import { prisma } from '@/lib/prisma';
 import { routing } from '@/i18n/routing';
 
 export default async function sitemap() {
@@ -26,8 +26,8 @@ export default async function sitemap() {
       select: { slug: true, updatedAt: true },
     });
 
-    // Build URLs for all locales
-    const blogs = await prisma.blogPost.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }); const allUrls = [];
+    const blogs = await prisma.blogPost.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }); 
+    const allUrls = [];
 
     for (const locale of locales) {
       const localePrefix = locale === routing.defaultLocale ? '' : `/${locale}`;
@@ -39,7 +39,7 @@ export default async function sitemap() {
         priority: 0.8,
       }));
 
-      const blogUrls = blogs.map(b => ({ url: \\\/blog/\\, lastModified: b.updatedAt, changeFrequency: 'daily', priority: 0.8 }));
+      const blogUrls = blogs.map(b => ({ url: `${baseUrl}${localePrefix}/blog/${b.slug}`, lastModified: b.updatedAt, changeFrequency: 'daily', priority: 0.8 }));
 
       const categoryUrls = categories.map((c) => ({
         url: `${baseUrl}${localePrefix}/products?category=${c.slug}`,

@@ -18,7 +18,7 @@ import { prisma } from "@/lib/prisma";
 const inter = Inter({ subsets: ["latin"] });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_URL ? \https://\\ : "https://fermermarket.az");
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://fermermarket.az");
 
 export async function generateMetadata() {
   let dbTitle = "FermerMarket — Aqrar Bazar Platforması | Heyvan, Gübrə, Texnika Satışı";
@@ -85,7 +85,7 @@ export default async function RootLayout({ children, params }) {
         <meta name="theme-color" content="#4f46e5" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body className={\\ min-h-screen flex flex-col bg-gray-50 text-gray-900\}>
+      <body className={`${inter.className} min-h-screen flex flex-col bg-gray-50 text-gray-900`}>
         <NextIntlClientProvider messages={messages}>
           <ServiceWorkerRegister />
           <PWAInstallPrompt />

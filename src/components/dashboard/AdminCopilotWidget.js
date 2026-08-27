@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useRef } from "react";
 import Icon from "@/components/ui/Icon";
 import { useRouter } from "next/navigation";
@@ -95,7 +95,7 @@ export default function AdminCopilotWidget() {
                   ...copy[msgIndex],
                   isExecuting: false,
                   executed: true,
-                  content: copy[msgIndex].content + (execRes.ok ? "\n\n✅ Əməliyyat uğurla və avtomatik icra edildi!" : \n\n❌ İcra xətası: )
+                  content: copy[msgIndex].content + (execRes.ok ? "\n\n✅ Əməliyyat uğurla və avtomatik icra edildi!" : "\n\n❌ İcra xətası: " + (execData?.error || "Xəta baş verdi"))
                };
                return copy;
              });
