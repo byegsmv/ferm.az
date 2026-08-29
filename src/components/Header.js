@@ -29,16 +29,22 @@ function MobileNavItem({ link, setMobileMenuOpen, depth = 0 }) {
   
   return (
     <div>
-      <div className="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition" style={{ paddingLeft: `${(depth * 1) + 0.75}rem` }}>
-        <Link href={link.href} onClick={() => setMobileMenuOpen(false)} className="flex-1">
+      <div className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-all" style={{ paddingLeft: `${(depth * 1) + 0.75}rem` }}>
+        <Link href={link.href} onClick={() => setMobileMenuOpen(false)} className="flex-1 truncate">
           {link.label}
         </Link>
-        <button onClick={() => setOpen(!open)} className="p-1">
-          <Icon name={open ? "chevronDown" : "chevronRight"} size={16} className="text-gray-400" />
+        <button
+          onClick={() => setOpen(!open)}
+          className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md transition-colors text-[10px] font-bold ${
+            open ? 'bg-brand-100 text-brand-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+          }`}
+        >
+          <Icon name={open ? "chevronDown" : "chevronRight"} size={11} />
+          <span>{link.subLinks.length}</span>
         </button>
       </div>
       {open && (
-        <div className="space-y-1 mt-1 border-l-2 border-brand-50 ml-4 pl-2">
+        <div className="space-y-1 mt-1 border-l-2 border-brand-100 ml-4 pl-2">
           {link.subLinks.map(sub => (
             <MobileNavItem key={sub.href} link={sub} setMobileMenuOpen={setMobileMenuOpen} depth={depth + 1} />
           ))}
@@ -464,24 +470,39 @@ export default function Header() {
                     {l.label}
                     <Icon name="chevronDown" size={14} className="opacity-50 group-hover:rotate-180 transition-transform duration-300" />
                   </Link>
-                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block min-w-[240px] bg-white rounded-xl shadow-xl border border-gray-100 p-2 z-50">
-                    {l.subLinks.map(sub => (
-                      <div key={sub.href} className={sub.subLinks ? "group/sub relative" : ""}>
-                        <Link href={sub.href} className="flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-lg transition-colors">
-                          {sub.label}
-                          {sub.subLinks && <Icon name="chevronRight" size={14} className="opacity-50" />}
-                        </Link>
-                        {sub.subLinks && (
-                          <div className="absolute top-0 left-full ml-1 hidden group-hover/sub:block min-w-[240px] bg-white rounded-xl shadow-xl border border-gray-100 p-2 z-50">
-                            {sub.subLinks.map(child => (
-                              <Link key={child.href} href={child.href} className="block px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-lg transition-colors">
-                                {child.label}
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block min-w-[250px] bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50 animate-fadeIn">
+                    {l.subLinks.map(sub => {
+                      const hasSubChildren = sub.subLinks && sub.subLinks.length > 0;
+                      return (
+                        <div key={sub.href} className={hasSubChildren ? "group/sub relative" : ""}>
+                          <Link
+                            href={sub.href}
+                            className="flex items-center justify-between px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-xl transition-all"
+                          >
+                            <span className="truncate">{sub.label}</span>
+                            {hasSubChildren && (
+                              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-500 group-hover:bg-brand-100 group-hover:text-brand-700 text-[10px] font-bold transition-colors shrink-0 ml-2">
+                                <Icon name="chevronRight" size={10} />
+                                <span>{sub.subLinks.length}</span>
+                              </span>
+                            )}
+                          </Link>
+                          {hasSubChildren && (
+                            <div className="absolute top-0 left-full ml-1.5 hidden group-hover/sub:block min-w-[240px] bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50 animate-fadeIn">
+                              {sub.subLinks.map(child => (
+                                <Link
+                                  key={child.href}
+                                  href={child.href}
+                                  className="block px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-xl transition-colors"
+                                >
+                                  {child.label}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ) : (

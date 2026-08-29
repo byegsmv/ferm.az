@@ -1,136 +1,79 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Icon from "@/components/ui/Icon";
 import { useRouter } from "next/navigation";
 import { clearSiteTextsCache } from "@/lib/siteTexts";
 
+const QUICK_COMMANDS = [
+  { label: "📊 Bu günün statistikası", text: "Bu gün neçə istifadəçi, sifariş və məhsul var?" },
+  { label: "⚡ Aktiv məhsullar", text: "Neçə aktiv məhsul var?" },
+  { label: "💰 Ümumi gəlir", text: "Sistemdəki ümumi gəlir nə qədərdir?" },
+  { label: "📦 Gözləyən sifarişlər", text: "PENDING statusunda olan sifarişlər var mı?" },
+];
+
 export default function AdminCopilotWidget() {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem("adminCopilotOpen") === "true";
-    }
-    return false;
-  });
-  
+  const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const [messages, setMessages] = useState(() => {
     if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("adminCopilotMessages");
-      if (saved) return JSON.parse(saved);
+      try {
+        const saved = sessionStorage.getItem("adminCopilotMessages");
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
     }
-    return [{ role: "ai", content: "Salam Admin! Mən sizin AI köməkçinizəm. Sistemdəki məlumatları öyrənmək üçün mənə sual verin (Məs: \"Bu gün neçə sifariş var?\"). Və ya modul idarəetməsi (məs: \"E-poçt modulunu deaktiv et\") əmrləri verə bilərsiniz." }];
+    return [{
+      role: "ai",
+      content: "Salam Admin! 👋 Mən Admin Copilot-unuzam.\n\nSistem məlumatlarını öyrənmək, modulları idarə etmək, məhsul/istifadəçi statuslarını dəyişmək üçün Azərbaycan dilində əmr verin.",
+    }];
   });
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const chatRef = useRef(null);
+  const inputRef = useRef(null);
 
+  // Persist messages
   useEffect(() => {
-    sessionStorage.setItem("adminCopilotOpen", isOpen);
-  }, [isOpen]);
-
-  useEffect(() => {
-    sessionStorage.setItem("adminCopilotMessages", JSON.stringify(messages));
+    try {
+      sessionStorage.setItem("adminCopilotMessages", JSON.stringify(messages.slice(-30)));
+    } catch (e) {}
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
-    const newMsg = { role: "user", content: input };
-    setMessages((prev) => [...prev, newMsg]);
-    setInput("");
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/admin/copilot-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input, history: messages }),
-      });
-      const data = await res.json();
-      
-      if (res.ok) {
-        let aiText = data.reply;
-        let mutationAction = null;
-        let autoExecuteCode = null;
-
-        const jsonMatch = aiText.match(/```json\n([\s\S]*?)\n```/);
-        if (jsonMatch) {
-          try {
-            const parsed = JSON.parse(jsonMatch[1]);
-            if (parsed.intent === "DB_MUTATION") {
-              mutationAction = parsed;
-              aiText = aiText.replace(/```json\n[\s\S]*?\n```/, "").trim();
-              
-              if (parsed.requires_confirmation === false) {
-                 autoExecuteCode = parsed.prismaCode;
-              }
-            }
-          } catch(e) {}
-        }
-
-        setMessages((prev) => {
-          const arr = [...prev, { 
-            role: "ai", 
-            content: aiText, 
-            dataView: data.dataView,
-            mutationAction 
-          }];
-          return arr;
-        });
-
-        if (autoExecuteCode) {
-           const msgIndex = messages.length + 1; 
-           setMessages((prev) => {
-             const copy = [...prev];
-             copy[msgIndex] = { ...copy[msgIndex], isExecuting: true };
-             return copy;
-           });
-
-           try {
-             const execRes = await fetch("/api/admin/copilot-chat/execute", {
-               method: "POST",
-               headers: { "Content-Type": "application/json" },
-               body: JSON.stringify({ code: autoExecuteCode }),
-             });
-             const execData = await execRes.json();
-             
-             setMessages((prev) => {
-               const copy = [...prev];
-               copy[msgIndex] = {
-                  ...copy[msgIndex],
-                  isExecuting: false,
-                  executed: true,
-                  content: copy[msgIndex].content + (execRes.ok ? "\n\n✅ Əməliyyat uğurla və avtomatik icra edildi!" : `\n\n❌ İcra xətası: ${execData.error}`)
-               };
-               return copy;
-             });
-             if (execRes.ok) {
-               clearSiteTextsCache();
-               router.refresh();
-               setTimeout(() => window.location.reload(), 800);
-             }
-           } catch(e) {
-               setMessages((prev) => {
-                 const copy = [...prev];
-                 copy[msgIndex] = { ...copy[msgIndex], isExecuting: false, executed: true, content: copy[msgIndex].content + "\n❌ İcra xətası (Bağlantı)" };
-                 return copy;
-               });
-           }
-        }
-      } else {
-        setMessages((prev) => [...prev, { role: "ai", content: `Xəta: ${data.error}` }]);
-      }
-    } catch (e) {
-      setMessages((prev) => [...prev, { role: "ai", content: "Bağlantı xətası baş verdi." }]);
-    } finally {
-      setLoading(false);
+  // Auto-scroll
+  useEffect(() => {
+    if (chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
-  };
+  }, [messages, isOpen]);
 
-  const handleExecute = async (idx, code) => {
-    setMessages((prev) => {
+  // Focus input on open
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  const addMessage = useCallback((msg) => {
+    setMessages(prev => [...prev, msg]);
+  }, []);
+
+  const updateLastAI = useCallback((updater) => {
+    setMessages(prev => {
       const copy = [...prev];
-      copy[idx].isExecuting = true;
+      const lastIdx = copy.length - 1;
+      if (copy[lastIdx]?.role === "ai") {
+        copy[lastIdx] = { ...copy[lastIdx], ...updater(copy[lastIdx]) };
+      }
+      return copy;
+    });
+  }, []);
+
+  const executeCode = async (code, msgIdx) => {
+    setMessages(prev => {
+      const copy = [...prev];
+      if (copy[msgIdx]) copy[msgIdx] = { ...copy[msgIdx], isExecuting: true };
       return copy;
     });
 
@@ -141,134 +84,272 @@ export default function AdminCopilotWidget() {
         body: JSON.stringify({ code }),
       });
       const data = await res.json();
-      
-      setMessages((prev) => {
+
+      setMessages(prev => {
         const copy = [...prev];
-        copy[idx].isExecuting = false;
-        copy[idx].executed = true;
+        if (copy[msgIdx]) {
+          copy[msgIdx] = { ...copy[msgIdx], isExecuting: false, executed: true };
+        }
         return copy;
       });
 
       if (res.ok) {
-        clearSiteTextsCache();
-        router.refresh();
-        setTimeout(() => window.location.reload(), 800);
-        setMessages((prev) => [...prev, { role: "ai", content: "✅ Əməliyyat uğurla icra olundu!\n" + (data.result ? JSON.stringify(data.result) : "") }]);
+        clearSiteTextsCache?.();
+        addMessage({ role: "ai", content: `✅ Əməliyyat uğurla icra edildi!${data.result ? "\n\nNəticə: " + JSON.stringify(data.result, null, 2) : ""}` });
+        setTimeout(() => router.refresh(), 500);
       } else {
-        setMessages((prev) => [...prev, { role: "ai", content: `❌ İcra xətası: ${data.error}` }]);
+        addMessage({ role: "ai", content: `❌ İcra xətası:\n${data.error || "Naməlum xəta"}` });
       }
-    } catch(e) {
-      setMessages((prev) => [...prev, { role: "ai", content: "Bağlantı xətası baş verdi." }]);
+    } catch (e) {
+      setMessages(prev => {
+        const copy = [...prev];
+        if (copy[msgIdx]) copy[msgIdx] = { ...copy[msgIdx], isExecuting: false, executed: true };
+        return copy;
+      });
+      addMessage({ role: "ai", content: "❌ Bağlantı xətası baş verdi." });
     }
   };
 
-  useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  const handleSend = async (text) => {
+    const userText = (text || input).trim();
+    if (!userText || loading) return;
+
+    addMessage({ role: "user", content: userText });
+    setInput("");
+    setLoading(true);
+
+    // Add a placeholder AI message
+    const aiPlaceholderIdx = messages.length + 1;
+
+    try {
+      const res = await fetch("/api/admin/copilot-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [...messages, { role: "user", content: userText }] }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        let aiText = data.reply || "";
+        let mutationAction = null;
+
+        const jsonMatch = aiText.match(/```json\n([\s\S]*?)\n```/);
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[1]);
+            if (parsed.intent === "DB_MUTATION") {
+              mutationAction = parsed;
+              aiText = aiText.replace(/```json\n[\s\S]*?\n```/, "").trim();
+            }
+          } catch (e) {}
+        }
+
+        const newMsgIdx = messages.length + 1; // user msg is at messages.length, ai is at +1
+
+        setMessages(prev => {
+          const aiMsg = {
+            role: "ai",
+            content: aiText,
+            dataView: data.dataView,
+            mutationAction: mutationAction || null,
+            executed: false,
+            isExecuting: false,
+          };
+          return [...prev, aiMsg];
+        });
+
+        // Auto execute if no confirmation needed
+        if (mutationAction && mutationAction.requires_confirmation === false) {
+          setTimeout(() => {
+            setMessages(prev => {
+              const idx = prev.findIndex((m, i) => i === prev.length - 1 && m.role === "ai" && m.mutationAction);
+              if (idx !== -1) executeCode(mutationAction.prismaCode, idx);
+              return prev;
+            });
+          }, 300);
+        }
+      } else {
+        addMessage({ role: "ai", content: `❌ Xəta: ${data.error || "Cavab alınmadı"}` });
+      }
+    } catch (e) {
+      addMessage({ role: "ai", content: "❌ Bağlantı xətası baş verdi." });
+    } finally {
+      setLoading(false);
     }
-  }, [messages, isOpen]);
+  };
+
+  const clearChat = () => {
+    setMessages([{
+      role: "ai",
+      content: "Söhbət silindi. Yeni sualınızı yazın!",
+    }]);
+    sessionStorage.removeItem("adminCopilotMessages");
+  };
+
+  const panelWidth = isExpanded ? "w-[520px]" : "w-[380px]";
+  const panelHeight = isExpanded ? "h-[80vh]" : "h-[560px]";
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end">
-      
+    <div className="fixed bottom-6 right-6 z-[999] flex flex-col items-end gap-3">
+
+      {/* Chat Panel */}
       {isOpen && (
-        <div className="mb-4 w-[350px] h-[550px] max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <div className="bg-gray-900 p-4 text-white flex justify-between items-center shadow-md z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
-                <Icon name="terminal" size={16} className="text-white" />
+        <div className={`${panelWidth} ${panelHeight} max-h-[85vh] bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden flex flex-col`}
+          style={{ transition: "width 0.2s, height 0.2s" }}>
+
+          {/* Header */}
+          <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-4 py-3 text-white flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 bg-brand-500 rounded-lg flex items-center justify-center">
+                <Icon name="sparkles" size={14} className="text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-sm">Admin Copilot</h3>
-                <p className="text-[10px] text-gray-400">Sistem analizi və avtomatlaşdırma</p>
+                <p className="font-bold text-sm leading-tight">Admin Copilot</p>
+                <p className="text-[10px] text-gray-400 leading-tight">Sistem analizi & avtomatlaşdırma</p>
               </div>
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-1" />
             </div>
-            <button onClick={() => setIsOpen(false)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
-              <Icon name="x" size={18} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setIsExpanded(v => !v)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors" title={isExpanded ? "Kiçilt" : "Böyüt"}>
+                <Icon name={isExpanded ? "minimize2" : "maximize2"} size={14} />
+              </button>
+              <button onClick={clearChat} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors" title="Söhbəti sil">
+                <Icon name="trash2" size={14} />
+              </button>
+              <button onClick={() => setIsOpen(false)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
+                <Icon name="x" size={16} />
+              </button>
+            </div>
           </div>
 
-          <div ref={chatRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+          {/* Quick Commands */}
+          <div className="px-3 py-2 border-b border-gray-100 flex gap-1.5 overflow-x-auto no-scrollbar shrink-0 bg-gray-50/50">
+            {QUICK_COMMANDS.map((cmd, i) => (
+              <button key={i} onClick={() => handleSend(cmd.text)}
+                className="whitespace-nowrap text-[11px] font-medium px-2.5 py-1 bg-white border border-gray-200 rounded-lg hover:border-brand-400 hover:text-brand-600 transition-all shrink-0">
+                {cmd.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Messages */}
+          <div ref={chatRef} data-lenis-prevent="true"
+            className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/30 min-h-0">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[90%] rounded-xl p-3 text-sm ${msg.role === "user" ? "bg-brand-600 text-white rounded-br-sm" : "bg-white border border-gray-200 text-gray-800 shadow-sm rounded-bl-sm"}`}>
-                  {msg.content && <p className="whitespace-pre-wrap leading-relaxed mb-2">{msg.content}</p>}
-                  
-                  {msg.mutationAction && !msg.executed && (
-                    <div className="mt-2 border border-red-200 bg-red-50 rounded-xl p-3">
-                      <div className="flex items-center gap-2 text-red-600 font-bold mb-2">
-                        <Icon name="alert-triangle" size={16} /> DİQQƏT
-                      </div>
-                      <p className="text-xs text-red-800 mb-3">{msg.mutationAction.warning}</p>
-                      
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => handleExecute(idx, msg.mutationAction.prismaCode)}
-                          disabled={msg.isExecuting}
-                          className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 rounded-lg transition-colors flex justify-center items-center gap-2"
-                        >
-                          {msg.isExecuting ? "İcra olunur..." : "Təsdiqlə və İcra Et"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  {msg.executed && (
-                    <div className="mt-2 text-xs text-green-600 font-medium">Əməliyyat icra edildi.</div>
+                {msg.role === "ai" && (
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shrink-0 mr-2 mt-1">
+                    <Icon name="sparkles" size={12} className="text-white" />
+                  </div>
+                )}
+                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${
+                  msg.role === "user"
+                    ? "bg-brand-600 text-white rounded-br-sm"
+                    : "bg-white border border-gray-200 text-gray-800 rounded-bl-sm"
+                }`}>
+                  {msg.content && (
+                    <p className="whitespace-pre-wrap leading-relaxed text-[13px]">{msg.content}</p>
                   )}
 
-                  {msg.dataView && !msg.mutationAction && (
-                    <div className="mt-2 p-2 bg-gray-900 text-green-400 font-mono text-[10px] rounded-lg overflow-x-auto">
+                  {/* Mutation confirm block */}
+                  {msg.mutationAction && !msg.executed && (
+                    <div className="mt-2.5 border border-amber-200 bg-amber-50 rounded-xl p-3">
+                      <div className="flex items-center gap-1.5 text-amber-700 font-bold text-xs mb-1.5">
+                        <Icon name="alertTriangle" size={14} /> Təsdiq Tələb Olunur
+                      </div>
+                      {msg.mutationAction.warning && (
+                        <p className="text-[12px] text-amber-800 mb-2.5 leading-relaxed">{msg.mutationAction.warning}</p>
+                      )}
+                      <div className="bg-gray-900 rounded-lg px-2.5 py-1.5 mb-2.5 font-mono text-[10px] text-emerald-400 overflow-x-auto">
+                        {msg.mutationAction.prismaCode}
+                      </div>
+                      <button
+                        onClick={() => executeCode(msg.mutationAction.prismaCode, idx)}
+                        disabled={msg.isExecuting}
+                        className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2 rounded-lg transition-colors flex justify-center items-center gap-2"
+                      >
+                        {msg.isExecuting ? (
+                          <><Icon name="loader" size={12} className="animate-spin" /> İcra olunur...</>
+                        ) : (
+                          <><Icon name="check" size={12} /> Təsdiqlə & İcra Et</>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {msg.executed && !msg.mutationAction?.requires_confirmation && (
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-emerald-600 font-medium">
+                      <Icon name="checkCircle" size={12} /> Uğurla icra edildi
+                    </div>
+                  )}
+
+                  {/* Data view */}
+                  {msg.dataView && (
+                    <div className="mt-2 p-2 bg-gray-900 text-emerald-400 font-mono text-[10px] rounded-lg overflow-x-auto max-h-40">
                       <pre>{JSON.stringify(msg.dataView, null, 2)}</pre>
                     </div>
                   )}
                 </div>
               </div>
             ))}
+
             {loading && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-gray-200 shadow-sm rounded-xl rounded-bl-sm p-4 flex gap-2 items-center">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></div>
+              <div className="flex justify-start items-center gap-2 ml-8">
+                <div className="bg-white border border-gray-200 shadow-sm rounded-xl rounded-bl-sm px-4 py-3 flex gap-1.5">
+                  <div className="w-1.5 h-1.5 bg-brand-400 rounded-full animate-bounce" />
+                  <div className="w-1.5 h-1.5 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: "0.15s" }} />
+                  <div className="w-1.5 h-1.5 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
                 </div>
               </div>
             )}
           </div>
 
-          <div className="p-3 bg-white border-t border-gray-200">
-            <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-1 pr-1">
-              <input 
-                type="text" 
+          {/* Input */}
+          <div className="p-3 bg-white border-t border-gray-100 shrink-0">
+            <div className="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-xl p-1.5 focus-within:border-brand-400 transition-colors">
+              <textarea
+                ref={inputRef}
+                rows={1}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Admin əmrini yazın..."
-                className="flex-1 bg-transparent px-3 py-1.5 text-sm outline-none"
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  e.target.style.height = "auto";
+                  e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px";
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Admin əmrini yazın... (Enter göndər, Shift+Enter yeni sətir)"
+                className="flex-1 bg-transparent px-2 py-1 text-sm outline-none resize-none leading-relaxed min-h-[32px] max-h-[100px]"
+                style={{ overflow: "hidden" }}
               />
-              <button 
-                onClick={handleSend}
+              <button
+                onClick={() => handleSend()}
                 disabled={!input.trim() || loading}
-                className="w-8 h-8 flex items-center justify-center bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+                className="w-8 h-8 flex items-center justify-center bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-40 transition-all active:scale-95 shrink-0"
               >
-                <Icon name="terminal" size={14} />
+                <Icon name="arrowRight" size={15} />
               </button>
             </div>
+            <p className="text-[10px] text-gray-400 mt-1.5 px-1">Enter ilə göndər · Shift+Enter yeni sətir</p>
           </div>
         </div>
       )}
 
-      {!isOpen && (
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="group relative flex items-center justify-center w-14 h-14 bg-gray-900 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
-        >
-          <Icon name="terminal" size={24} className="text-white" />
-          <div className="absolute inset-0 rounded-full border border-brand-500 animate-ping opacity-30"></div>
-          <div className="absolute bottom-0 right-0 w-4 h-4 bg-gray-900 rounded-full flex items-center justify-center">
-            <div className="w-2.5 h-2.5 bg-brand-500 rounded-full"></div>
-          </div>
-        </button>
-      )}
+      {/* Toggle FAB */}
+      <button
+        onClick={() => setIsOpen(v => !v)}
+        className={`w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-200 active:scale-95 ${
+          isOpen
+            ? "bg-gray-800 hover:bg-gray-900 rotate-0"
+            : "bg-gradient-to-br from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-800"
+        }`}
+      >
+        <Icon name={isOpen ? "x" : "sparkles"} size={22} className="text-white" />
+      </button>
     </div>
   );
 }

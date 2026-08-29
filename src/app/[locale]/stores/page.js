@@ -22,6 +22,8 @@ export default async function StoresPage() {
       slug: true,
       address: true,
       phone: true,
+      lat: true,
+      lng: true,
       logoUrl: true,
       isVerified: true,
       _count: { select: { products: true } }

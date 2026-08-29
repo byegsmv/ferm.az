@@ -58,9 +58,9 @@ function NavItem({ item, pathname, depth = 0 }) {
              <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
           </div>
         )}
-        <span className="truncate flex-1">{item.name || item.label}</span>
+        <span className="flex-1 text-[13px] font-semibold text-gray-800 leading-snug">{item.name || item.label}</span>
         {item.badge && (
-          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black bg-brand-600 text-white tracking-wide">
+          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black bg-brand-600 text-white tracking-wide shrink-0">
             {item.badge}
           </span>
         )}
@@ -71,9 +71,12 @@ function NavItem({ item, pathname, depth = 0 }) {
               e.stopPropagation();
               setIsOpen(!isOpen);
             }}
-            className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+            className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md transition-colors text-[10px] font-bold ${
+              isOpen ? 'bg-brand-100 text-brand-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
           >
-            <Icon name={isOpen ? "chevronDown" : "chevronRight"} size={14} className="text-gray-400" />
+            <Icon name={isOpen ? "chevronDown" : "chevronRight"} size={11} />
+            <span>{item.children.length}</span>
           </button>
         )}
       </Link>
@@ -109,7 +112,12 @@ export default function AdminSidebarNav() {
     ])
       .then(([modRes, catRes]) => {
         if (modRes && modRes.modules) {
-          const activeTree = modRes.modules.filter(m => m.status === 'ACTIVE');
+          // Filter top-level and children recursively by status
+          const filterActive = (mods) => mods
+            .filter(m => m.status !== 'INACTIVE' && m.status !== 'HIDDEN')
+            .map(m => ({ ...m, children: m.children ? filterActive(m.children) : [] }));
+
+          const activeTree = filterActive(modRes.modules);
           
           if (catRes && catRes.categories) {
             // Find Kateqoriyalar module
@@ -152,8 +160,18 @@ export default function AdminSidebarNav() {
       .catch(console.error);
   }, []);
 
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredModules = modules.filter(m => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    const matchesSelf = m.name?.toLowerCase().includes(term) || m.label?.toLowerCase().includes(term) || m.slug?.toLowerCase().includes(term);
+    const matchesChild = m.children?.some(c => c.name?.toLowerCase().includes(term) || c.slug?.toLowerCase().includes(term));
+    return matchesSelf || matchesChild;
+  });
+
   return (
-    <aside className="hidden md:flex w-64 h-screen sticky top-0 bg-white border-r border-[var(--border)] flex-col shadow-sm overflow-hidden">
+    <aside className="hidden md:flex w-72 h-screen sticky top-0 bg-white border-r border-[var(--border)] flex-col shadow-xs overflow-hidden select-none">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--border)] shrink-0">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
@@ -165,11 +183,36 @@ export default function AdminSidebarNav() {
         </div>
       </div>
 
+      {/* Sürətli Axtarış (Quick Command Search) */}
+      <div className="px-3 pt-3 pb-1 shrink-0">
+        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1.5 focus-within:border-brand-500 focus-within:bg-white transition-all shadow-2xs">
+          <Icon name="search" size={14} className="text-gray-400" />
+          <input
+            type="text"
+            placeholder="Bölmə və ya modul axtar..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-transparent text-xs text-gray-800 outline-none font-medium placeholder-gray-400"
+          />
+          {searchTerm && (
+            <button onClick={() => setSearchTerm('')} className="text-gray-400 hover:text-gray-600">
+              <Icon name="close" size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Nav Items */}
-      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5 min-h-0 scrollbar-thin">
-        {modules.map((mod) => (
-          <NavItem key={mod.id || mod.slug || mod.href} item={mod} pathname={pathname} depth={0} />
-        ))}
+      <nav data-lenis-prevent="true" className="flex-1 overflow-y-auto py-2 px-3 space-y-0.5 min-h-0 scrollbar-thin">
+        {filteredModules.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 text-xs">
+            Heç bir modul tapılmadı
+          </div>
+        ) : (
+          filteredModules.map((mod) => (
+            <NavItem key={mod.id || mod.slug || mod.href} item={mod} pathname={pathname} depth={0} />
+          ))
+        )}
       </nav>
 
       {/* Footer */}
