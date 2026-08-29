@@ -1,4 +1,4 @@
-﻿import { Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import "../globals.css";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
@@ -7,6 +7,7 @@ import AdBanner from "@/components/AdBanner";
 import { getAdSlotContent } from "@/lib/adSlots";
 import Footer from "@/components/Footer";
 import AIAgronomWidget from "@/components/AIAgronomWidget";
+import SmoothScroll from "@/components/SmoothScroll";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { Analytics } from "@vercel/analytics/next";
 import { NextIntlClientProvider } from "next-intl";
@@ -87,24 +88,26 @@ export default async function RootLayout({ children, params }) {
       </head>
       <body className={`${inter.className} min-h-screen flex flex-col bg-gray-50 text-gray-900`}>
         <NextIntlClientProvider messages={messages}>
-          <ServiceWorkerRegister />
-          <PWAInstallPrompt />
-          <Toaster position="top-center" />
-          
-          {topAd && <AdBanner ad={topAd} position="top" />}
-          
-          <Header />
-          <main className="flex-1 w-full max-w-[1440px] mx-auto pb-16 md:pb-0">
-            {children}
-          </main>
-          
-          {bottomAd && <AdBanner ad={bottomAd} position="bottom" />}
-          
-          <Footer />
-          <BottomNav />
-          <AIAgronomWidget />
-          <Analytics />
+          <SmoothScroll>
+            <ServiceWorkerRegister />
+            <PWAInstallPrompt />
+            <Toaster position="top-center" />
+            
+            {topAd && <AdBanner ad={topAd} position="top" />}
+            
+            <Header />
+            <main className="flex-1 w-full max-w-[1440px] mx-auto pb-16 md:pb-0">
+              {children}
+            </main>
+            
+            {bottomAd && <AdBanner ad={bottomAd} position="bottom" />}
+            
+            <BottomNav />
+            <Footer />
+            <AIAgronomWidget />
+          </SmoothScroll>
         </NextIntlClientProvider>
+        <Analytics />
       </body>
     </html>
   );

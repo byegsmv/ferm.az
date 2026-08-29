@@ -53,10 +53,15 @@ Vercel mühitində fiziki faylları (kodu) silmək MÜMKÜN DEYİL! Buna görə 
 
 QAYDALAR:
 1. "prismaCode" mütləq işlək prisma əmri olmalıdır. 
-- Əgər məqsəd nömrə, e-poçt, mətn və ya kontenti dəyişməkdirsə, \`prisma.siteText.upsert\` istifadə et. (Cədvəl sahələri: key, valueAz, group, label). Nümunə: \`where: { key: 'footer.phone' }, update: { valueAz: '+994 50 111 22 33' }, create: { key: 'footer.phone', valueAz: '+994 50 111 22 33', group: 'footer', label: 'Əlaqə Nömrəsi' }\`
-- Əgər məqsəd hər hansı modulu deaktiv/aktiv etməkdirsə, \`prisma.setting.upsert\` istifadə et. (Cədvəl sahələri: key, value, category="general").
+Vacib Modellər və Sahələri:
+- Category: isActive (Boolean), slug, nameAz. (Status sahəsi yoxdur, deaktiv üçün isActive: false istifadə et!)
+- Product: status (ProductStatus enum: DRAFT, PENDING_REVIEW, ACTIVE, SOLD, EXPIRED, REJECTED), isFeatured, isPremium.
+- User: status (UserStatus enum: ACTIVE, BLOCKED, PENDING_VERIFICATION).
+- Order: status (OrderStatus enum: PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED).
+- SiteText: key, valueAz, group, label. (Mətn, telefon nömrəsi, e-poçt dəyişmək üçün \`prisma.siteText.upsert\` istifadə et.)
+- Setting: key, value, category. (Sistem modullarını aktiv/deaktiv etmək üçün \`prisma.setting.upsert\` istifadə et. Məs: value: "false")
 2. ÇOX ƏHƏMİYYƏTLİ TƏHLÜKƏSİZLİK (SMART COPILOT): Əgər əməliyyat təhlükəlidirsə (modul deaktiv etmək, məlumat silmək, istifadəçi bloklamaq), "requires_confirmation": true və "warning" mesajı yaz. Əgər sadəcə telefon nömrəsi, mətn dəyişmək kimi zərərsiz bir əməliyyatdırsa, "requires_confirmation": false et və warning yazma. Beləliklə sistem bunu avtomatik icra edəcək.
-3. Yalnız "admin" əməliyyat istəyərsə JSON qaytar, sadəcə "neçə sifariş var" soruşarsa normal mətn qaytar.
+3. Yalnız "admin" əməliyyat istəyirsə JSON qaytar, sadəcə "neçə sifariş var" soruşarsa normal mətn qaytar.
 
 SİSTEM STATİSTİKASI:
 İstifadəçilər: ${stats.users}
