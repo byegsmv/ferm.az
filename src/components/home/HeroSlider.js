@@ -82,7 +82,7 @@ export default function HeroSlider() {
   }, [slides.length]);
 
   return (
-    <section className="relative overflow-hidden w-full min-h-[320px] sm:min-h-[380px] md:h-[440px] bg-gray-900 group mb-4 sm:mb-6">
+    <section className="relative overflow-hidden w-full min-h-[320px] sm:min-h-[380px] md:h-[440px] bg-gray-900 group mb-4 sm:mb-6 rounded-2xl shadow-xl">
       {slides.map((slide, idx) => (
         <div
           key={idx}
@@ -92,15 +92,19 @@ export default function HeroSlider() {
         >
            {slide.imageUrl && (
              <>
-               <img src={slide.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
-               <div className="absolute inset-0 bg-black/45" />
+               <img 
+                 src={slide.imageUrl} 
+                 alt="" 
+                 className={`absolute inset-0 w-full h-full object-cover transition-transform duration-[10000ms] ease-out ${current === idx ? "scale-100" : "scale-110"}`}
+               />
+               <div className={`absolute inset-0 bg-black/45 transition-opacity duration-[2000ms] ${current === idx ? "opacity-100" : "opacity-0"}`} />
              </>
            )}
-           {/* Decorative circles */}
+           {/* Decorative circles animated */}
            {!slide.imageUrl && (
-             <div className="absolute inset-0 pointer-events-none" aria-hidden>
-               <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 blur-3xl" />
-               <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+             <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+               <div className={`absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 blur-3xl transition-transform duration-[8000ms] ease-out ${current === idx ? "translate-x-0 translate-y-0 scale-100" : "translate-x-10 translate-y-10 scale-90"}`} />
+               <div className={`absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-white/10 blur-3xl transition-transform duration-[8000ms] ease-out ${current === idx ? "translate-x-0 translate-y-0 scale-100" : "-translate-x-10 -translate-y-10 scale-90"}`} />
              </div>
            )}
 

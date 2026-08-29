@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import ScrollReveal from "@/components/ui/ScrollReveal";
 import { Link } from "@/i18n/routing";
 import ProductCard from "@/components/ProductCard";
 import Icon from "@/components/ui/Icon";
@@ -221,20 +222,22 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
         }
 
         return (
-          <div 
+          <ScrollReveal 
             key={index} 
-            onClick={(e) => onBlockClick(index, e)}
+            delay={50}
             className={`${editMode ? 'relative cursor-pointer ring-2 ring-transparent hover:ring-brand-500 rounded-3xl transition group' : ''}`}
           >
-            {editMode && (
-              <div className="absolute inset-0 bg-brand-500/0 group-hover:bg-brand-500/10 rounded-3xl z-10 flex items-center justify-center transition pointer-events-none">
-                <span className="opacity-0 group-hover:opacity-100 bg-brand-600 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-xl pointer-events-auto">
-                  Redaktə et ({block.type})
-                </span>
-              </div>
-            )}
-            {content}
-          </div>
+            <div onClick={(e) => onBlockClick(index, e)}>
+              {editMode && (
+                <div className="absolute inset-0 bg-brand-500/0 group-hover:bg-brand-500/10 rounded-3xl z-10 flex items-center justify-center transition pointer-events-none">
+                  <span className="opacity-0 group-hover:opacity-100 bg-brand-600 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-xl pointer-events-auto">
+                    Redaktə et ({block.type})
+                  </span>
+                </div>
+              )}
+              {content}
+            </div>
+          </ScrollReveal>
         );
       })}
     </div>

@@ -1,4 +1,4 @@
-﻿
+
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, requireRole } from "@/lib/auth";
 
@@ -19,8 +19,15 @@ export async function POST(req) {
     }
 
     const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-    const executeCode = new AsyncFunction("prisma", `return ${code};`);
     
+    let finalCode = code.trim();
+    if (!finalCode.includes("return ") && finalCode.split("\n").length === 1) {
+      if (!finalCode.startsWith("return")) {
+        finalCode = `return ${finalCode};`;
+      }
+    }
+    
+    const executeCode = new AsyncFunction("prisma", finalCode);
     const result = await executeCode(prisma);
 
     return Response.json({ success: true, result });
