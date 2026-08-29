@@ -1,14 +1,13 @@
-﻿{
-    "installCommand": "npm install",
-    "buildCommand": "npm run build",
-    "crons": [
-        {
-            "path": "/api/cron/ai-news-agent",
-            "schedule": "0 18 * * *"
-        },
-        {
-            "path": "/api/cron/ai-seo-agent",
-            "schedule": "0 2 * * *"
-        }
-    ]
+{
+  "crons": [
+    {
+      "path": "/api/cron/ai-news-agent",
+      "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/ai-seo-agent",
+      "schedule": "0 2 * * *"
+    }
+  ]
 }
+
