@@ -380,18 +380,57 @@ export default function ElementorSidebar({
 
               {inspectorTab === 'STYLE' && (
                 <div className="space-y-4">
+                  {/* Text Color */}
                   <div>
-                    <label className="block text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Fon Rəngi</label>
-                    <input
-                      type="color"
-                      value={selectedElement.style?.bg || '#ffffff'}
-                      onChange={(e) => onUpdateElement(selectedElement.id, {
-                        ...selectedElement,
-                        style: { ...(selectedElement.style || {}), bg: e.target.value }
-                      })}
-                      className="w-full h-9 bg-[#15191c] border border-[#3c434a] rounded-xl cursor-pointer p-1"
-                    />
+                    <label className="block text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Mətn / İkon Rəngi</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={selectedElement.props?.color || (selectedElement.isSection ? '#ffffff' : '#111827')}
+                        onChange={(e) => onUpdateElement(selectedElement.id, {
+                          ...selectedElement,
+                          props: { ...(selectedElement.props || {}), color: e.target.value }
+                        })}
+                        className="w-10 h-9 bg-[#15191c] border border-[#3c434a] rounded-xl cursor-pointer p-1"
+                      />
+                      <input
+                        type="text"
+                        value={selectedElement.props?.color || '#111827'}
+                        onChange={(e) => onUpdateElement(selectedElement.id, {
+                          ...selectedElement,
+                          props: { ...(selectedElement.props || {}), color: e.target.value }
+                        })}
+                        className="flex-1 px-3 py-2 bg-[#15191c] border border-[#3c434a] rounded-xl text-white font-mono text-xs outline-none uppercase"
+                      />
+                    </div>
                   </div>
+
+                  {/* Background Color */}
+                  <div>
+                    <label className="block text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Arxa Fon Rəngi</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={selectedElement.style?.bg || (selectedElement.isSection ? '#15803d' : '#ffffff')}
+                        onChange={(e) => onUpdateElement(selectedElement.id, {
+                          ...selectedElement,
+                          style: { ...(selectedElement.style || {}), bg: e.target.value }
+                        })}
+                        className="w-10 h-9 bg-[#15191c] border border-[#3c434a] rounded-xl cursor-pointer p-1"
+                      />
+                      <input
+                        type="text"
+                        value={selectedElement.style?.bg || '#ffffff'}
+                        onChange={(e) => onUpdateElement(selectedElement.id, {
+                          ...selectedElement,
+                          style: { ...(selectedElement.style || {}), bg: e.target.value }
+                        })}
+                        className="flex-1 px-3 py-2 bg-[#15191c] border border-[#3c434a] rounded-xl text-white font-mono text-xs outline-none uppercase"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Alignment */}
                   <div>
                     <label className="block text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Mətn Düzülüşü (Align)</label>
                     <div className="grid grid-cols-3 gap-1">
@@ -404,21 +443,98 @@ export default function ElementorSidebar({
                             props: { ...(selectedElement.props || {}), align }
                           })}
                           className={`py-1.5 rounded-lg text-xs font-bold capitalize border ${
-                            selectedElement.props?.align === align
+                            (selectedElement.props?.align || 'left') === align
                               ? 'bg-emerald-600 border-emerald-500 text-white'
                               : 'bg-[#15191c] border-[#3c434a] text-gray-400 hover:text-white'
                           }`}
                         >
-                          {align}
+                          {align === 'left' ? 'Sola' : align === 'center' ? 'Mərkəz' : 'Sağa'}
                         </button>
                       ))}
                     </div>
                   </div>
+
+                  {/* Heading Level (if heading) */}
+                  {selectedElement.type === 'Heading' && (
+                    <div>
+                      <label className="block text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Şrift Ölçüsü / Teq</label>
+                      <div className="grid grid-cols-4 gap-1">
+                        {['h1', 'h2', 'h3', 'h4'].map(lvl => (
+                          <button
+                            key={lvl}
+                            type="button"
+                            onClick={() => onUpdateElement(selectedElement.id, {
+                              ...selectedElement,
+                              props: { ...(selectedElement.props || {}), level: lvl }
+                            })}
+                            className={`py-1.5 rounded-lg text-xs font-bold uppercase border ${
+                              (selectedElement.props?.level || 'h2') === lvl
+                                ? 'bg-emerald-600 border-emerald-500 text-white'
+                                : 'bg-[#15191c] border-[#3c434a] text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            {lvl}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Button Variant */}
+                  {selectedElement.type === 'Button' && (
+                    <div>
+                      <label className="block text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Düymə Stili</label>
+                      <div className="grid grid-cols-3 gap-1">
+                        {['primary', 'secondary', 'outline'].map(v => (
+                          <button
+                            key={v}
+                            type="button"
+                            onClick={() => onUpdateElement(selectedElement.id, {
+                              ...selectedElement,
+                              props: { ...(selectedElement.props || {}), variant: v }
+                            })}
+                            className={`py-1.5 rounded-lg text-xs font-bold capitalize border ${
+                              (selectedElement.props?.variant || 'primary') === v
+                                ? 'bg-emerald-600 border-emerald-500 text-white'
+                                : 'bg-[#15191c] border-[#3c434a] text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {inspectorTab === 'ADVANCED' && (
                 <div className="space-y-4">
+                  {/* Padding / Spacing */}
+                  <div>
+                    <label className="block text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Daxili Məsafə (Padding)</label>
+                    <div className="grid grid-cols-3 gap-1">
+                      {['py-4', 'py-8', 'py-12'].map(p => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => onUpdateElement(selectedElement.id, {
+                            ...selectedElement,
+                            style: { ...(selectedElement.style || {}), padding: p }
+                          })}
+                          className={`py-1.5 rounded-lg text-xs font-bold border ${
+                            (selectedElement.style?.padding || 'py-8') === p
+                              ? 'bg-emerald-600 border-emerald-500 text-white'
+                              : 'bg-[#15191c] border-[#3c434a] text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          {p === 'py-4' ? 'Kiçik' : p === 'py-8' ? 'Orta' : 'Geniş'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Responsive Visibility */}
                   <div className="p-3 bg-[#15191c] rounded-xl border border-[#3c434a] space-y-2">
                     <span className="text-[11px] font-bold text-gray-300 block">Responsiv Görünüş</span>
                     <label className="flex items-center gap-2 text-gray-400 cursor-pointer">
@@ -510,20 +626,23 @@ export default function ElementorSidebar({
             </button>
 
             {showPageMenu && (
-              <div className="absolute bottom-full left-0 mb-2 w-64 bg-[#1e2327] rounded-xl border border-[#3c434a] shadow-2xl p-2 z-50 animate-fadeIn">
-                <span className="text-[10px] font-black uppercase text-gray-400 px-2 py-1 block">Bütün Səhifələr</span>
-                <div className="max-h-48 overflow-y-auto space-y-0.5">
+              <div className="absolute bottom-full left-0 mb-2 w-80 bg-[#1e2327] rounded-2xl border border-[#3c434a] shadow-2xl p-3 z-50 animate-fadeIn" data-lenis-prevent="true">
+                <div className="flex items-center justify-between px-2 py-1.5 border-b border-[#2c3338] mb-2">
+                  <span className="text-[11px] font-black uppercase text-emerald-400">Sistem Səhifələri</span>
+                  <span className="text-[10px] font-mono text-gray-400">{(pages || []).length} səhifə</span>
+                </div>
+                <div className="max-h-72 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
                   {(pages || []).map((p, idx) => (
                     <button
-                      key={p.pageId}
+                      key={p.pageId || idx}
                       onClick={() => {
                         onSelectPage(idx);
                         setShowPageMenu(false);
                       }}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold text-gray-300 hover:bg-[#252c33] hover:text-white flex items-center justify-between"
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-gray-200 hover:bg-[#252c33] hover:text-white flex items-center justify-between transition-colors group"
                     >
-                      <span className="truncate">{p.name}</span>
-                      <span className="text-[10px] text-gray-500 font-mono">{p.slug}</span>
+                      <span className="truncate group-hover:text-emerald-400">{p.name}</span>
+                      <span className="text-[10px] text-gray-500 font-mono group-hover:text-gray-300">{p.slug}</span>
                     </button>
                   ))}
                 </div>
@@ -532,10 +651,10 @@ export default function ElementorSidebar({
                     setShowPageMenu(false);
                     onOpenCreatePage();
                   }}
-                  className="w-full mt-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1"
+                  className="w-full mt-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Yeni Səhifə Yarat</span>
+                  <Plus className="w-4 h-4" />
+                  <span>Yeni Səhifə / Modul Yarat</span>
                 </button>
               </div>
             )}

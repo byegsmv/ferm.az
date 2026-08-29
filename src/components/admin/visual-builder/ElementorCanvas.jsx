@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import {
   Plus, Trash2, Edit3, ArrowUp, ArrowDown, Copy,
   Sparkles, Layers, Box, Move, ShoppingBag, FolderTree,
-  FileText, Activity, CheckSquare, BarChart3
+  FileText, Activity, CheckSquare, BarChart3, GripVertical
 } from 'lucide-react';
 import DynamicWidgetRenderer from '@/components/admin/dynamic/DynamicWidgetRenderer';
 
@@ -19,6 +19,7 @@ export default function ElementorCanvas({
   onDuplicateSection,
   onDeleteComponent,
   onDuplicateComponent,
+  onMoveComponent,
   onDropWidget
 }) {
   const [dragOverSectionId, setDragOverSectionId] = useState(null);
@@ -74,7 +75,7 @@ export default function ElementorCanvas({
   };
 
   return (
-    <div className="flex-1 bg-[#121517] overflow-y-auto p-4 sm:p-8 flex flex-col items-center custom-scrollbar">
+    <div className="flex-1 bg-[#121517] overflow-y-auto p-4 sm:p-8 flex flex-col items-center custom-scrollbar" data-lenis-prevent="true">
       {/* Canvas Viewport Mock Container */}
       <div
         className={`w-full ${getContainerWidth()} min-h-[750px] bg-white rounded-2xl shadow-2xl border border-gray-300 flex flex-col overflow-hidden transition-all duration-300`}
@@ -98,6 +99,7 @@ export default function ElementorCanvas({
           {(page.sections || []).map((section, sIdx) => {
             const isSectionSelected = selectedElementId === section.id;
             const isOverThisSection = dragOverSectionId === section.id;
+            const totalSections = (page.sections || []).length;
 
             return (
               <div
@@ -112,20 +114,46 @@ export default function ElementorCanvas({
                   e.stopPropagation();
                   onSelectElement({ ...section, isSection: true });
                 }}
-                className={`group relative rounded-xl border-2 transition-all p-4 ${
+                className={`group relative rounded-2xl border-2 transition-all p-5 ${
                   isSectionSelected
-                    ? 'border-[#0073aa] ring-4 ring-[#0073aa]/15 bg-[#f0f6fc]/30'
+                    ? 'border-[#0073aa] ring-4 ring-[#0073aa]/15'
                     : isOverThisSection
                     ? 'border-emerald-500 bg-emerald-50/20'
-                    : 'border-dashed border-gray-200 hover:border-[#0073aa]/60 bg-white'
-                }`}
+                    : 'border-dashed border-gray-200 hover:border-[#0073aa]/60'
+                } ${!section.style?.bg ? 'bg-white' : ''}`}
                 style={{ backgroundColor: section.style?.bg || undefined }}
               >
                 {/* Elementor Floating Section Header Bar */}
-                <div className="absolute -top-3.5 left-4 flex items-center gap-1 bg-[#1e2327] text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                <div className="absolute -top-3.5 left-4 flex items-center gap-1 bg-[#1e2327] text-white px-2.5 py-1 rounded-lg text-[10px] font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-20">
                   <span className="text-emerald-400">Section:</span>
                   <span>{section.name || `Bölmə #${sIdx + 1}`}</span>
-                  <span className="text-gray-400 ml-1">({section.columns || 1} col)</span>
+                  <span className="text-gray-400 ml-1">({section.columns || 1} sütun)</span>
+
+                  <div className="h-3 w-px bg-gray-600 mx-1" />
+
+                  {/* Section Reorder */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (sIdx > 0 && onMoveSection) onMoveSection(sIdx, sIdx - 1);
+                    }}
+                    disabled={sIdx === 0}
+                    className="p-1 hover:text-emerald-400 disabled:opacity-30"
+                    title="Bölməni Yuxarı Daşı"
+                  >
+                    <ArrowUp className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (sIdx < totalSections - 1 && onMoveSection) onMoveSection(sIdx, sIdx + 1);
+                    }}
+                    disabled={sIdx === totalSections - 1}
+                    className="p-1 hover:text-emerald-400 disabled:opacity-30"
+                    title="Bölməni Aşağı Daşı"
+                  >
+                    <ArrowDown className="w-3 h-3" />
+                  </button>
 
                   <div className="h-3 w-px bg-gray-600 mx-1" />
 
@@ -160,30 +188,57 @@ export default function ElementorCanvas({
                   'grid-cols-1'
                 }`}>
                   {(section.components || []).length === 0 ? (
-                    <div className="col-span-full py-8 border border-dashed border-gray-300 rounded-lg text-center bg-gray-50/50">
-                      <p className="text-xs font-semibold text-gray-500">
-                        Bu bölmə boşdur. Sol paneldən widget çəkib bura atın (Drag & Drop).
+                    <div className="col-span-full py-10 border-2 border-dashed border-gray-200 rounded-xl text-center bg-gray-50/50 hover:bg-emerald-50/20 hover:border-emerald-300 transition-all">
+                      <p className="text-xs font-bold text-gray-500">
+                        Bu bölmə boşdur. Sol paneldən widget çəkib bura atın (Drag & Drop) və ya klikləyin.
                       </p>
                     </div>
                   ) : (
-                    (section.components || []).map((comp) => {
+                    (section.components || []).map((comp, cIdx) => {
                       const isCompSelected = selectedElementId === comp.id;
+                      const totalComps = (section.components || []).length;
 
                       return (
                         <div
-                          key={comp.id}
+                          key={comp.id || cIdx}
                           onClick={(e) => {
                             e.stopPropagation();
                             onSelectElement(comp);
                           }}
-                          className={`group/comp relative rounded-lg border-2 transition-all p-3 ${
+                          className={`group/comp relative rounded-xl border-2 transition-all p-3.5 ${
                             isCompSelected
-                              ? 'border-[#0073aa] ring-2 ring-[#0073aa]/20 bg-blue-50/20'
-                              : 'border-transparent hover:border-[#0073aa]/50 hover:bg-gray-50/60'
+                              ? 'border-[#0073aa] ring-4 ring-[#0073aa]/20 bg-blue-50/20 shadow-md'
+                              : 'border-transparent hover:border-[#0073aa]/50 hover:bg-white/40'
                           }`}
                         >
                           {/* Elementor Widget Floating Action Icons */}
-                          <div className="absolute top-1 right-1 flex items-center gap-1 bg-[#1e2327] text-white p-1 rounded shadow opacity-0 group-hover/comp:opacity-100 transition-opacity z-10">
+                          <div className="absolute -top-3 right-3 flex items-center gap-1 bg-[#1e2327] text-white px-2 py-1 rounded-lg shadow-lg opacity-0 group-hover/comp:opacity-100 transition-opacity z-20">
+                            {/* Move Up/Down within section */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (cIdx > 0 && onMoveComponent) onMoveComponent(section.id, cIdx, cIdx - 1);
+                              }}
+                              disabled={cIdx === 0}
+                              className="p-0.5 hover:text-emerald-400 disabled:opacity-30"
+                              title="Yuxarı Daşı"
+                            >
+                              <ArrowUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (cIdx < totalComps - 1 && onMoveComponent) onMoveComponent(section.id, cIdx, cIdx + 1);
+                              }}
+                              disabled={cIdx === totalComps - 1}
+                              className="p-0.5 hover:text-emerald-400 disabled:opacity-30"
+                              title="Aşağı Daşı"
+                            >
+                              <ArrowDown className="w-3 h-3" />
+                            </button>
+
+                            <div className="h-2.5 w-px bg-gray-600 mx-0.5" />
+
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -216,8 +271,8 @@ export default function ElementorCanvas({
                             </button>
                           </div>
 
-                          {/* Render Widget Preview */}
-                          <DynamicWidgetRenderer component={comp} />
+                          {/* Render Live Widget Preview */}
+                          <DynamicWidgetRenderer component={comp} widget={comp} />
                         </div>
                       );
                     })
@@ -235,23 +290,23 @@ export default function ElementorCanvas({
             }}
             onDragLeave={() => setIsDragOverBottom(false)}
             onDrop={handleBottomDrop}
-            className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all flex flex-col items-center justify-center gap-3 ${
+            className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all flex flex-col items-center justify-center gap-3 ${
               isDragOverBottom
-                ? 'border-emerald-500 bg-emerald-50/40 scale-[1.01]'
-                : 'border-gray-300 bg-gray-50/60 hover:border-gray-400'
+                ? 'border-emerald-500 bg-emerald-50/50 scale-[1.01]'
+                : 'border-gray-300 bg-gray-50/70 hover:border-gray-400'
             }`}
           >
             <div className="flex items-center gap-3">
               <button
                 onClick={onAddSection}
-                className="px-5 py-2.5 bg-[#9b0a46] hover:bg-[#b00c50] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-2"
+                className="px-6 py-3 bg-[#9b0a46] hover:bg-[#b00c50] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2 active:scale-95"
               >
                 <Plus className="w-4 h-4" />
-                <span>BÖLMƏ ƏLAVƏ ET</span>
+                <span>YENİ BÖLMƏ ƏLAVƏ ET</span>
               </button>
             </div>
             <span className="text-xs font-bold text-gray-400 italic">
-              Və ya sol paneldən istənilən widget-i birbaşa bura atın (Drag & Drop)
+              Və ya sol paneldən istənilən widget-i birbaşa bura atın (WordPress / Elementor Live Drag & Drop)
             </span>
           </div>
         </div>

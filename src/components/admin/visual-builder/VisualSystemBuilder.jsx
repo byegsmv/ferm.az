@@ -225,6 +225,21 @@ export default function VisualSystemBuilder() {
     showToast('Komponent dublikasiya edildi');
   };
 
+  const handleMoveComponent = (sectionId, fromIdx, toIdx) => {
+    if (!activePage) return;
+    const newPages = [...pages];
+    const targetPage = { ...newPages[activePageIndex] };
+    const sec = targetPage.sections.find(s => s.id === sectionId);
+    if (sec && sec.components) {
+      const components = [...sec.components];
+      const [moved] = components.splice(fromIdx, 1);
+      components.splice(toIdx, 0, moved);
+      sec.components = components;
+      newPages[activePageIndex] = targetPage;
+      pushHistory(newPages);
+    }
+  };
+
   const handleUpdateElement = (elementId, updatedElement) => {
     if (!activePage) return;
     const newPages = [...pages];
@@ -373,6 +388,7 @@ export default function VisualSystemBuilder() {
         onDuplicateSection={handleDuplicateSection}
         onDeleteComponent={handleDeleteComponent}
         onDuplicateComponent={handleDuplicateComponent}
+        onMoveComponent={handleMoveComponent}
         onDropWidget={handleAddComponent}
       />
 
