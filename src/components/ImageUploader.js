@@ -31,9 +31,15 @@ export default function ImageUploader({ value = [], onChange, max = 8 }) {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: fd,
       });
-      const data = await res.json();
+      let data;
+      try {
+        const text = await res.text();
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error("Serverdən etibarsız cavab alındı");
+      }
       if (!res.ok) throw new Error(data.error || "Yükləmə xətası");
-      onChange([...value, ...data.images]);
+      onChange([...value, ...(data.images || [])]);
     } catch (err) {
       setError(err.message);
     } finally {
