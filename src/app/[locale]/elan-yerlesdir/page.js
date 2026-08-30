@@ -122,10 +122,18 @@ export default function PostListingPage() {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: fd,
       });
-      const data = await res.json();
+      
+      let data;
+      try {
+        const text = await res.text();
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error("Serverdən etibarsız cavab alındı");
+      }
+
       if (!res.ok) throw new Error(data.error || "Yükləmə xətası");
 
-      const newImages = [...form.images, ...data.images].slice(0, 5);
+      const newImages = [...form.images, ...(data.images || [])].slice(0, 5);
       setForm(prev => ({ ...prev, images: newImages }));
     } catch (err) {
       setError(err.message);
