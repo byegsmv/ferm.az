@@ -17,6 +17,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import SafeImage from "@/components/SafeImage";
 import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { csvToObjects, downloadCsvTemplate } from "@/lib/bulkCsv";
 import ImageUploadField from "@/components/ui/ImageUploadField";
 import BoostModal from "@/components/products/BoostModal";
 import { useSiteTexts } from "@/lib/siteTexts";
@@ -48,6 +49,7 @@ const SIDEBAR_GROUPS_DEF = [
       { id: "categories", icon: "grid", label: "Kateqoriyalar" },
       { id: "brands", icon: "tag", label: "Brendlər" },
       { id: "stores", icon: "store", label: "Mağazalar" },
+      { id: "bulkUpload", icon: "upload", label: "Toplu Yükləmə" },
     ]
   },
   {
@@ -2059,6 +2061,149 @@ function SliderManager() {
 }
 
 
+// ─── Bulk Upload Panel (Toplu Məhsul Yükləmə) ────────────────────────────────
+function BulkUploadPanel() {
+  const [mode, setMode] = useState("store");
+  const [stores, setStores] = useState([]);
+  const [storeId, setStoreId] = useState("");
+  const [csvText, setCsvText] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [results, setResults] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState("");
+  const { toast } = useToast();
+
+  useEffect(() => {
+    apiFetch("/api/stores?all=1&includeStats=1")
+      .then((d) => setStores(d.stores || []))
+      .catch(() => {});
+  }, []);
+
+  function onFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setErr("");
+    setResults(null);
+    const reader = new FileReader();
+    reader.onload = () => { setCsvText(String(reader.result || "")); setFileName(file.name); };
+    reader.readAsText(file);
+  }
+
+  async function submit() {
+    setErr(""); setResults(null);
+    if (!csvText.trim()) { setErr("CSV faylı seçin və ya mətni yapışdırın"); return; }
+    if (mode === "store" && !storeId) { setErr("Mağaza seçin"); return; }
+
+    let rows;
+    try {
+      rows = csvToObjects(csvText).map(({ _rowNumber, ...rest }) => rest);
+    } catch (e) { setErr(e.message); return; }
+    if (!rows.length) { setErr("CSV-də məlumat sətri yoxdur"); return; }
+
+    setUploading(true);
+    try {
+      const d = await apiFetch("/api/products/bulk-upload", {
+        method: "POST",
+        body: JSON.stringify({ target: { type: mode, storeId }, products: rows }),
+      });
+      setResults(d);
+      toast(`${d.createdCount} məhsul yaradıldı${d.failed ? `, ${d.failed} xəta` : ""}`, d.failed ? "error" : "success");
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-bold text-lg flex items-center gap-2"><Icon name="upload" size={20} />Toplu Məhsul Yükləmə</h2>
+        <p className="text-sm text-gray-500 mt-0.5">
+          CSV faylı ilə bir dəfəyə yüzlərlə məhsul əlavə edin. İcazə sadəcə ADMIN/SUPER_ADMIN-ə açıqdır — digər istifadəçilərə &quot;Modullar&quot; bölməsindən &quot;Toplu Məhsul Yükləmə&quot; icazəsi verilə bilər.
+        </p>
+      </div>
+
+      {/* Target mode */}
+      <div className="card p-4 space-y-3">
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setMode("store")}
+            className={`px-4 py-2 rounded-xl text-sm font-bold border transition ${mode === "store" ? "bg-brand-600 text-white border-brand-600" : "bg-white text-gray-600 border-gray-200 hover:border-brand-300"}`}>
+            🏬 Mağazaya yüklə
+          </button>
+          <button onClick={() => setMode("personal")}
+            className={`px-4 py-2 rounded-xl text-sm font-bold border transition ${mode === "personal" ? "bg-brand-600 text-white border-brand-600" : "bg-white text-gray-600 border-gray-200 hover:border-brand-300"}`}>
+            👤 Fərdi (şəxsi) yüklə
+          </button>
+        </div>
+
+        {mode === "store" && (
+          <select value={storeId} onChange={(e) => setStoreId(e.target.value)} className="input-field max-w-md">
+            <option value="">Mağaza seçin...</option>
+            {stores.map((st) => (
+              <option key={st.id} value={st.id}>{st.name}{st.status ? ` (${st.status})` : ""}</option>
+            ))}
+          </select>
+        )}
+        {mode === "personal" && (
+          <p className="text-xs text-gray-500">Məhsullar admin hesabınıza fərdi elan kimi əlavə olunacaq və dərhal aktivləşəcək.</p>
+        )}
+      </div>
+
+      {/* CSV input */}
+      <div className="card p-4 space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-bold cursor-pointer hover:bg-brand-700 transition">
+            📄 CSV faylı seç
+            <input type="file" accept=".csv,text/csv" className="hidden" onChange={onFile} />
+          </label>
+          <button onClick={downloadCsvTemplate}
+            className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+            ⬇ Şablonu yüklə
+          </button>
+          {fileName && <span className="text-xs text-gray-500 font-medium">{fileName}</span>}
+        </div>
+        <textarea
+          rows={5}
+          className="input-field font-mono text-xs"
+          placeholder="və ya CSV mətnini buraya yapışdırın..."
+          value={csvText}
+          onChange={(e) => { setCsvText(e.target.value); setResults(null); }}
+        />
+        <div className="text-[11px] text-gray-500">
+          Məcburi sütunlar: <span className="font-bold text-gray-700">titleAz, price, categorySlug</span>. İstəyə bağlı: descriptionAz, discountedPrice, wholesalePrice, wholesaleMinQty, unit, stock, region, city, imageUrl.
+        </div>
+        {err && <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">{err}</div>}
+        <button onClick={submit} disabled={uploading}
+          className="w-full sm:w-auto px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold transition">
+          {uploading ? "Yüklənir..." : "Toplu Yüklə (aktivləşdir)"}
+        </button>
+      </div>
+
+      {/* Results */}
+      {results && (
+        <div className="card p-4 space-y-3">
+          <div className="flex flex-wrap gap-2 text-sm">
+            <span className="badge-green">✓ {results.createdCount} yaradıldı</span>
+            {results.failed > 0 && <span className="badge-red">✗ {results.failed} xəta</span>}
+            <span className="badge-gray">Cəmi: {results.total}</span>
+          </div>
+          <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+            {results.results.map((r) => (
+              <div key={r.row} className="flex items-start justify-between gap-3 py-2 text-sm">
+                <span className="text-gray-600">Sətir {r.row}: <span className="font-medium text-gray-800">{r.title || "(adsız)"}</span></span>
+                {r.success
+                  ? <span className="badge-green shrink-0">OK</span>
+                  : <span className="text-xs text-red-600 shrink-0 max-w-[50%] text-right">{r.error}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── User Modules Panel (Rol Modulları) ──────────────────────────────────────
 function UserModulesPanel() {
   const [users, setUsers] = useState([]);
@@ -2077,7 +2222,7 @@ function UserModulesPanel() {
     { key: "AI_AGRONOM", label: "AI Aqronom", icon: "bot" },
     { key: "ANALYTICS", label: "Analitika", icon: "trendingUp" },
     { key: "CAMPAIGNS", label: "Kampaniyalar", icon: "bell" },
-    { key: "BULK_CSV", label: "Toplu CSV", icon: "upload" },
+    { key: "BULK_CSV", label: "Toplu Məhsul Yükləmə", icon: "upload" },
     { key: "DELIVERY", label: "Çatdırılma", icon: "truck" },
     { key: "LEADERBOARD", label: "Liderlər Lövhəsi", icon: "trophy" },
     { key: "CATEGORIES_SLIDER", label: "Kateqoriya Slider", icon: "layers" },
@@ -2337,6 +2482,7 @@ export default function AdminPanel() {
       case "categories": return <CategoriesManager />;
       case "brands": return <BrandsManager />;
       case "stores": return <StoresManager />;
+      case "bulkUpload": return <BulkUploadPanel />;
       case "agro_services": return <AgroServicesManager />;
       case "orders": return <OrdersAll />;
       case "wallet": return <WalletWithdrawalsManager />;

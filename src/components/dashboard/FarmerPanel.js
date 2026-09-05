@@ -7,6 +7,7 @@ import MessagingPanel from "@/components/chat/MessagingPanel";
 import AnalyticsPanel from "@/components/dashboard/AnalyticsPanel";
 import CatalogPanel from "@/components/dashboard/CatalogPanel";
 import BoostModal from "@/components/products/BoostModal";
+import { csvToObjects, downloadCsvTemplate } from "@/lib/bulkCsv";
 
 const STATUS_LABELS = {
   DRAFT: "Qaralama",
@@ -236,6 +237,11 @@ export default function FarmerPanel({ user }) {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [bulkAllowed, setBulkAllowed] = useState(false);
+  const [bulkCsv, setBulkCsv] = useState("");
+  const [bulkResults, setBulkResults] = useState(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkErr, setBulkErr] = useState("");
   const [myProducts, setMyProducts] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(null);
@@ -292,6 +298,14 @@ export default function FarmerPanel({ user }) {
       setCategories(flat);
     }).catch(() => {});
     loadMyProducts();
+  }, []);
+
+  useEffect(() => {
+    // Bulk upload module: only visible if the user is ADMIN/SUPER_ADMIN or has
+    // the BULK_CSV module granted from the admin permissions section.
+    apiFetch("/api/products/bulk-upload")
+      .then(() => setBulkAllowed(true))
+      .catch(() => setBulkAllowed(false));
   }, []);
 
   useEffect(() => {
@@ -682,6 +696,7 @@ export default function FarmerPanel({ user }) {
         {[
           { id: "overview", label: "Ümumi Baxış" },
           { id: "products", label: "Elanlarım" },
+          ...(bulkAllowed ? [{ id: "bulkUpload", label: "Toplu Yüklə" }] : []),
           { id: "orders", label: "Sifarişlərim" },
           { id: "bundles", label: "Bağlamalar" },
           { id: "wallet", label: "Pul Kisəm" },
@@ -881,6 +896,81 @@ export default function FarmerPanel({ user }) {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {tab === "bulkUpload" && (
+        <div className="card p-5 space-y-4">
+          <h2 className="font-bold flex items-center gap-2"><Icon name="upload" size={20} /> Toplu Məhsul Yüklə</h2>
+          <p className="text-sm text-gray-500">CSV faylı ilə birdən çox məhsul əlavə edin. Məhsullar admin təsdiqindən sonra aktivləşəcək.</p>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-bold cursor-pointer hover:bg-brand-700 transition">
+              📄 CSV faylı seç
+              <input type="file" accept=".csv,text/csv" className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setBulkErr(""); setBulkResults(null);
+                  const reader = new FileReader();
+                  reader.onload = () => setBulkCsv(String(reader.result || ""));
+                  reader.readAsText(file);
+                }} />
+            </label>
+            <button type="button" onClick={downloadCsvTemplate}
+              className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+              ⬇ Şablonu yüklə
+            </button>
+          </div>
+
+          <textarea rows={5} className="input-field font-mono text-xs"
+            placeholder="və ya CSV mətnini buraya yapışdırın..."
+            value={bulkCsv}
+            onChange={(e) => { setBulkCsv(e.target.value); setBulkResults(null); }} />
+          <p className="text-[11px] text-gray-500">Məcburi sütunlar: titleAz, price, categorySlug. İstəyə bağlı: descriptionAz, discountedPrice, wholesalePrice, wholesaleMinQty, unit, stock, region, city, imageUrl.</p>
+
+          {bulkErr && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-2">{bulkErr}</p>}
+
+          <button type="button" disabled={bulkUploading}
+            onClick={async () => {
+              setBulkErr(""); setBulkResults(null);
+              if (!bulkCsv.trim()) { setBulkErr("CSV mətni boşdur"); return; }
+              let rows;
+              try { rows = csvToObjects(bulkCsv).map(({ _rowNumber, ...rest }) => rest); }
+              catch (e) { setBulkErr(e.message); return; }
+              if (!rows.length) { setBulkErr("CSV-də məlumat sətri yoxdur"); return; }
+              setBulkUploading(true);
+              try {
+                const d = await apiFetch("/api/products/bulk-upload", {
+                  method: "POST",
+                  body: JSON.stringify({ target: { type: "personal" }, products: rows }),
+                });
+                setBulkResults(d);
+              } catch (e) { setBulkErr(e.message); }
+              finally { setBulkUploading(false); }
+            }}
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold transition">
+            {bulkUploading ? "Yüklənir..." : "Toplu Yüklə"}
+          </button>
+
+          {bulkResults && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">
+                <span className="text-green-700">✓ {bulkResults.createdCount} yaradıldı</span>
+                {bulkResults.failed > 0 && <span className="text-red-600"> · ✗ {bulkResults.failed} xəta</span>}
+              </p>
+              <div className="max-h-60 overflow-y-auto divide-y divide-gray-50 text-sm">
+                {bulkResults.results.map((r) => (
+                  <div key={r.row} className="flex items-center justify-between gap-3 py-1.5">
+                    <span className="text-gray-600">Sətir {r.row}: <span className="font-medium text-gray-800">{r.title || "(adsız)"}</span></span>
+                    {r.success
+                      ? <span className="text-green-600 text-xs font-bold">OK</span>
+                      : <span className="text-xs text-red-600 text-right max-w-[50%]">{r.error}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

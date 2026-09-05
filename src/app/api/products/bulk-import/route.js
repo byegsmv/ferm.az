@@ -16,8 +16,22 @@ import slugify from "slugify";
  */
 export async function POST(request) {
   const authUser = await getAuthUser(request);
-  const denied = requireRole(authUser, ["ADMIN", "SUPER_ADMIN", "BUYER"]); // All authenticated users can bulk import
-  if (denied) return denied;
+  if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Permission gate: ADMIN/SUPER_ADMIN by default; other users need the
+  // BULK_CSV module granted from the admin permissions section.
+  const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(authUser.role);
+  if (!isAdmin) {
+    const mod = await prisma.userModule.findFirst({
+      where: { userId: authUser.sub, module: "BULK_CSV" },
+    });
+    if (!mod) {
+      return Response.json(
+        { error: "Toplu yükləmə icazəniz yoxdur. Admin icazə bölməsindən əldə edə bilərsiniz." },
+        { status: 403 }
+      );
+    }
+  }
 
   let body;
   try {
