@@ -273,10 +273,28 @@ export default async function ProductDetailPage({ params }) {
     ],
   };
 
-  const seller = product.seller ? {
-    ...product.seller,
-    otherListings
+  // Mağazaya bağlı məhsullarda "Satıcı haqqında" bölməsi mağaza adını və
+  // mağaza profilinə keçidi göstərməlidir, fərdi satıcı adını yox.
+  const sellerCard = product.store ? {
+    isStore: true,
+    id: product.store.id,
+    slug: product.store.slug,
+    displayName: product.store.name,
+    logoUrl: product.store.logoUrl,
+    isVerified: product.store.isVerified,
+    avgRating: product.seller?.avgRating,
+    reviewCount: product.seller?.reviewCount,
+    otherListings,
+  } : product.seller ? {
+    isStore: false,
+    id: product.seller.id,
+    displayName: product.seller.fullName,
+    role: product.seller.role,
+    avgRating: product.seller.avgRating,
+    reviewCount: product.seller.reviewCount,
+    otherListings,
   } : null;
+  const seller = sellerCard;
 
   const hasDiscount = product.discountedPrice && Number(product.discountedPrice) > 0 && Number(product.discountedPrice) < Number(product.price);
   const effectivePrice = hasDiscount ? Number(product.discountedPrice) : Number(product.price);
@@ -608,16 +626,20 @@ export default async function ProductDetailPage({ params }) {
           {seller && (
             <div className="card p-5 mt-6 border border-gray-100 rounded-2xl">
               <div className="flex items-center justify-between mb-3">
-                 <h3 className="font-bold text-sm">Satıcı haqqında</h3>
-                 <Link href={`/seller/${seller.id}`} className="text-[11px] text-brand-600 font-bold hover:underline bg-brand-50 px-2 py-1 rounded-md"><span className="inline-flex items-center gap-1">Profilə bax <Icon name="arrowRight" size={12} /></span></Link>
+                 <h3 className="font-bold text-sm">{seller.isStore ? "Mağaza haqqında" : "Satıcı haqqında"}</h3>
+                 <Link href={seller.isStore ? `/stores/${seller.slug}` : `/seller/${seller.id}`} className="text-[11px] text-brand-600 font-bold hover:underline bg-brand-50 px-2 py-1 rounded-md"><span className="inline-flex items-center gap-1">Profilə bax <Icon name="arrowRight" size={12} /></span></Link>
               </div>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center text-xl font-bold">
-                  {seller.fullName?.[0]}
+                <div className="w-12 h-12 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center text-xl font-bold overflow-hidden">
+                  {seller.isStore && seller.logoUrl ? (
+                    <img src={seller.logoUrl} alt={seller.displayName} className="w-full h-full object-cover" />
+                  ) : (
+                    seller.displayName?.[0]
+                  )}
                 </div>
                 <div>
-                  <p className="font-bold">{seller.fullName}</p>
-                  <p className="text-xs text-gray-500">{seller.role === 'STORE' ? 'Mağaza' : 'İstifadəçi'}</p>
+                  <p className="font-bold flex items-center gap-1">{seller.displayName}{seller.isStore && seller.isVerified && <Icon name="shieldCheck" size={14} className="text-brand-600" />}</p>
+                  <p className="text-xs text-gray-500">{seller.isStore ? "Mağaza" : (seller.role === 'STORE' ? 'Mağaza' : 'İstifadəçi')}</p>
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="inline-flex items-center gap-0.5">{[...Array(5)].map((_, i) => <Icon key={i} name="star" size={12} className={i < Math.round(seller.avgRating||0) ? "text-amber-400 fill-amber-400" : "text-gray-300"} />)}</span>
                     <span className="text-xs text-gray-400">({seller.reviewCount||0} rəy)</span>
