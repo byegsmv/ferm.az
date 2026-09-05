@@ -182,9 +182,9 @@ function pickModels(available, prefs, fallback) {
 }
 
 // OpenAI-compatible chat completions (Groq / xAI)
-async function callOpenAICompat({ endpoint, key, models, prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode }) {
+async function callOpenAICompat({ endpoint, key, models, prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode, includeImage = true }) {
   const content = [{ type: "text", text: prompt }];
-  if (imageBase64) {
+  if (imageBase64 && includeImage) {
     content.push({
       type: "image_url",
       image_url: { url: `data:${imageMimeType || "image/jpeg"};base64,${imageBase64}` },
@@ -202,7 +202,6 @@ async function callOpenAICompat({ endpoint, key, models, prompt, imageBase64, im
           messages: [{ role: "user", content }],
           temperature: 0.6,
           max_completion_tokens: maxOutputTokens,
-          max_tokens: maxOutputTokens,
           ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
         }),
       });
@@ -249,12 +248,22 @@ export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOu
   if (keys.groq) {
     try {
       const available = await discoverModels("https://api.groq.com/openai/v1/chat/completions", keys.groq);
-      const groqModels = pickModels(available, [/llama-4-scout/i, /llama-4-maverick/i, /vision/i, /llama-3\.2-90b/i, /llama-3\.2-11b/i], GROQ_MODELS);
+      const visionRe = /vision|llama-4|scout|maverick|pixtral|qwen.*vl|gpt-4o|gemma|llama-3\.2/i;
+      const visionModels = available.filter((id) => visionRe.test(id));
+      const textModels = pickModels(available, [/qwen3\.\d+-27b/i, /gpt-oss-120b/i, /gpt-oss-20b/i, /qwen/i, /allam-2/i, /compound-mini/i], GROQ_MODELS);
+      const hasImage = !!imageBase64;
+      const useVision = hasImage && visionModels.length > 0;
+      const groqModels = (hasImage ? (useVision ? visionModels : textModels) : textModels).slice(0, 4);
+      if (hasImage && !useVision) {
+        // Hesabda vision model yoxdur — shekli at, metnle davam et
+        console.log("⚠️ Groq: vision model tapılmadı, şəklsiz (yalnız mətn) analiz davam edir");
+      }
       const text = await callOpenAICompat({
         endpoint: "https://api.groq.com/openai/v1/chat/completions",
         key: keys.groq,
-        models: groqModels.slice(0, 4),
+        models: groqModels,
         prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode,
+        includeImage: useVision,
       });
       geminiDebug.lastProvider = "groq";
       geminiDebug.lastError = null;
@@ -270,12 +279,18 @@ export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOu
   if (keys.xai) {
     try {
       const availableX = await discoverModels("https://api.x.ai/v1/chat/completions", keys.xai);
-      const xaiModels = pickModels(availableX, [/grok-\d*-vision/i, /grok-vision/i, /grok-4/i, /grok-3/i], XAI_MODELS);
+      const visionReX = /vision|grok-4|grok-3/i;
+      const visionModelsX = availableX.filter((id) => visionReX.test(id));
+      const textModelsX = pickModels(availableX, [/grok-4/i, /grok-3/i, /grok-2/i], XAI_MODELS);
+      const hasImageX = !!imageBase64;
+      const useVisionX = hasImageX && visionModelsX.length > 0;
+      const xaiModels = (hasImageX ? (useVisionX ? visionModelsX : textModelsX) : textModelsX).slice(0, 4);
       const text = await callOpenAICompat({
         endpoint: "https://api.x.ai/v1/chat/completions",
         key: keys.xai,
-        models: xaiModels.slice(0, 4),
+        models: xaiModels,
         prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode,
+        includeImage: useVisionX,
       });
       geminiDebug.lastProvider = "grok";
       geminiDebug.lastError = null;
