@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { geminiGenerate } from "@/lib/gemini";
+import { normalizeBlogContent } from "@/lib/blogContent";
 import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
@@ -47,6 +48,7 @@ Tələblər:
 2. Mətnin mükəmməl giriş, əsas hissə və yekun hissəsi olsun. Mətn Azərbaycan dilində olmalıdır. Fikirləri aydın, anlaşıqlı və peşəkar şəkildə izah et.
 3. Fermerlərə bu xəbərlərin (və ya yeniliklərin) nə üçün əhəmiyyətli olduğunu, onların işinə necə təsir edə biləcəyini izah et.
 4. Məqaləni HTML formatında qaytar. <div>, <p>, <h3>, <ul>, <li>, <strong>, <br> kimi teqlərdən istifadə edərək mətni gözəl strukturlaşdır.
+   ÇOX VACİB: contentAz dəyəri DAXİLİNƏ heç bir markdown kod bloku (\`\`\` və ya \`\`\`html) YAZMA. Yalnız təmiz HTML teqləri olmalıdır. Markdown işarələri (**bold**, # başlıq) istifadə etmə — yalnız HTML teqləri.
 5. Məqaləyə uyğun olaraq vizual zənginlik qatmaq üçün mətnin daxilinə və məqalənin üz qabığı (coverUrl) üçün süni intellekt vasitəsilə şəkillər əlavə et. 
    Şəkil yaratmaq üçün bu URL formatından istifadə et: "https://image.pollinations.ai/prompt/{ingilisce-detalli-tesvir}?width=1024&height=768&nologo=true".
    Məsələn, xəbər pambıqçılıq barədədirsə, mətnin daxilinə belə bir teq qoy: <img src="https://image.pollinations.ai/prompt/farmers-harvesting-cotton-in-field-realistic-high-quality-photography?width=1024&height=500&nologo=true" alt="Pambıq yığımı" class="w-full rounded-xl my-4" />
@@ -104,16 +106,24 @@ ${newsListStr}`;
       .replace(/^-+/, '')
       .replace(/-+$/, '');
 
-    const slug = generateSlug(parsed.titleAz) + '-' + Math.random().toString(36).substring(2, 8);
-
     // Provide a default cover image for AI news
-    const coverUrl = parsed.coverUrl || "https://www.fermermarket.az/img/blog-ai-placeholder.jpg";
+    let coverUrl = "https://www.fermermarket.az/img/blog-ai-placeholder.jpg";
+    if (parsed.coverUrl && /^https:\/\//i.test(parsed.coverUrl) && !/javascript:/i.test(parsed.coverUrl)) {
+      coverUrl = parsed.coverUrl;
+    }
+
+    // Clean the AI output: strip code fences / escaped entities / dangerous tags
+    const cleanContent = normalizeBlogContent(parsed.contentAz);
+    const cleanTitle = String(parsed.titleAz || "").replace(/```[a-zA-Z]*\n?/g, "").trim();
+    if (!cleanTitle || !cleanContent) {
+      return NextResponse.json({ error: "AI returned empty title/content" }, { status: 500 });
+    }
 
     const blogPost = await prisma.blogPost.create({
       data: {
-        slug,
-        titleAz: parsed.titleAz,
-        contentAz: parsed.contentAz,
+        slug: generateSlug(cleanTitle) + '-' + Math.random().toString(36).substring(2, 8),
+        titleAz: cleanTitle,
+        contentAz: cleanContent,
         category: "Aqrar Xəbərlər",
         authorId: adminUser.id,
         isPublished: true,
