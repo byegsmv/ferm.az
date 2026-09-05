@@ -8,7 +8,28 @@ export async function POST(req) {
       return Response.json({ error: "Bu modul deaktiv edilib" }, { status: 403 });
     }
     
-    const { messages } = await req.json();
+    // Accept both JSON ({messages}) and multipart/form-data ({messages: JSON string, image: File})
+    const contentType = req.headers.get("content-type") || "";
+    let messages = null;
+    let imageBase64 = null;
+    let imageMimeType = null;
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      try { messages = JSON.parse(formData.get("messages") || "null"); } catch { messages = null; }
+      const image = formData.get("image");
+      if (image && image !== "null" && typeof image === "object" && image.size > 0) {
+        const buffer = Buffer.from(await image.arrayBuffer());
+        imageBase64 = buffer.toString("base64");
+        imageMimeType = image.type || "image/jpeg";
+      }
+    } else {
+      const body = await req.json();
+      messages = body.messages;
+      imageBase64 = body.imageBase64 || null;
+      imageMimeType = body.imageMimeType || "image/jpeg";
+    }
+
     if (!messages || !Array.isArray(messages)) {
       return Response.json({ error: "Mesajlar tapılmadı" }, { status: 400 });
     }
@@ -23,6 +44,7 @@ Sən Azərbaycan dilində danışırsan, çox mehriban və köməksevərsən.
 Məsələn: "Bunun üçün sizə [PRODUCT:fungisid] və ya [PRODUCT:Mis kuporosu] lazımdır."
 Və ya "Torpağı gücləndirmək üçün [PRODUCT:NPK gübrəsi] istifadə edə bilərsiniz."
 
+${imageBase64 ? "\nİstifadəçi son mesajına bitki/yarpaq/zərərverici şəkli əlavə edib — şəkli diqqətlə analiz et və diaqnozunu şəkilə əsaslandır.\n" : ""}
 Budur söhbət tarixçəsi və son sual:
 ${historyText}
 
@@ -30,6 +52,8 @@ Sənin cavabın:`;
 
     const aiResponse = await geminiGenerate({
       prompt,
+      imageBase64: imageBase64 || undefined,
+      imageMimeType: imageBase64 ? imageMimeType : undefined,
       maxOutputTokens: 1024,
     });
 

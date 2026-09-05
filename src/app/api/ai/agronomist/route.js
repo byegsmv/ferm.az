@@ -41,6 +41,7 @@ export async function POST(req) {
       imageBase64,
       imageMimeType,
       maxOutputTokens: 1024,
+      jsonMode: true,
     });
 
     // Parse AI response
