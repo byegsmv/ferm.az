@@ -151,14 +151,17 @@ export async function POST(request) {
         },
       });
 
-      // Optional single image URL per row
-      if (row.imageUrl) {
+      // Images: imageUrls array (preferred) or single imageUrl fallback
+      const urls = Array.isArray(row.imageUrls) && row.imageUrls.length
+        ? row.imageUrls.filter((u) => typeof u === "string" && u.trim())
+        : row.imageUrl ? [row.imageUrl] : [];
+      for (let j = 0; j < Math.min(urls.length, 8); j++) {
         await prisma.productImage.create({
           data: {
             productId: created.id,
-            url: row.imageUrl,
+            url: urls[j].trim(),
             altText: title,
-            sortOrder: 0,
+            sortOrder: j,
           },
         });
       }

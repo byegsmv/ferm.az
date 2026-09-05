@@ -18,6 +18,7 @@ import SafeImage from "@/components/SafeImage";
 import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { csvToObjects, downloadCsvTemplate } from "@/lib/bulkCsv";
+import ImageUploader from "@/components/ImageUploader";
 import ImageUploadField from "@/components/ui/ImageUploadField";
 import BoostModal from "@/components/products/BoostModal";
 import { useSiteTexts } from "@/lib/siteTexts";
@@ -2061,6 +2062,172 @@ function SliderManager() {
 }
 
 
+// ─── AI Quick Add (şəkil + qısa məlumat → hazır elan) ──────────────────────────
+function AiQuickAddPanel({ storeId }) {
+  const [images, setImages] = useState([]);
+  const [infoText, setInfoText] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiErr, setAiErr] = useState("");
+  const [draft, setDraft] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [missing, setMissing] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const { toast } = useToast();
+
+  async function analyze() {
+    setAiErr(""); setSuccess(null);
+    if (!infoText.trim() && !images.length) {
+      setAiErr("Şəkil yükləyin və ya qısa məlumat yazın");
+      return;
+    }
+    setAnalyzing(true);
+    try {
+      const d = await apiFetch("/api/ai/analyze-product", {
+        method: "POST",
+        body: JSON.stringify({
+          infoText,
+          imageUrl: images[0]?.url || null,
+        }),
+      });
+      setDraft(d.draft);
+      setCategories(d.categories || []);
+      setMissing(d.missing || []);
+      if (!d.draft?.titleAz) setAiErr("AI cavab vermədi, yenidən cəhd edin");
+    } catch (e) {
+      setAiErr(e.message);
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  function upd(field, val) { setDraft((p) => ({ ...p, [field]: val })); }
+
+  async function publish() {
+    setAiErr("");
+    if (!draft?.titleAz?.trim()) { setAiErr("Başlıq boş ola bilməz"); return; }
+    if (!(Number(draft.price) > 0)) { setAiErr("Qiymət daxil edin (müsbət rəqəm)"); return; }
+    if (!draft.categorySlug) { setAiErr("Kateqoriya seçin"); return; }
+
+    setSaving(true);
+    try {
+      const d = await apiFetch("/api/products/bulk-upload", {
+        method: "POST",
+        body: JSON.stringify({
+          target: { type: storeId ? "store" : "personal", storeId: storeId || undefined },
+          products: [{
+            titleAz: draft.titleAz,
+            descriptionAz: draft.descriptionAz,
+            price: draft.price,
+            ...(draft.discountedPrice ? { discountedPrice: draft.discountedPrice } : {}),
+            ...(draft.wholesalePrice ? { wholesalePrice: draft.wholesalePrice, wholesaleMinQty: draft.wholesaleMinQty || 1 } : {}),
+            unit: draft.unit,
+            stock: draft.stock || 1,
+            categorySlug: draft.categorySlug,
+            imageUrls: images.map((i) => i.url),
+          }],
+        }),
+      });
+      const r = (d.results || [])[0];
+      if (r?.success) {
+        setSuccess(r);
+        setDraft(null); setImages([]); setInfoText(""); setMissing([]);
+        toast(`"${r.title}" dərhal AKTİV olaraq yayımlandı`, "success");
+      } else {
+        setAiErr(r?.error || "Elan yerləşdirilə bilmədi");
+      }
+    } catch (e) {
+      setAiErr(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Step 1: image + short info */}
+      <div className="card p-4 space-y-4">
+        <div>
+          <p className="text-sm font-bold text-gray-800 mb-1">1. Şəkil və qısa məlumat</p>
+          <p className="text-xs text-gray-500">Məhsul şəklini yüklə, qısa məlumatı yaz (WhatsApp&apos;da yazdığın kimi) — AI avtomatik başlıq, açıqlama və kateqoriya hazırlayacaq.</p>
+        </div>
+        <ImageUploader value={images} onChange={(v) => { setImages(v); setSuccess(null); }} max={8} />
+        <textarea
+          rows={3}
+          className="input-field"
+          placeholder="Məsələn: EvroHim KAS-32 maye azot gübrəsi, 3.50 AZN, toptan 2.80 min 10 ədəd, 50 stok"
+          value={infoText}
+          onChange={(e) => { setInfoText(e.target.value); setSuccess(null); }}
+        />
+        {aiErr && <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">{aiErr}</div>}
+        <button onClick={analyze} disabled={analyzing || !images.length && !infoText.trim()}
+          className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-brand-600 hover:from-purple-700 hover:to-brand-700 text-white font-bold transition disabled:opacity-60">
+          {analyzing ? "🤖 AI analiz edir..." : "🤖 AI ilə analiz et"}
+        </button>
+      </div>
+
+      {/* Step 2: editable draft */}
+      {draft && (
+        <div className="card p-4 space-y-3 border-2 border-purple-200">
+          <div>
+            <p className="text-sm font-bold text-gray-800 mb-1">2. AI hazırlığı — yoxla və düzəlt</p>
+            <p className="text-xs text-gray-500">AI tərəfindən hazırlanan elan mətni. İstədiyin kimi redaktə edə və dərhal yayımlaya bilərsən.</p>
+          </div>
+
+          {missing.length > 0 && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm space-y-1">
+              <p className="font-bold text-amber-800">AI sualları:</p>
+              {missing.map((m, i) => (
+                <p key={i} className="text-amber-700">• {m.question}</p>
+              ))}
+            </div>
+          )}
+
+          <input className="input-field font-semibold" placeholder="Başlıq" value={draft.titleAz} onChange={(e) => upd("titleAz", e.target.value)} />
+          <textarea rows={4} className="input-field" placeholder="Açıqlama" value={draft.descriptionAz} onChange={(e) => upd("descriptionAz", e.target.value)} />
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <input type="number" step="0.01" className="input-field" placeholder="Qiymət (AZN) *" value={draft.price} onChange={(e) => upd("price", e.target.value)} />
+            <input type="number" step="0.01" className="input-field" placeholder="Endirimli" value={draft.discountedPrice} onChange={(e) => upd("discountedPrice", e.target.value)} />
+            <input type="number" step="0.01" className="input-field" placeholder="Toptan qiymət" value={draft.wholesalePrice} onChange={(e) => upd("wholesalePrice", e.target.value)} />
+            <input type="number" className="input-field" placeholder="Toptan min. say" value={draft.wholesaleMinQty} onChange={(e) => upd("wholesaleMinQty", e.target.value)} />
+            <input type="number" className="input-field" placeholder="Stok" value={draft.stock} onChange={(e) => upd("stock", e.target.value)} />
+            <input className="input-field" placeholder="Vahid (ədəd/kq/litr)" value={draft.unit} onChange={(e) => upd("unit", e.target.value)} />
+          </div>
+
+          <select className="input-field" value={draft.categorySlug || ""} onChange={(e) => {
+            const cat = categories.find((c) => c.slug === e.target.value);
+            setDraft((p) => ({ ...p, categorySlug: cat?.slug || null }));
+          }}>
+            <option value="">Kateqoriya seçin... *</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.slug}>{c.name}</option>
+            ))}
+          </select>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button onClick={publish} disabled={saving}
+              className="px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold transition disabled:opacity-60">
+              {saving ? "Yerləşdirilir..." : "✅ Elanı yerləşdir (dərhal AKTİV)"}
+            </button>
+            <span className="text-xs text-gray-500">
+              {storeId ? "Seçilmiş mağazaya əlavə olunacaq" : "Fərdi elan kimi admin hesabınıza əlavə olunacaq"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Success */}
+      {success && (
+        <div className="card p-4 bg-green-50 border border-green-200">
+          <p className="font-bold text-green-700">✓ &quot;{success.title}&quot; dərhal AKTİF olaraq yayımlandı!</p>
+          <p className="text-xs text-gray-500 mt-1">Yeni elan əlavə etmək üçün şəkil və məlumatı yenidən göndərin.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Bulk Upload Panel (Toplu Məhsul Yükləmə) ────────────────────────────────
 function BulkUploadPanel() {
   const [mode, setMode] = useState("store");
@@ -2135,11 +2302,15 @@ function BulkUploadPanel() {
             className={`px-4 py-2 rounded-xl text-sm font-bold border transition ${mode === "personal" ? "bg-brand-600 text-white border-brand-600" : "bg-white text-gray-600 border-gray-200 hover:border-brand-300"}`}>
             👤 Fərdi (şəxsi) yüklə
           </button>
+          <button onClick={() => setMode("ai")}
+            className={`px-4 py-2 rounded-xl text-sm font-bold border transition ${mode === "ai" ? "bg-gradient-to-r from-purple-600 to-brand-600 text-white border-purple-600" : "bg-white text-gray-600 border-gray-200 hover:border-purple-300"}`}>
+            🤖 AI ilə əlavə et
+          </button>
         </div>
 
-        {mode === "store" && (
+        {(mode === "store" || mode === "ai") && (
           <select value={storeId} onChange={(e) => setStoreId(e.target.value)} className="input-field max-w-md">
-            <option value="">Mağaza seçin...</option>
+            <option value="">Mağaza seçin...{mode === "ai" ? " (seçməsəniz fərdi elan kimi)" : ""}</option>
             {stores.map((st) => (
               <option key={st.id} value={st.id}>{st.name}{st.status ? ` (${st.status})` : ""}</option>
             ))}
@@ -2150,8 +2321,13 @@ function BulkUploadPanel() {
         )}
       </div>
 
+      {/* AI quick-add panel */}
+      {mode === "ai" && (
+        <AiQuickAddPanel storeId={storeId} stores={stores} />
+      )}
+
       {/* CSV input */}
-      <div className="card p-4 space-y-3">
+      {mode !== "ai" && (<div className="card p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <label className="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-bold cursor-pointer hover:bg-brand-700 transition">
             📄 CSV faylı seç
@@ -2178,10 +2354,10 @@ function BulkUploadPanel() {
           className="w-full sm:w-auto px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold transition">
           {uploading ? "Yüklənir..." : "Toplu Yüklə (aktivləşdir)"}
         </button>
-      </div>
+      </div>)}
 
       {/* Results */}
-      {results && (
+      {mode !== "ai" && results && (
         <div className="card p-4 space-y-3">
           <div className="flex flex-wrap gap-2 text-sm">
             <span className="badge-green">✓ {results.createdCount} yaradıldı</span>
