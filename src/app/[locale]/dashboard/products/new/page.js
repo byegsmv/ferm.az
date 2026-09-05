@@ -21,6 +21,7 @@ export default function StoreNewProductPage() {
     titleAz: "",
     descriptionAz: "",
     price: "",
+    discountedPrice: "",
     stock: "1",
     unit: "ədəd",
     categoryId: "",
@@ -85,6 +86,16 @@ export default function StoreNewProductPage() {
 
       if (storeId) payload.storeId = storeId;
 
+      if (formData.discountedPrice) {
+        const disc = parseFloat(formData.discountedPrice);
+        if (disc >= payload.price) {
+          setError("Endirimli qiymət normal qiymətdən aşağı olmalıdır.");
+          setLoading(false);
+          return;
+        }
+        payload.discountedPrice = disc;
+      }
+
       if (formData.wholesalePrice) {
         payload.wholesalePrice = parseFloat(formData.wholesalePrice);
         payload.wholesaleMinQty = parseInt(formData.wholesaleMinQty || "1", 10);
@@ -147,10 +158,17 @@ export default function StoreNewProductPage() {
               className={inputCls} placeholder="0.00" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Vahid</label>
-            <input type="text" value={formData.unit} onChange={set("unit")}
-              className={inputCls} placeholder="ədəd / kq / litr" />
+            <label className="block text-sm font-medium mb-1 text-red-700">Endirimli qiymət (AZN, opsional)</label>
+            <input type="number" step="0.01" value={formData.discountedPrice} onChange={set("discountedPrice")}
+              className={inputCls + " !border-red-200 focus:!border-red-400"} placeholder="0.00" />
+            <p className="text-xs text-gray-400 mt-1">Boş saxlansanız endirim göstərilmir. Normal qiymətdən aşağı olmalıdır.</p>
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Vahid</label>
+          <input type="text" value={formData.unit} onChange={set("unit")}
+            className={inputCls} placeholder="ədəd / kq / litr" />
         </div>
 
         <div className="p-4 rounded-xl border border-amber-200 bg-amber-50 space-y-4">

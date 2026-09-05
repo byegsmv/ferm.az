@@ -231,7 +231,7 @@ export default function FarmerPanel({ user }) {
   const [aiCategory, setAiCategory] = useState("");
   const [aiError, setAiError] = useState("");
   const [categories, setCategories] = useState([]);
-  const [form, setForm] = useState({ titleAz: "", price: "", stock: 1, categoryId: "", region: "", city: "", descriptionAz: "", images: [], isCorporate: false, minOrderQty: "", tags: [], allowInstallment: false });
+  const [form, setForm] = useState({ titleAz: "", price: "", discountedPrice: "", stock: 1, categoryId: "", region: "", city: "", descriptionAz: "", images: [], isCorporate: false, minOrderQty: "", tags: [], allowInstallment: false });
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -379,6 +379,7 @@ export default function FarmerPanel({ user }) {
         storeId: (_store?.id || user?.store?.id) || undefined,
         titleAz: form.titleAz,
         price: form.price ? Number(form.price) : 0,
+        discountedPrice: form.discountedPrice ? Number(form.discountedPrice) : null,
         stock: form.stock !== "" && form.stock !== null ? Number(form.stock) : 1,
         categoryId: form.categoryId,
         region: form.region || undefined,
@@ -395,7 +396,7 @@ export default function FarmerPanel({ user }) {
       });
       await apiFetch("/api/products", { method: "POST", body: JSON.stringify(payload) });
       setMsg("Elan yaradıldı! Admin təsdiqindən sonra aktivləşəcək.");
-      setForm({ titleAz: "", price: "", stock: 1, categoryId: "", region: "", city: "", descriptionAz: "", images: [], isCorporate: false, minOrderQty: "", allowInstallment: false });
+      setForm({ titleAz: "", price: "", discountedPrice: "", stock: 1, categoryId: "", region: "", city: "", descriptionAz: "", images: [], isCorporate: false, minOrderQty: "", allowInstallment: false });
       loadMyProducts();
     } catch (err) {
       const details = err.details ? Object.values(err.details).flat().join(" · ") : "";
@@ -407,7 +408,7 @@ export default function FarmerPanel({ user }) {
 
   function startEdit(p) {
     setEditingId(p.id);
-    setEditForm({ titleAz: p.titleAz || p.title, price: p.price, stock: p.stock, region: p.region || "", city: p.city || "", images: p.images || (p.coverImage ? [{ url: p.coverImage }] : []), allowInstallment: p.allowInstallment || false });
+    setEditForm({ titleAz: p.titleAz || p.title, price: p.price, discountedPrice: p.discountedPrice ?? "", stock: p.stock, region: p.region || "", city: p.city || "", images: p.images || (p.coverImage ? [{ url: p.coverImage }] : []), allowInstallment: p.allowInstallment || false });
   }
 
   async function saveEdit(id) {
@@ -417,6 +418,7 @@ export default function FarmerPanel({ user }) {
         storeId: (_store?.id || user?.store?.id) || undefined,
         titleAz: editForm.titleAz,
         price: editForm.price ? Number(editForm.price) : 0,
+        discountedPrice: editForm.discountedPrice ? Number(editForm.discountedPrice) : null,
         stock: editForm.stock !== "" && editForm.stock !== null ? Number(editForm.stock) : 1,
         region: editForm.region || undefined,
         city: editForm.city || undefined,
@@ -723,8 +725,9 @@ export default function FarmerPanel({ user }) {
                   AI ilə yaz
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <input required type="number" step="0.01" placeholder="Qiymət (AZN)" className="input-field" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                <input type="number" step="0.01" placeholder="Endirimli qiymət (₼)" className="input-field !border-red-200 focus:!border-red-400" value={form.discountedPrice} onChange={(e) => setForm({ ...form, discountedPrice: e.target.value })} />
                 <input required type="number" placeholder="Stok" className="input-field" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
               </div>
               <select required className="input-field" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
@@ -812,9 +815,10 @@ export default function FarmerPanel({ user }) {
                     {editingId === p.id ? (
                       <div className="space-y-2">
                         <input className="input-field" value={editForm.titleAz} onChange={(e) => setEditForm({ ...editForm, titleAz: e.target.value })} />
-                        <div className="grid grid-cols-2 gap-2">
-                          <input type="number" step="0.01" className="input-field" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} />
-                          <input type="number" className="input-field" value={editForm.stock} onChange={(e) => setEditForm({ ...editForm, stock: e.target.value })} />
+                        <div className="grid grid-cols-3 gap-2">
+                          <input type="number" step="0.01" className="input-field" placeholder="Qiymət" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} />
+                          <input type="number" step="0.01" className="input-field !border-red-200 focus:!border-red-400" placeholder="Endirim" value={editForm.discountedPrice} onChange={(e) => setEditForm({ ...editForm, discountedPrice: e.target.value })} />
+                          <input type="number" className="input-field" placeholder="Stok" value={editForm.stock} onChange={(e) => setEditForm({ ...editForm, stock: e.target.value })} />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <input placeholder="Region" className="input-field" value={editForm.region} onChange={(e) => setEditForm({ ...editForm, region: e.target.value })} />
