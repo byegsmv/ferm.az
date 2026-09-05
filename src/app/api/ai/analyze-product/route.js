@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
-import { geminiGenerate } from "@/lib/gemini";
+import { geminiGenerate, geminiDebug } from "@/lib/gemini";
 
 // POST /api/ai/analyze-product
 // AI-assisted quick listing: analyzes image + short info text and returns
@@ -127,6 +127,7 @@ missing massivi yalnız çatışmayan məlumatlar üçün olmalıdır (price, st
   // Resolve category slug → id (fallback: null → UI shows selector)
   const matched = categories.find((c) => c.slug === draft.categorySlug);
   return Response.json({
+    _debug: { geminiError: geminiDebug.lastError, geminiStatus: geminiDebug.lastStatus },
     draft: {
       titleAz: draft.titleAz || "",
       descriptionAz: draft.descriptionAz || "",

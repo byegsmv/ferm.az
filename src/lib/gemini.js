@@ -2,6 +2,9 @@
 // Reads API key from: 1) DB Setting table (admin-managed), 2) env var, 3) offline fallback.
 const MODEL = "gemini-2.5-flash";
 
+// Temporary diagnostics: last Gemini error (null when last call succeeded)
+export const geminiDebug = { lastError: null, lastStatus: null };
+
 let cachedKey = null;
 let cacheExpiry = 0;
 
@@ -118,8 +121,13 @@ export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOu
       }
     );
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error?.message || "AI sorğusu uğursuz oldu");
+    const data = await res.json().catch(() => ({}));
+    geminiDebug.lastStatus = res.status;
+    if (!res.ok) {
+      geminiDebug.lastError = (data?.error?.message || "AI sorğusu uğursuz oldu") + ` [HTTP ${res.status}]`;
+      throw new Error(geminiDebug.lastError);
+    }
+    geminiDebug.lastError = null;
 
     const candidate = data?.candidates?.[0];
     const text = candidate?.content?.parts?.map((p) => p.text).join("\n") || "";
@@ -127,6 +135,7 @@ export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOu
     return text.trim();
   } catch (err) {
     console.log("⚠️ AI xətası, offline rejimə keçilir:", err.message);
+    geminiDebug.lastError = geminiDebug.lastError || err.message;
     return offlineGenerate(prompt);
   }
 }
