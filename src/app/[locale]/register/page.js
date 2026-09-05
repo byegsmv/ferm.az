@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter, Link } from "@/i18n/routing";
 import { apiFetch, saveSession, getToken } from "@/lib/apiClient";
 import Icon from "@/components/ui/Icon";
+import TermsCheckbox from "@/components/TermsCheckbox";
 
 function EyeIcon({ visible }) {
   return visible ? (
@@ -36,9 +37,15 @@ export default function RegisterPage() {
   }, []);
 
   const [error, setError] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState("");
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!termsAccepted) {
+      setTermsError("Davam etmək üçün İstifadə Şərtlərini oxuyub qəbul etməlisiniz.");
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       setError("Şifrələr uyğun gəlmir"); return;
     }
@@ -123,6 +130,11 @@ export default function RegisterPage() {
                 </button>
               </div>
             </div>
+            <TermsCheckbox
+              checked={termsAccepted}
+              onChange={(v) => { setTermsAccepted(v); if (v) setTermsError(""); }}
+              error={termsError}
+            />
             <button type="submit" disabled={loading}
               className="w-full bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white font-bold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-60">
               {loading ? "Yüklənir..." : "Qeydiyyatdan keç"}

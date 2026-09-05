@@ -7,6 +7,7 @@ import MessagingPanel from "@/components/chat/MessagingPanel";
 import AnalyticsPanel from "@/components/dashboard/AnalyticsPanel";
 import CatalogPanel from "@/components/dashboard/CatalogPanel";
 import BoostModal from "@/components/products/BoostModal";
+import TermsCheckbox from "@/components/TermsCheckbox";
 import { csvToObjects, downloadCsvTemplate } from "@/lib/bulkCsv";
 
 const STATUS_LABELS = {
@@ -281,6 +282,8 @@ export default function FarmerPanel({ user }) {
     logoUrl: _store?.logoUrl || "",
   });
   const [storeSettingsLoading, setStoreSettingsLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState("");
   const [storeSettingsMsg, setStoreSettingsMsg] = useState("");
   const [storeSettingsError, setStoreSettingsError] = useState("");
 
@@ -386,6 +389,10 @@ export default function FarmerPanel({ user }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!termsAccepted) {
+      setTermsError("Elanı yerləşdirmək üçün İstifadə Şərtlərini oxuyub qəbul etməlisiniz.");
+      return;
+    }
     setError("");
     setLoading(true);
     try {
@@ -611,6 +618,10 @@ export default function FarmerPanel({ user }) {
 
   async function createStore(e) {
     e.preventDefault();
+    if (!termsAccepted) {
+      setTermsError("Mağaza açmaq üçün İstifadə Şərtlərini oxuyub qəbul etməlisiniz.");
+      return;
+    }
     setStoreSettingsError("");
     setStoreSettingsMsg("");
     setStoreSettingsLoading(true);
@@ -815,7 +826,12 @@ export default function FarmerPanel({ user }) {
                 </div>
               )}
 
-              <button disabled={loading} className="btn-primary w-full">{loading ? "Göndərilir..." : "Elanı Yerləşdir"}</button>
+              <TermsCheckbox
+                checked={termsAccepted}
+                onChange={(v) => { setTermsAccepted(v); if (v) setTermsError(""); }}
+                error={termsError}
+              />
+              <button disabled={loading || !termsAccepted} className="btn-primary w-full">{loading ? "Göndərilir..." : "Elanı Yerləşdir"}</button>
             </form>
           </div>
 
@@ -1112,7 +1128,12 @@ export default function FarmerPanel({ user }) {
               </p>
             </div>
 
-            <button type="submit" disabled={storeSettingsLoading} className="btn-primary w-full mt-4">
+            <TermsCheckbox
+              checked={termsAccepted}
+              onChange={(v) => { setTermsAccepted(v); if (v) setTermsError(""); }}
+              error={termsError}
+            />
+            <button type="submit" disabled={storeSettingsLoading || !termsAccepted} className="btn-primary w-full mt-4">
               {storeSettingsLoading ? "Yaradılır..." : "Mağaza Yarat"}
             </button>
           </form>

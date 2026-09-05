@@ -1,5 +1,6 @@
 "use client";
 import Icon from "@/components/ui/Icon";
+import TermsCheckbox from "@/components/TermsCheckbox";
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { apiFetch, getUser, getToken } from "@/lib/apiClient";
@@ -46,6 +47,8 @@ export default function PostListingPage() {
 
   const [brands, setBrands] = useState([]);
   const [selectedDuration, setSelectedDuration] = useState(1);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState("");
   const [pricingConfig, setPricingConfig] = useState({
     tier_1_day: { days: 1, price: 0 },
     tier_15_days: { days: 15, price: 7 },
@@ -174,6 +177,11 @@ export default function PostListingPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!termsAccepted) {
+      setTermsError("Elanı yerləşdirmək üçün İstifadə Şərtlərini oxuyub qəbul etməlisiniz.");
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      return;
+    }
     setError("");
     setLoading(true);
     try {
@@ -674,7 +682,13 @@ export default function PostListingPage() {
           </div>
         </div>
 
-        <button disabled={loading} className="btn-primary w-full mt-2">
+        <TermsCheckbox
+          checked={termsAccepted}
+          onChange={(v) => { setTermsAccepted(v); if (v) setTermsError(""); }}
+          error={termsError}
+        />
+
+        <button disabled={loading || !termsAccepted} className="btn-primary w-full mt-2">
           {loading ? "Göndərilir..." : "Elanı Göndər"}
         </button>
 

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "@/i18n/routing";
 import { apiFetch, getUser } from "@/lib/apiClient";
 import ImageUploader from "@/components/ImageUploader";
+import TermsCheckbox from "@/components/TermsCheckbox";
 
 // /dashboard/products/new — the "Yeni məhsul" button in the store dashboard.
 // Mirrors the /elan-yerlesdir flow: cascading category selection, same card
@@ -21,6 +22,8 @@ export default function StoreNewProductPage() {
   const [selectedSubCat, setSelectedSubCat] = useState("");
   const [selectedSubSubCat, setSelectedSubSubCat] = useState("");
 
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState("");
   const [formData, setFormData] = useState({
     titleAz: "",
     descriptionAz: "",
@@ -61,6 +64,10 @@ export default function StoreNewProductPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!termsAccepted) {
+      setTermsError("Məhsulu əlavə etmək üçün İstifadə Şərtlərini oxuyub qəbul etməlisiniz.");
+      return;
+    }
     setError("");
     setLoading(true);
 
@@ -259,7 +266,13 @@ export default function StoreNewProductPage() {
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button type="submit" disabled={loading}
+          <TermsCheckbox
+            checked={termsAccepted}
+            onChange={(v) => { setTermsAccepted(v); if (v) setTermsError(""); }}
+            error={termsError}
+          />
+
+          <button type="submit" disabled={loading || !termsAccepted}
             className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-all">
             {loading ? "Göndərilir..." : "Məhsulu Əlavə Et"}
           </button>
