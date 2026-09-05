@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Icon from "@/components/ui/Icon";
 import { Link } from "@/i18n/routing";
+import { apiFetch } from "@/lib/apiClient";
 
 export default function AIAgronomWidget() {
   const pathname = usePathname();
@@ -17,6 +18,9 @@ export default function AIAgronomWidget() {
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
   const chatRef = useRef(null);
+  // Direct-listing continuation: keeps the AI draft + the original image file
+  // while the staff user answers the AI's missing-info questions.
+  const pendingListingRef = useRef(null);
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -50,24 +54,46 @@ export default function AIAgronomWidget() {
     setLoading(true);
 
     try {
+      const pending = pendingListingRef.current;
       const formData = new FormData();
-      formData.append("messages", JSON.stringify([...messages, { role: "user", content: newMsg.content }]));
+      let content = newMsg.content;
+      // Continue an unfinished listing: re-attach the original image and give
+      // the AI its previous draft as context so the next answer completes it.
+      if (pending) {
+        if (pending.draft) content += `\n\n(Əvvəlki AI hazırlığı: ${JSON.stringify(pending.draft)})`;
+        formData.append("listingMode", "1");
+        if (!sentImage && pending.image) {
+          formData.append("image", pending.image);
+          newMsg.imagePreview = newMsg.imagePreview || URL.createObjectURL(pending.image);
+        }
+      }
+      formData.append("messages", JSON.stringify([...messages, { role: "user", content }]));
       if (sentImage) formData.append("image", sentImage);
 
-      const res = await fetch("/api/ai/agronomist-chat", {
+      const data = await apiFetch("/api/ai/agronomist-chat", {
         method: "POST",
         body: formData,
       });
-      const data = await res.json();
-      
-      if (res.ok) {
-        setMessages((prev) => [...prev, { role: "ai", content: data.reply, products: data.products }]);
+
+      if (data.listing) {
+        if (data.listing.created) {
+          pendingListingRef.current = null;
+          setMessages((prev) => [
+            ...prev,
+            { role: "ai", content: data.reply, listing: data.listing },
+          ]);
+        } else {
+          // Draft ready but info missing — keep image + draft for the next message
+          pendingListingRef.current = { draft: data.listing.draft, image: sentImage || pending?.image || null };
+          setMessages((prev) => [...prev, { role: "ai", content: data.reply }]);
+        }
       } else {
-        setMessages((prev) => [...prev, { role: "ai", content: `Xəta: ${data.error}` }]);
+        pendingListingRef.current = null;
+        setMessages((prev) => [...prev, { role: "ai", content: data.reply, products: data.products }]);
       }
       if (sentPreview) URL.revokeObjectURL(sentPreview);
     } catch (e) {
-      setMessages((prev) => [...prev, { role: "ai", content: "Bağlantı xətası baş verdi." }]);
+      setMessages((prev) => [...prev, { role: "ai", content: e.message || "Bağlantı xətası baş verdi." }]);
     } finally {
       setLoading(false);
     }
@@ -111,7 +137,18 @@ export default function AIAgronomWidget() {
                     <img src={msg.imagePreview} alt="Yüklənilən şəkil" className="mb-2 max-h-36 rounded-xl object-cover w-full" />
                   )}
                   <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                  
+
+                  {msg.listing?.created && (
+                    <Link href={`/products/${msg.listing.slug}`} className="mt-3 block p-3 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors">
+                      <p className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                        <Icon name="checkCircle" size={14} /> {msg.listing.title}
+                      </p>
+                      <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                        {msg.listing.price} AZN · {msg.listing.storeName || "şəxsi"} · dərhal AKTİV · səhifəyə bax →
+                      </p>
+                    </Link>
+                  )}
+
                   {msg.products && msg.products.length > 0 && (
                     <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
                       <p className="text-xs font-bold text-gray-500 mb-2">Tövsiyə olunan məhsullar:</p>

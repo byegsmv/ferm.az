@@ -1,22 +1,30 @@
-﻿
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 import { geminiGenerate, isModuleActive } from "@/lib/gemini";
+import {
+  looksLikeListingIntent,
+  extractListingDraft,
+  resolveTargetStore,
+  createListingFromDraft,
+} from "@/lib/directListing";
 
 export async function POST(req) {
   try {
     if (!(await isModuleActive("agronomist"))) {
       return Response.json({ error: "Bu modul deaktiv edilib" }, { status: 403 });
     }
-    
+
     // Accept both JSON ({messages}) and multipart/form-data ({messages: JSON string, image: File})
     const contentType = req.headers.get("content-type") || "";
     let messages = null;
     let imageBase64 = null;
     let imageMimeType = null;
+    let listingModeFlag = false;
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       try { messages = JSON.parse(formData.get("messages") || "null"); } catch { messages = null; }
+      listingModeFlag = (formData.get("listingMode") || "") === "1";
       const image = formData.get("image");
       if (image && image !== "null" && typeof image === "object" && image.size > 0) {
         const buffer = Buffer.from(await image.arrayBuffer());
@@ -26,6 +34,7 @@ export async function POST(req) {
     } else {
       const body = await req.json();
       messages = body.messages;
+      listingModeFlag = body.listingMode === true;
       imageBase64 = body.imageBase64 || null;
       imageMimeType = body.imageMimeType || "image/jpeg";
     }
@@ -34,9 +43,91 @@ export async function POST(req) {
       return Response.json({ error: "Mesajlar tapılmadı" }, { status: 400 });
     }
 
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content || "";
+
+    // ── Direct-listing mode ────────────────────────────────────────────────────
+    // Authenticated staff can send a product photo + short info and have the
+    // product published instantly (ACTIVE) into their store, right from the chat.
+    const authUser = await getAuthUser(req);
+    if (authUser) {
+      const isStaff = ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(authUser.role);
+      let canList = isStaff;
+      if (!isStaff) {
+        const mod = await prisma.userModule.findFirst({
+          where: { userId: authUser.sub, module: "BULK_CSV" },
+        });
+        canList = !!mod;
+      }
+      // Text intent only (price pattern or add keywords) — an attached photo alone
+      // must stay a normal disease-diagnosis chat even for staff.
+      const wantsListing = listingModeFlag || looksLikeListingIntent(lastUserMsg);
+      if (canList && wantsListing && (imageBase64 || lastUserMsg.trim())) {
+        try {
+          const { draft, missing } = await extractListingDraft({
+            infoText: lastUserMsg,
+            imageBase64,
+            imageMimeType,
+          });
+          const { store, stores } = await resolveTargetStore(authUser.sub, lastUserMsg);
+
+          const questions = [];
+          if (!(Number(draft.price) > 0)) {
+            questions.push(draft.price
+              ? `Satış (pərakəndə) qiyməti nə qədərdir?`
+              : (missing.find((m) => m.field === "price")?.question || "Satış (pərakəndə) qiyməti nə qədərdir?"));
+          }
+          if (!store && stores.length > 1) {
+            questions.push(`Hansı mağazaya yerləşdirim: ${stores.map((s) => s.name).join(" / ")}?`);
+          }
+
+          if (questions.length === 0) {
+            const imageDataUri = imageBase64
+              ? `data:${imageMimeType || "image/jpeg"};base64,${imageBase64}`
+              : null;
+            const created = await createListingFromDraft({
+              draft,
+              store,
+              sellerId: store?.ownerId || authUser.sub,
+              imageDataUri,
+            });
+            const priceLine = `${created.price} AZN`;
+            const wholeLine = created.wholesalePrice
+              ? `, toptan ${created.wholesalePrice} AZN (min ${created.wholesaleMinQty} ədəd)`
+              : "";
+            return Response.json({
+              reply: `✅ «${created.titleAz}» məhsulu ${store ? store.name + " mağazasında" : "şəxsi hesabında"} AKTİF olaraq yayımlandı!\n\n💰 Qiymət: ${priceLine}${wholeLine}\n📦 Stok: ${created.stock} ${created.unit}\n\nMəhsul səhifəsi: /products/${created.slug}\n\nBaşqa məhsul əlavə etmək istəyirsənsə, şəklini və qısa məlumatını göndər.`,
+              products: [],
+              listing: {
+                created: true,
+                slug: created.slug,
+                title: created.titleAz,
+                price: created.price,
+                storeName: store ? store.name : null,
+              },
+            });
+          }
+
+          // Something is missing — ask, keep the draft client-side
+          return Response.json({
+            reply: `Məhsulu analiz etdim: «${draft.titleAz}».\n\nYayımlamaq üçün bir az məlumat lazımdır:\n${questions.map((q) => "• " + q).join("\n")}\n\nCavabını yaz — qalan hər şeyi mən hazırlamışam.`,
+            products: [],
+            listing: { created: false, draft, missing: questions },
+          });
+        } catch (e) {
+          // Listing failed (AI/key issues) — fall back to normal agronomist chat,
+          // but tell the staff user what went wrong so they can act on it.
+          return Response.json({
+            reply: `⚠️ Məhsul yerləşdirilə bilmədi: ${e.message}\n\nZəhmət olmasa AI Ayarları bölməsində Gemini açarını yoxlayın və yenidən cəhd edin.`,
+            products: [],
+          });
+        }
+      }
+    }
+    // ── End direct-listing mode ────────────────────────────────────────────────
+
     // Build context string from history
     const historyText = messages.map(m => `${m.role === "user" ? "Fermer" : "AI"}: ${m.content}`).join("\n");
-    
+
     const prompt = `Sən FermerMarket.az-ın rəqəmsal AI Aqronomusan (Kənd təsərrüfatı mütəxəssisi).
 Sən Azərbaycan dilində danışırsan, çox mehriban və köməksevərsən.
 İstifadəçinin sənə verdiyi suala cavab ver. 
@@ -109,4 +200,3 @@ Sənin cavabın:`;
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
-
