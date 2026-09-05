@@ -55,7 +55,7 @@ export async function GET(request) {
       geminiEnvKey: maskedEnvKey,
       hasActiveKey: !!(map["geminiApiKey"] || envKey),
       model: "gemini-2.5-flash",
-      aiDebug: { provider: geminiDebug.lastProvider, lastError: geminiDebug.lastError, lastStatus: geminiDebug.lastStatus },
+      aiDebug: { provider: geminiDebug.lastProvider, lastError: geminiDebug.lastError, lastStatus: geminiDebug.lastStatus, modelCatalog: geminiDebug.modelCatalog },
 
       // Other API keys
       resendKey: mask("resendApiKey"),

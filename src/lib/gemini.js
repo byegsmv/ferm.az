@@ -9,7 +9,7 @@ const GROQ_MODELS = ["meta-llama/llama-4-scout-17b-16e-instruct", "meta-llama/ll
 const XAI_MODELS = ["grok-2-vision-1212", "grok-vision-beta"];
 
 // Temporary diagnostics: last AI provider used / last error (null when last call succeeded)
-export const geminiDebug = { lastError: null, lastStatus: null, lastProvider: null };
+export const geminiDebug = { lastError: null, lastStatus: null, lastProvider: null, modelCatalog: null };
 
 let keyCache = null; // { gemini, groq, xai }
 let cacheExpiry = 0;
@@ -57,6 +57,8 @@ async function loadKeys() {
 export function clearGeminiKeyCache() {
   keyCache = null;
   cacheExpiry = 0;
+  metaCache.at = 0;
+  metaCache.models = {};
 }
 
 function offlineGenerate(prompt) {
@@ -148,6 +150,37 @@ async function callGemini({ key, prompt, imageBase64, imageMimeType, maxOutputTo
   return text.trim();
 }
 
+// Discover available models on an OpenAI-compatible provider (cached 10 min).
+const metaCache = { at: 0, models: {} };
+async function discoverModels(endpoint, key) {
+  const metaKey = endpoint;
+  if (metaCache.models[metaKey] && Date.now() - metaCache.at < 10 * 60 * 1000) return metaCache.models[metaKey];
+  try {
+    const res = await fetch(endpoint.replace("/chat/completions", "/models"), {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const ids = (data?.data || []).map((m) => m.id).filter(Boolean);
+      if (ids.length) {
+        metaCache.models[metaKey] = ids;
+        metaCache.at = Date.now();
+        geminiDebug.modelCatalog = { ...(geminiDebug.modelCatalog || {}), [metaKey.split("//")[1].split("/")[0]]: ids };
+        return ids;
+      }
+    }
+  } catch (e) {}
+  return [];
+}
+
+function pickModels(available, prefs, fallback) {
+  const picked = [];
+  for (const re of prefs) {
+    for (const id of available) if (re.test(id) && !picked.includes(id)) picked.push(id);
+  }
+  return picked.length ? picked : fallback;
+}
+
 // OpenAI-compatible chat completions (Groq / xAI)
 async function callOpenAICompat({ endpoint, key, models, prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode }) {
   const content = [{ type: "text", text: prompt }];
@@ -215,10 +248,12 @@ export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOu
   // 2) Groq (OpenAI-compatible)
   if (keys.groq) {
     try {
+      const available = await discoverModels("https://api.groq.com/openai/v1/chat/completions", keys.groq);
+      const groqModels = pickModels(available, [/llama-4-scout/i, /llama-4-maverick/i, /vision/i, /llama-3\.2-90b/i, /llama-3\.2-11b/i], GROQ_MODELS);
       const text = await callOpenAICompat({
         endpoint: "https://api.groq.com/openai/v1/chat/completions",
         key: keys.groq,
-        models: GROQ_MODELS,
+        models: groqModels.slice(0, 4),
         prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode,
       });
       geminiDebug.lastProvider = "groq";
@@ -234,10 +269,12 @@ export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOu
   // 3) xAI Grok (OpenAI-compatible)
   if (keys.xai) {
     try {
+      const availableX = await discoverModels("https://api.x.ai/v1/chat/completions", keys.xai);
+      const xaiModels = pickModels(availableX, [/grok-\d*-vision/i, /grok-vision/i, /grok-4/i, /grok-3/i], XAI_MODELS);
       const text = await callOpenAICompat({
         endpoint: "https://api.x.ai/v1/chat/completions",
         key: keys.xai,
-        models: XAI_MODELS,
+        models: xaiModels.slice(0, 4),
         prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode,
       });
       geminiDebug.lastProvider = "grok";
