@@ -86,7 +86,7 @@ function offlineGenerate(prompt) {
   return "Lokal simulyasiya cavabı: Kənd təsərrüfatı layihəsi uğurla işləyir.";
 }
 
-export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOutputTokens = 2048 }) {
+export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOutputTokens = 2048, jsonMode = false }) {
   const key = await getApiKey();
 
   if (!key) {
@@ -100,6 +100,12 @@ export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOu
       parts.push({ inline_data: { mime_type: imageMimeType || "image/jpeg", data: imageBase64 } });
     }
 
+    const generationConfig = { temperature: 0.6, maxOutputTokens, thinkingConfig: { thinkingBudget: 0 } };
+    // Force Gemini to emit strictly valid JSON (no markdown fences, no raw
+    // control chars inside strings) — otherwise multi-paragraph text fields
+    // (e.g. descriptions) often contain literal newlines that break JSON.parse.
+    if (jsonMode) generationConfig.response_mime_type = "application/json";
+
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,
       {
@@ -107,7 +113,7 @@ export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOu
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts }],
-          generationConfig: { temperature: 0.6, maxOutputTokens, thinkingConfig: { thinkingBudget: 0 } },
+          generationConfig,
         }),
       }
     );
