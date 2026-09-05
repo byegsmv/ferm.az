@@ -36,7 +36,19 @@ export default function StoreNewProductPage() {
     }
 
     apiFetch("/api/categories")
-      .then((data) => setCategories(data || []))
+      .then((data) => {
+        // /api/categories returns { categories: [ { ...parent, children: [...] } ] }.
+        // Flatten to parent + child options for a simple <select>.
+        const flat = [];
+        (data?.categories || []).forEach((cat) => {
+          if (cat.children && cat.children.length > 0) {
+            cat.children.forEach((ch) => flat.push({ ...ch, name: `${cat.name} › ${ch.name}` }));
+          } else {
+            flat.push(cat);
+          }
+        });
+        setCategories(flat);
+      })
       .catch(console.error);
 
     // Auto-attach the product to the owner's store, if they have one.
@@ -123,9 +135,7 @@ export default function StoreNewProductPage() {
           <select required value={formData.categoryId} onChange={set("categoryId")} className={inputCls}>
             <option value="">Kateqoriya seçin</option>
             {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.parentId ? "— " : ""}{c.nameAz || c.name}
-              </option>
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
         </div>
