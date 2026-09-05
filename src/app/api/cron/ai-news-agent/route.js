@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { geminiGenerate } from "@/lib/gemini";
 import { normalizeBlogContent } from "@/lib/blogContent";
+import { persistBlogImages } from "@/lib/blogImages";
 import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
@@ -50,8 +51,8 @@ Tələblər:
 4. Məqaləni HTML formatında qaytar. <div>, <p>, <h3>, <ul>, <li>, <strong>, <br> kimi teqlərdən istifadə edərək mətni gözəl strukturlaşdır.
    ÇOX VACİB: contentAz dəyəri DAXİLİNƏ heç bir markdown kod bloku (\`\`\` və ya \`\`\`html) YAZMA. Yalnız təmiz HTML teqləri olmalıdır. Markdown işarələri (**bold**, # başlıq) istifadə etmə — yalnız HTML teqləri.
 5. Məqaləyə uyğun olaraq vizual zənginlik qatmaq üçün mətnin daxilinə və məqalənin üz qabığı (coverUrl) üçün süni intellekt vasitəsilə şəkillər əlavə et. 
-   Şəkil yaratmaq üçün bu URL formatından istifadə et: "https://image.pollinations.ai/prompt/{ingilisce-detalli-tesvir}?width=1024&height=768&nologo=true".
-   Məsələn, xəbər pambıqçılıq barədədirsə, mətnin daxilinə belə bir teq qoy: <img src="https://image.pollinations.ai/prompt/farmers-harvesting-cotton-in-field-realistic-high-quality-photography?width=1024&height=500&nologo=true" alt="Pambıq yığımı" class="w-full rounded-xl my-4" />
+   Şəkil yaratmaq üçün bu URL formatından istifadə et: "https://image.pollinations.ai/prompt/{ingilisce-detalli-tesvir}?width=1600&height=1200&nologo=true".
+   Məsələn, xəbər pambıqçılıq barədədirsə, mətnin daxilinə belə bir teq qoy: <img src="https://image.pollinations.ai/prompt/farmers-harvesting-cotton-in-field-realistic-high-quality-photography?width=1600&height=780&nologo=true" alt="Pambıq yığımı" class="w-full rounded-xl my-4" />
 6. ƏGƏR siyahıda kənd təsərrüfatına aid HEÇ BİR xəbər yoxdursa, bugünkü gün üçün fermerlərə mövsümə uyğun çox faydalı, elmi və praktik bir aqrar məsləhət və ya dərin analitik məqalə yaz.
 7. Ən sonda <hr class="my-6 border-gray-200" /><p class="text-sm text-gray-500 italic">Bu xəbər xülasəsi FermerMarket AI Agent tərəfindən avtomatik toplanmış və tərtib edilmişdir.</p> əlavə et.
 
@@ -60,7 +61,7 @@ Sənə qaytarılacaq yeganə nəticə aşağıdakı kimi dəqiq bir JSON olmalı
 {
   "titleAz": "Bloqun cəlbedici başlığı",
   "contentAz": "Bloqun strukturlaşdırılmış, daxilində <img> teqləri (pollinations) olan HTML mətni",
-  "coverUrl": "https://image.pollinations.ai/prompt/beautiful-agriculture-farm-landscape-high-quality?width=1280&height=720&nologo=true"
+  "coverUrl": "https://image.pollinations.ai/prompt/beautiful-agriculture-farm-landscape-high-quality?width=1600&height=900&nologo=true"
 }
 \`\`\`
 
@@ -119,17 +120,23 @@ ${newsListStr}`;
       return NextResponse.json({ error: "AI returned empty title/content" }, { status: 500 });
     }
 
+    // Re-host AI-generated (pollinations) images on Vercel Blob so they load
+    // reliably and never appear broken to visitors.
+    const persisted = await persistBlogImages(cleanContent, coverUrl);
+    const finalContent = persisted.content;
+    const finalCoverUrl = persisted.coverUrl;
+
     const blogPost = await prisma.blogPost.create({
       data: {
         slug: generateSlug(cleanTitle) + '-' + Math.random().toString(36).substring(2, 8),
         titleAz: cleanTitle,
-        contentAz: cleanContent,
+        contentAz: finalContent,
         category: "Aqrar Xəbərlər",
         authorId: adminUser.id,
         isPublished: true,
         publishedAt: new Date(),
         viewCount: 0,
-        coverUrl: coverUrl
+        coverUrl: finalCoverUrl
       }
     });
 
