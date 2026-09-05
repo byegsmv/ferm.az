@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import { apiFetch, getUser } from "@/lib/apiClient";
 import Icon from "@/components/ui/Icon";
 
 export default function UserPromoteProductPage({ params }) {
-  const { id } = params;
+  const { id } = use(params);
   const router = useRouter();
   
   const [product, setProduct] = useState(null);

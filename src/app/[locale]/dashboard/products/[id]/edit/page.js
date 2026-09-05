@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import { apiFetch, getUser, getToken } from "@/lib/apiClient";
 import Icon from "@/components/ui/Icon";
 
 export default function UserEditProductPage({ params }) {
-  const { id } = params;
+  const { id } = use(params);
   const router = useRouter();
   
   const [categories, setCategories] = useState([]);
@@ -47,7 +47,8 @@ export default function UserEditProductPage({ params }) {
       const p = prodData.product;
       
       const currentUser = getUser();
-      if (!currentUser || p.sellerId !== currentUser.id) {
+      const isAdminRole = currentUser && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(currentUser.role);
+      if (!currentUser || (p.sellerId !== currentUser.id && !isAdminRole)) {
         throw new Error("Siz yalnız öz məhsullarınıza düzəliş edə bilərsiniz.");
       }
 

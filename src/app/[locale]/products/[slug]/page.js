@@ -319,6 +319,16 @@ export default async function ProductDetailPage({ params }) {
               {Number(product.price).toLocaleString("az-AZ")} {product.currency}
             </p>
           )}
+          {product.wholesalePrice ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 w-fit">
+              <span className="text-sm font-bold text-amber-800">
+                Topdan satış: {Number(product.wholesalePrice).toLocaleString("az-AZ")} {product.currency}
+              </span>
+              <span className="text-[11px] text-amber-700 font-medium">
+                (minimum {product.wholesaleMinQty || 1} {product.unit || "ədəd"} alana şamil olunur)
+              </span>
+            </div>
+          ) : null}
           <p className="text-sm text-gray-500 mt-1">
             {product.city || product.region || "Qeyd olunmayıb"} · Stok: {product.stock}
           </p>
