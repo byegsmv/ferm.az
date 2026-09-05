@@ -20,9 +20,23 @@ export const BULK_CSV_COLUMNS = [
   { key: "imageUrl", label: "Şəkil URL", required: false },
 ];
 
-// Minimal but correct CSV parser: handles quoted fields, escaped quotes (""),
-// commas and newlines inside quotes, and CRLF line endings.
-export function parseCSV(text) {
+// Detect the delimiter: Excel (TR/AZ locale) exports semicolon-separated CSV,
+// Google Sheets uses commas, pasted Excel rows use tabs. Sniff the first line.
+export function detectDelimiter(text) {
+  const firstLine = text.split(/\r?\n/).find((l) => l.trim() !== "") || "";
+  const counts = [
+    [",", (firstLine.match(/,/g) || []).length],
+    [";", (firstLine.match(/;/g) || []).length],
+    ["\t", (firstLine.match(/\t/g) || []).length],
+  ];
+  counts.sort((a, b) => b[1] - a[1]);
+  return counts[0][1] > 0 ? counts[0][0] : ",";
+}
+
+// Minimal but correct delimited-text parser: handles quoted fields, escaped
+// quotes (""), delimiters and newlines inside quotes, and CRLF line endings.
+export function parseCSV(text, delimiter) {
+  const delim = delimiter || detectDelimiter(text);
   const rows = [];
   let cur = [];
   let field = "";
@@ -39,7 +53,7 @@ export function parseCSV(text) {
       } else field += ch;
     } else if (ch === '"') {
       inQuotes = true;
-    } else if (ch === ",") {
+    } else if (ch === delim) {
       cur.push(field); field = "";
     } else if (ch === "\n" || ch === "\r") {
       if (ch === "\r" && src[i + 1] === "\n") i++;
@@ -57,7 +71,7 @@ export function parseCSV(text) {
 export function csvToObjects(text) {
   const rows = parseCSV(text);
   if (!rows.length) throw new Error("CSV boşdur");
-  const header = rows[0].map((h) => h.trim());
+  const header = rows[0].map((h) => h.trim().replace(/^["']+|["']+$/g, ""));
   const missing = ["titleAz", "price", "categorySlug"].filter((r) => !header.includes(r));
   if (missing.length) throw new Error(`CSV-də bu sütunlar çatışmır: ${missing.join(", ")}`);
   return rows.slice(1).map((cols, idx) => {

@@ -26,7 +26,7 @@ export async function GET(request) {
       isActive: cat.isActive,
       sortOrder: cat.sortOrder,
     });
-    return Response.json({ categories: allCategories.map(localizeAdmin) });
+    return Response.json({ categories: allCategories.map(localizeAdmin) }, { headers: { "Cache-Control": "public, max-age=0, s-maxage=300, stale-while-revalidate=600" } });
   }
 
   const categories = await prisma.category.findMany({
@@ -60,7 +60,7 @@ export async function GET(request) {
     .filter((c) => !c.parentId)
     .map(localize);
 
-  return Response.json({ categories: topLevel });
+  return Response.json({ categories: topLevel }, { headers: { "Cache-Control": "public, max-age=0, s-maxage=300, stale-while-revalidate=600" } });
 }
 
 // POST /api/categories — Admin/Super Admin only

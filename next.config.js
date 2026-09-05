@@ -3,7 +3,12 @@ const createNextIntlPlugin = require('next-intl/plugin');
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.js');
 const nextConfig = {
   reactStrictMode: true,
+  compress: true,
+  poweredByHeader: false,
+  productionBrowserSourceMaps: false,
+  optimizePackageImports: ["lucide-react", "recharts"],
   images: {
+    minimumCacheTTL: 86400,
     remotePatterns: [
       { protocol: "https", hostname: "**" },
       { protocol: "http", hostname: "**" },
@@ -47,6 +52,13 @@ const nextConfig = {
         source: "/api/:path*",
         headers: [
           { key: "Cache-Control", value: "no-store, max-age=0" },
+        ],
+      },
+      {
+        // Public, seyrek değişen referans verisi — CDN'de 5 dakika cache
+        source: "/api/categories",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, s-maxage=300, stale-while-revalidate=600" },
         ],
       },
     ];

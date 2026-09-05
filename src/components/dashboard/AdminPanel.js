@@ -2238,13 +2238,51 @@ function BulkUploadPanel() {
   const [results, setResults] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState("");
+  const [preview, setPreview] = useState(null); // { ok, rows, errors }
+  const [categories, setCategories] = useState([]);
+  const [showCats, setShowCats] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     apiFetch("/api/stores?all=1&includeStats=1")
       .then((d) => setStores(d.stores || []))
       .catch(() => {});
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((d) => {
+        const cats = Array.isArray(d) ? d : d.categories || [];
+        setCategories(cats);
+      })
+      .catch(() => {});
   }, []);
+
+  // CSV dəyişəndə canlı önizləmə: sətir sayı + səhvlər
+  useEffect(() => {
+    if (!csvText.trim()) { setPreview(null); return; }
+    try {
+      const rows = csvToObjects(csvText);
+      const flat = [];
+      const walk = (c) => { flat.push(c); (c.children || []).forEach(walk); };
+      categories.forEach(walk);
+      const known = new Set(flat.map((c) => c.slug));
+      const knownNames = new Set(flat.map((c) => (c.nameAz || "").toLowerCase()).filter(Boolean));
+      let ok = 0;
+      const errors = [];
+      rows.forEach((r) => {
+        const rowErrors = [];
+        if (!r.titleAz || r.titleAz.trim().length < 3) rowErrors.push("başlıq qısa/yoxdur");
+        if (!(Number(String(r.price).replace(",", ".")) > 0)) rowErrors.push("qiymət yoxdur");
+        const cs = (r.categorySlug || "").trim();
+        if (!cs) rowErrors.push("kateqoriya boşdur");
+        else if (!known.has(cs) && !knownNames.has(cs.toLowerCase())) rowErrors.push(`kateqoriya tapılmadı: ${cs}`);
+        if (rowErrors.length) errors.push({ row: r._rowNumber, errors: rowErrors });
+        else ok++;
+      });
+      setPreview({ ok, rows: rows.length, errors });
+    } catch (e) {
+      setPreview({ ok: 0, rows: 0, errors: [], parseError: e.message });
+    }
+  }, [csvText, categories]);
 
   function onFile(e) {
     const file = e.target.files?.[0];
@@ -2348,7 +2386,40 @@ function BulkUploadPanel() {
         />
         <div className="text-[11px] text-gray-500">
           Məcburi sütunlar: <span className="font-bold text-gray-700">titleAz, price, categorySlug</span>. İstəyə bağlı: descriptionAz, discountedPrice, wholesalePrice, wholesaleMinQty, unit, stock, region, city, imageUrl.
+          Kateqoriya kimi <span className="font-semibold">slug, ID və ya ad</span> (məs. "İnsektisidlər") yazmaq olar. Excel-in nöqtəli vergüllü (;) ixracı avtomatik tanınır.
         </div>
+        <button onClick={() => setShowCats(!showCats)} className="text-xs font-semibold text-brand-600 hover:underline">
+          {showCats ? "▾" : "▸"} Kateqoriya siyahısı (sləqlər)
+        </button>
+        {showCats && (
+          <div className="max-h-48 overflow-y-auto text-xs bg-gray-50 rounded-xl p-3 space-y-1">
+            {categories.map((c) => (
+              <div key={c.id}>
+                <div className="font-bold text-gray-700">{c.nameAz} — <code className="text-brand-700">{c.slug}</code></div>
+                {(c.children || []).map((ch) => (
+                  <div key={ch.id} className="pl-4 text-gray-600">{ch.nameAz} — <code className="text-brand-700">{ch.slug}</code></div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+        {preview && (
+          <div className={`text-sm rounded-xl p-3 border ${preview.parseError ? "bg-red-50 border-red-200 text-red-700" : preview.errors.length ? "bg-amber-50 border-amber-200 text-amber-800" : "bg-green-50 border-green-200 text-green-800"}`}>
+            {preview.parseError ? `CSV oxunmadı: ${preview.parseError}` : (
+              <>
+                <span className="font-bold">{preview.rows}</span> sətir oxundu — <span className="font-bold text-green-700">{preview.ok} hazırdır</span>
+                {preview.errors.length > 0 && <> | <span className="font-bold text-red-600">{preview.errors.length} sətirdə problem</span></>}
+                {preview.errors.length > 0 && (
+                  <div className="mt-2 max-h-28 overflow-y-auto text-xs">
+                    {preview.errors.slice(0, 20).map((e) => (
+                      <div key={e.row}>Sətir {e.row}: {e.errors.join(", ")}</div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
         {err && <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">{err}</div>}
         <button onClick={submit} disabled={uploading}
           className="w-full sm:w-auto px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold transition">
