@@ -44,9 +44,16 @@ export default function BlogSection({ posts }) {
             className="card-hover overflow-hidden flex flex-col group"
           >
             {/* Cover */}
-            <div className="h-36 bg-gradient-to-br from-brand-50 to-emerald-100 flex items-center justify-center text-5xl">
-              <Icon name={post.category === "tips" ? "lightbulb" : post.category === "news" ? "newspaper" : post.category === "market" ? "trendingUp" : "leaf"} size={16} />
-            </div>
+            {post.coverUrl ? (
+              <div className="relative h-36 overflow-hidden">
+                <img src={post.coverUrl} alt={post.titleAz} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+              </div>
+            ) : (
+              <div className="h-36 bg-gradient-to-br from-brand-50 to-emerald-100 flex items-center justify-center">
+                <Icon name={post.category === "tips" ? "lightbulb" : post.category === "news" ? "newspaper" : post.category === "market" ? "trendingUp" : "leaf"} size={28} className="text-brand-400" />
+              </div>
+            )}
             <div className="p-4 flex-1 flex flex-col">
               {post.category && (
                 <span className="text-[10px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full w-fit mb-2">
@@ -58,10 +65,6 @@ export default function BlogSection({ posts }) {
               </h3>
               <div className="flex items-center gap-2 mt-auto pt-3 text-[11px] text-gray-400">
                 <span className="flex items-center gap-1"><Icon name="pencil" size={12} /> {post.author?.fullName || t('homepage.blogDefaultAuthor', 'FermerMarket')}</span>
-                <span>·</span>
-                <span className="flex items-center gap-1"><Icon name="clock" size={12} /> {readTime(post.contentAz)}</span>
-                <span>·</span>
-                <span suppressHydrationWarning>{new Date(post.createdAt).toLocaleDateString("az-AZ")}</span>
               </div>
             </div>
           </Link>
