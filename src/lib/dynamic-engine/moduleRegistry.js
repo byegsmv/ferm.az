@@ -38,6 +38,7 @@ export const DEFAULT_MODULE_TREE = [
     isSystem: true,
     children: [
       { id: 'sub-all-products', name: 'Bütün Məhsullar', icon: 'List', slug: '/admin/products', status: 'ACTIVE' },
+      { id: 'sub-bulk-upload', name: 'Toplu Yükləmə', icon: 'UploadCloud', slug: '/admin?tab=bulkUpload', status: 'ACTIVE' },
       { id: 'sub-categories', name: 'Kateqoriyalar', icon: 'FolderTree', slug: '/admin/categories', status: 'ACTIVE' },
       { id: 'sub-brands', name: 'Brendlər', icon: 'Tag', slug: '/admin/brands', status: 'ACTIVE' },
       { id: 'sub-ingredients', name: 'Aktiv Maddələr', icon: 'FlaskConical', slug: '/admin/active-ingredients', status: 'ACTIVE' },
