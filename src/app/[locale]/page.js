@@ -120,11 +120,13 @@ export default async function HomePage({ searchParams }) {
   let blocks = [];
 
   try {
-    homeData = await getHomeData();
-    blocks = await prisma.dynamicBlock.findMany({
-      where: { page: "home", isActive: true },
-      orderBy: { sortOrder: "asc" }
-    });
+    [homeData, blocks] = await Promise.all([
+      getHomeData(),
+      prisma.dynamicBlock.findMany({
+        where: { page: "home", isActive: true },
+        orderBy: { sortOrder: "asc" }
+      }),
+    ]);
   } catch (e) {
     console.error("Fetch failed:", e.message);
   }

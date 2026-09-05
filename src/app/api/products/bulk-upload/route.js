@@ -90,14 +90,26 @@ export async function POST(request) {
     targetStoreId = me?.storeId || null;
   }
 
-  // Preload categories once
-  const categories = await prisma.category.findMany();
-  const catBySlug = Object.fromEntries(categories.map((c) => [c.slug, c]));
+  // Preload categories once (resolve by slug, id or name — case-insensitive)
+  const categories = await prisma.category.findMany({
+    select: { id: true, slug: true, nameAz: true, nameRu: true, nameEn: true },
+  });
+  const catBySlug = Object.fromEntries(categories.map((c) => [c.slug.toLowerCase(), c]));
   const catById = Object.fromEntries(categories.map((c) => [c.id, c]));
+  const catByName = {};
+  for (const c of categories) {
+    for (const name of [c.nameAz, c.nameRu, c.nameEn]) {
+      if (name) catByName[String(name).toLowerCase()] = c;
+    }
+  }
+  const resolveCategory = (row) =>
+    (row.categorySlug && (catBySlug[String(row.categorySlug).toLowerCase()] || catById[row.categorySlug] || catByName[String(row.categorySlug).toLowerCase()])) ||
+    (row.categoryId && (catById[row.categoryId] || catBySlug[String(row.categoryId).toLowerCase()])) ||
+    null;
 
+  // ── Phase 1: validate all rows in memory (fast, no DB writes) ──
+  const validRows = [];
   const results = [];
-  let createdCount = 0;
-
   for (let i = 0; i < products.length; i++) {
     const row = products[i] || {};
     const rowNum = i + 1;
@@ -105,18 +117,18 @@ export async function POST(request) {
       const title = (row.titleAz || "").trim();
       if (title.length < 3) throw new Error("titleAz ən azı 3 simvol olmalıdır");
 
-      const price = Number(row.price);
+      const price = Number(String(row.price).replace(",", "."));
       if (!(price > 0)) throw new Error("price müsbət ədəd olmalıdır");
 
       const stock = row.stock === undefined || row.stock === "" ? 1 : parseInt(row.stock, 10);
       if (!(stock >= 0)) throw new Error("stock mənfi ola bilməz");
 
-      const category = catBySlug[row.categorySlug] || catById[row.categoryId];
-      if (!category) throw new Error(`Kateqoriya tapılmadı: ${row.categorySlug || row.categoryId || "(boş)"}`);
+      const category = resolveCategory(row);
+      if (!category) throw new Error(`Kateqoriya tapılmadı: ${row.categorySlug || row.categoryId || "(boş)"} — slug, ID və ya ad yazıla bilər`);
 
       let discountedPrice = null;
       if (row.discountedPrice !== undefined && row.discountedPrice !== "" && row.discountedPrice !== null) {
-        discountedPrice = Number(row.discountedPrice);
+        discountedPrice = Number(String(row.discountedPrice).replace(",", "."));
         if (!(discountedPrice > 0)) throw new Error("discountedPrice müsbət olmalıdır");
         if (discountedPrice >= price) throw new Error("discountedPrice normal qiymətdən aşağı olmalıdır");
       }
@@ -124,15 +136,20 @@ export async function POST(request) {
       let wholesalePrice = null;
       let wholesaleMinQty = null;
       if (row.wholesalePrice !== undefined && row.wholesalePrice !== "" && row.wholesalePrice !== null) {
-        wholesalePrice = Number(row.wholesalePrice);
+        wholesalePrice = Number(String(row.wholesalePrice).replace(",", "."));
         if (!(wholesalePrice > 0)) throw new Error("wholesalePrice müsbət olmalıdır");
         wholesaleMinQty = parseInt(row.wholesaleMinQty || "1", 10);
       }
 
-      const baseSlug = slugify(title, { lower: true, strict: true }) || "mehsul";
-      const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 10)}`;
+      // Images: imageUrls array (preferred) or single imageUrl fallback
+      const urls = Array.isArray(row.imageUrls) && row.imageUrls.length
+        ? row.imageUrls.filter((u) => typeof u === "string" && u.trim())
+        : row.imageUrl ? [row.imageUrl] : [];
 
-      const created = await prisma.product.create({
+      const baseSlug = slugify(title, { lower: true, strict: true }) || "mehsul";
+
+      validRows.push({
+        rowNum, title,
         data: {
           titleAz: title,
           descriptionAz: row.descriptionAz || null,
@@ -146,33 +163,58 @@ export async function POST(request) {
           region: row.region || null,
           city: row.city || null,
           ...(wholesalePrice ? { wholesalePrice, wholesaleMinQty } : {}),
-          slug,
+          slug: `${baseSlug}-${Math.random().toString(36).slice(2, 10)}`,
           status,
         },
+        images: urls.slice(0, 8).map((u, j) => ({ url: u.trim(), sortOrder: j })),
       });
-
-      // Images: imageUrls array (preferred) or single imageUrl fallback
-      const urls = Array.isArray(row.imageUrls) && row.imageUrls.length
-        ? row.imageUrls.filter((u) => typeof u === "string" && u.trim())
-        : row.imageUrl ? [row.imageUrl] : [];
-      for (let j = 0; j < Math.min(urls.length, 8); j++) {
-        await prisma.productImage.create({
-          data: {
-            productId: created.id,
-            url: urls[j].trim(),
-            altText: title,
-            sortOrder: j,
-          },
-        });
-      }
-
-      createdCount++;
-      results.push({ row: rowNum, success: true, title, productId: created.id });
     } catch (err) {
       results.push({ row: rowNum, success: false, title: row.titleAz || "", error: err.message });
     }
   }
 
+  // ── Phase 2: batched bulk inserts (createMany, chunks of 100) ──
+  let createdCount = 0;
+  for (let c = 0; c < validRows.length; c += 100) {
+    const chunk = validRows.slice(c, c + 100);
+    try {
+      await prisma.product.createMany({ data: chunk.map((r) => r.data), skipDuplicates: false });
+      createdCount += chunk.length;
+      for (const r of chunk) results.push({ row: r.rowNum, success: true, title: r.title });
+    } catch (err) {
+      // Chunk-level failure (DB/connection): mark the whole chunk as failed
+      for (const r of chunk) {
+        results.push({ row: r.rowNum, success: false, title: r.title, error: "Yükləmə xətası: " + err.message });
+      }
+    }
+  }
+
+  // ── Phase 3: attach images (single createMany for all rows) ──
+  if (createdCount > 0) {
+    try {
+      const createdProducts = await prisma.product.findMany({
+        where: { slug: { in: validRows.map((r) => r.data.slug) } },
+        select: { id: true, slug: true, titleAz: true },
+      });
+      const bySlug = Object.fromEntries(createdProducts.map((p) => [p.slug, p]));
+      const imageRows = [];
+      for (const r of validRows) {
+        const p = bySlug[r.data.slug];
+        if (!p) continue;
+        for (const img of r.images) {
+          imageRows.push({ productId: p.id, url: img.url, altText: p.titleAz, sortOrder: img.sortOrder });
+        }
+        const res = results.find((x) => x.row === r.rowNum && x.success);
+        if (res) res.productId = p.id;
+      }
+      if (imageRows.length) await prisma.productImage.createMany({ data: imageRows });
+    } catch (err) {
+      // Şəkillər uğursuz olsa da məhsullar yaradılıb — nəticəyə xəta qeyd et
+      results.push({ row: 0, success: true, title: "(şəkillər)", error: "Şəkil yükləmə xətası: " + err.message });
+    }
+  }
+
+  results.sort((a, b) => (a.row || 0) - (b.row || 0));
   return Response.json(
     { createdCount, failed: results.length - createdCount, total: results.length, status, results },
     { status: 201 }
