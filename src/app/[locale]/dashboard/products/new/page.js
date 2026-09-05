@@ -4,10 +4,9 @@ import { useRouter } from "@/i18n/routing";
 import { apiFetch, getUser } from "@/lib/apiClient";
 import ImageUploader from "@/components/ImageUploader";
 
-// /dashboard/products/new — the "Yeni məhsul" button in the store dashboard
-// previously linked here but no page existed (404). This page creates a
-// product that is automatically attached to the owner's store (via
-// /api/stores/me) and supports retail + wholesale pricing.
+// /dashboard/products/new — the "Yeni məhsul" button in the store dashboard.
+// Mirrors the /elan-yerlesdir flow: cascading category selection, same card
+// design language, plus retail + wholesale pricing for stores.
 export default function StoreNewProductPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -16,6 +15,11 @@ export default function StoreNewProductPage() {
   const [storeName, setStoreName] = useState("");
   const [images, setImages] = useState([]);
   const [error, setError] = useState("");
+
+  // Cascading Category States (same as elan-yerlesdir)
+  const [selectedMainCat, setSelectedMainCat] = useState("");
+  const [selectedSubCat, setSelectedSubCat] = useState("");
+  const [selectedSubSubCat, setSelectedSubSubCat] = useState("");
 
   const [formData, setFormData] = useState({
     titleAz: "",
@@ -37,19 +41,7 @@ export default function StoreNewProductPage() {
     }
 
     apiFetch("/api/categories")
-      .then((data) => {
-        // /api/categories returns { categories: [ { ...parent, children: [...] } ] }.
-        // Flatten to parent + child options for a simple <select>.
-        const flat = [];
-        (data?.categories || []).forEach((cat) => {
-          if (cat.children && cat.children.length > 0) {
-            cat.children.forEach((ch) => flat.push({ ...ch, name: `${cat.name} › ${ch.name}` }));
-          } else {
-            flat.push(cat);
-          }
-        });
-        setCategories(flat);
-      })
+      .then((data) => setCategories(data?.categories || []))
       .catch(console.error);
 
     // Auto-attach the product to the owner's store, if they have one.
@@ -119,94 +111,156 @@ export default function StoreNewProductPage() {
     }
   };
 
-  const inputCls = "w-full p-2.5 border border-gray-200 rounded-xl focus:border-green-500 focus:outline-none";
-
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-2">Yeni Məhsul Əlavə Et</h1>
-      {storeName && (
-        <p className="text-sm text-gray-500 mb-6">
-          Mağaza: <span className="font-medium text-gray-700">{storeName}</span>
-        </p>
-      )}
-
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-5">
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">{error}</div>
+      <h1 className="text-xl font-extrabold mb-1">Yeni Məhsul Əlavə Et</h1>
+      <p className="text-sm text-gray-500 mb-6">
+        {storeName ? (
+          <>Mağaza: <span className="font-semibold text-gray-700">{storeName}</span> — məhsul avtomatik mağazanıza əlavə olunacaq.</>
+        ) : (
+          "Məhsul məlumatlarını doldurun — kateqoriya seçimi elan bölməsi ilə eyni qaydadadır."
         )}
+      </p>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Məhsulun adı</label>
-          <input type="text" required value={formData.titleAz} onChange={set("titleAz")}
-            className={inputCls} placeholder="Məs: EvroHim KAS-32 maye azot gübrəsi (1L)" />
-        </div>
+      {error && <div className="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2 mb-4">{error}</div>}
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Kateqoriya</label>
-          <select required value={formData.categoryId} onChange={set("categoryId")} className={inputCls}>
-            <option value="">Kateqoriya seçin</option>
+      <form onSubmit={handleSubmit} className="card p-5 space-y-3">
+        {/* Title */}
+        <input
+          required
+          placeholder="Məhsulun adı (məs: EvroHim KAS-32 maye azot gübrəsi (1L))"
+          className="input-field"
+          value={formData.titleAz}
+          onChange={set("titleAz")}
+        />
+
+        {/* Cascading Category Selection — same as elan-yerlesdir */}
+        <div className="space-y-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+          <label className="block text-xs font-semibold text-gray-500">KATEQORİYA SEÇİMİ</label>
+          <select
+            className="input-field"
+            value={selectedMainCat}
+            onChange={(e) => {
+              setSelectedMainCat(e.target.value);
+              setSelectedSubCat("");
+              setSelectedSubSubCat("");
+              setFormData({ ...formData, categoryId: "" });
+            }}
+          >
+            <option value="">Ana kateqoriyanı seçin</option>
             {categories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id}>{c.name || c.nameAz}</option>
             ))}
           </select>
+
+          {selectedMainCat && categories.find(c => c.id === selectedMainCat)?.children?.length > 0 && (
+            <select
+              className="input-field animate-fade-in"
+              value={selectedSubCat}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedSubCat(val);
+                setSelectedSubSubCat("");
+
+                const mainCat = categories.find(c => c.id === selectedMainCat);
+                const subCat = mainCat?.children?.find(ch => ch.id === val);
+
+                // If this sub-category doesn't have its own children, it's a leaf node.
+                if (subCat && (!subCat.children || subCat.children.length === 0)) {
+                  setFormData({ ...formData, categoryId: val });
+                } else {
+                  setFormData({ ...formData, categoryId: "" });
+                }
+              }}
+            >
+              <option value="">Alt kateqoriyanı seçin</option>
+              {categories.find(c => c.id === selectedMainCat).children.map((c) => (
+                <option key={c.id} value={c.id}>{c.name || c.nameAz}</option>
+              ))}
+            </select>
+          )}
+
+          {selectedSubCat && categories.find(c => c.id === selectedMainCat)?.children?.find(ch => ch.id === selectedSubCat)?.children?.length > 0 && (
+            <select
+              className="input-field animate-fade-in"
+              value={selectedSubSubCat}
+              onChange={(e) => {
+                setSelectedSubSubCat(e.target.value);
+                setFormData({ ...formData, categoryId: e.target.value });
+              }}
+            >
+              <option value="">Daha dəqiq kateqoriyanı seçin</option>
+              {categories.find(c => c.id === selectedMainCat).children.find(ch => ch.id === selectedSubCat).children.map((c) => (
+                <option key={c.id} value={c.id}>{c.name || c.nameAz}</option>
+              ))}
+            </select>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* Retail + Discounted Price */}
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium mb-1">Pərakəndə qiymət (AZN)</label>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">PƏRAKƏNDƏ QİYMƏT (AZN)</label>
             <input type="number" step="0.01" required value={formData.price} onChange={set("price")}
-              className={inputCls} placeholder="0.00" />
+              className="input-field" placeholder="0.00" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-red-700">Endirimli qiymət (AZN, opsional)</label>
+            <label className="block text-xs font-semibold text-red-600 mb-1">ENDİRİMLİ QİYMƏT (OPSİONAL)</label>
             <input type="number" step="0.01" value={formData.discountedPrice} onChange={set("discountedPrice")}
-              className={inputCls + " !border-red-200 focus:!border-red-400"} placeholder="0.00" />
-            <p className="text-xs text-gray-400 mt-1">Boş saxlansanız endirim göstərilmir. Normal qiymətdən aşağı olmalıdır.</p>
+              className="input-field" placeholder="0.00" />
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Vahid</label>
-          <input type="text" value={formData.unit} onChange={set("unit")}
-            className={inputCls} placeholder="ədəd / kq / litr" />
-        </div>
-
-        <div className="p-4 rounded-xl border border-amber-200 bg-amber-50 space-y-4">
-          <p className="text-sm font-medium text-amber-800">Topdan satış (opsional)</p>
-          <div className="grid grid-cols-2 gap-4">
+        {/* Wholesale Price */}
+        <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50 space-y-3">
+          <p className="text-xs font-bold text-amber-800">TOPDAN SATIŞ (OPSİONAL)</p>
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1 text-amber-900">Topdan qiymət (AZN)</label>
+              <label className="block text-xs font-semibold text-amber-900 mb-1">Topdan qiymət (AZN)</label>
               <input type="number" step="0.01" value={formData.wholesalePrice} onChange={set("wholesalePrice")}
-                className={inputCls} placeholder="0.00" />
+                className="input-field" placeholder="0.00" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1 text-amber-900">Minimum say</label>
+              <label className="block text-xs font-semibold text-amber-900 mb-1">Minimum say</label>
               <input type="number" min="1" value={formData.wholesaleMinQty} onChange={set("wholesaleMinQty")}
-                className={inputCls} placeholder="məs: 10" />
+                className="input-field" placeholder="məs: 10" />
             </div>
+          </div>
+          <p className="text-[11px] text-amber-700">
+            Topdan qiymət minimum sayda alan müştərilərə şamil olunacaq.
+          </p>
+        </div>
+
+        {/* Unit + Stock */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">VAHİD</label>
+            <input type="text" value={formData.unit} onChange={set("unit")}
+              className="input-field" placeholder="ədəd / kq / litr" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">STOK SAYI</label>
+            <input type="number" min="0" required value={formData.stock} onChange={set("stock")}
+              className="input-field" placeholder="1" />
           </div>
         </div>
 
+        {/* Description */}
         <div>
-          <label className="block text-sm font-medium mb-1">Stok sayı</label>
-          <input type="number" min="0" required value={formData.stock} onChange={set("stock")}
-            className={inputCls} placeholder="1" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Təsvir</label>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">TƏSVİR</label>
           <textarea rows={4} value={formData.descriptionAz} onChange={set("descriptionAz")}
-            className={inputCls} placeholder="Məhsul haqqında məlumat..." />
+            className="input-field" placeholder="Məhsul haqqında məlumat..." />
         </div>
 
+        {/* Images */}
         <div>
-          <label className="block text-sm font-medium mb-1">Şəkillər</label>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">ŞƏKİLLƏR</label>
           <ImageUploader value={images} onChange={setImages} max={8} />
         </div>
 
         <div className="flex gap-3 pt-2">
           <button type="submit" disabled={loading}
-            className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition">
+            className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-all">
             {loading ? "Göndərilir..." : "Məhsulu Əlavə Et"}
           </button>
           <button type="button" onClick={() => router.back()}

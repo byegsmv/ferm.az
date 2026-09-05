@@ -1,6 +1,6 @@
 "use client";
 import Icon from "@/components/ui/Icon";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { Link } from "@/i18n/routing";
 import Header from "@/components/Header";
 import Footer from "@/components/home/Footer";
@@ -8,7 +8,7 @@ import SafeImage from "@/components/SafeImage";
 import { apiFetch } from "@/lib/apiClient";
 
 export default function ActiveIngredientDetailPage({ params }) {
-  const { id } = params;
+  const { id } = use(params);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

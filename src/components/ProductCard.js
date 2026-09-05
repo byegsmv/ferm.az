@@ -241,6 +241,17 @@ export default function ProductCard({ product, tier, compact = false, initialFav
           )}
         </div>
 
+        {product.wholesalePrice ? (
+          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+              Topdan: {Number(product.wholesalePrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} ₼
+            </span>
+            {product.wholesaleMinQty ? (
+              <span className="text-[9px] text-gray-400 font-medium">min {product.wholesaleMinQty} {product.unit || "ədəd"}</span>
+            ) : null}
+          </div>
+        ) : null}
+
         {/* Metadata Row (Corporate, Min Qty, Location) - Pushed to absolute bottom */}
         <div className="mt-auto pt-2 flex flex-wrap items-center gap-1.5 border-t border-gray-50 min-h-[32px]">
           {product.isCorporate && (
