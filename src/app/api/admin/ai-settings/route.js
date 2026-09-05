@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, requireRole } from "@/lib/auth";
-import { clearGeminiKeyCache } from "@/lib/gemini";
+import { clearGeminiKeyCache, geminiDebug } from "@/lib/gemini";
 
 const DEFAULT_MODULES = [
   { id: "agronomist", name: "AI Aqronomist", description: "Bitki xəstəliklərini şəkil + mətn ilə analiz edir, məhsul tövsiyə edir", endpoint: "/api/ai/agronomist", page: "/agronom", icon: "sprout", isDefault: true },
@@ -55,6 +55,7 @@ export async function GET(request) {
       geminiEnvKey: maskedEnvKey,
       hasActiveKey: !!(map["geminiApiKey"] || envKey),
       model: "gemini-2.5-flash",
+      aiDebug: { provider: geminiDebug.lastProvider, lastError: geminiDebug.lastError, lastStatus: geminiDebug.lastStatus },
 
       // Other API keys
       resendKey: mask("resendApiKey"),
@@ -102,7 +103,7 @@ export async function PUT(request) {
         const value = body[frontendKey].trim();
         if (!value) {
           await prisma.setting.deleteMany({ where: { key: dbKey, category: "ai" } });
-          if (dbKey === "geminiApiKey") clearGeminiKeyCache();
+          clearGeminiKeyCache();
           return Response.json({ success: true, message: `${dbKey} silindi` });
         }
         await prisma.setting.upsert({
@@ -110,7 +111,7 @@ export async function PUT(request) {
           update: { value, category: "ai" },
           create: { key: dbKey, value, category: "ai" },
         });
-        if (dbKey === "geminiApiKey") clearGeminiKeyCache();
+        clearGeminiKeyCache();
         return Response.json({ success: true, message: `${dbKey} yeniləndi` });
       }
     }
