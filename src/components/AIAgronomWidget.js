@@ -13,20 +13,50 @@ export default function AIAgronomWidget() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
   const chatRef = useRef(null);
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const isImage = typeof file.type === "string" && file.type.startsWith("image/");
+    const isValidSize = file.size <= 4 * 1024 * 1024; // 4MB (Vercel serverless body limit ~4.5MB)
+    if (!isImage || !isValidSize) {
+      setMessages((prev) => [...prev, { role: "ai", content: "Yalnız 4MB-a qədər şəkil faylı yükləyə bilərsiniz." }]);
+      e.target.value = "";
+      return;
+    }
+    setImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearImage = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || loading) return;
-    const newMsg = { role: "user", content: input };
+    if (loading || (!input.trim() && !image)) return;
+    const newMsg = { role: "user", content: input.trim() || "(şəkil göndərildi)", imagePreview: image ? imagePreview : undefined };
     setMessages((prev) => [...prev, newMsg]);
+    const sentImage = image;
+    const sentPreview = imagePreview;
     setInput("");
+    clearImage();
     setLoading(true);
 
     try {
+      const formData = new FormData();
+      formData.append("messages", JSON.stringify([...messages, { role: "user", content: newMsg.content }]));
+      if (sentImage) formData.append("image", sentImage);
+
       const res = await fetch("/api/ai/agronomist-chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...messages, newMsg] }),
+        body: formData,
       });
       const data = await res.json();
       
@@ -35,6 +65,7 @@ export default function AIAgronomWidget() {
       } else {
         setMessages((prev) => [...prev, { role: "ai", content: `Xəta: ${data.error}` }]);
       }
+      if (sentPreview) URL.revokeObjectURL(sentPreview);
     } catch (e) {
       setMessages((prev) => [...prev, { role: "ai", content: "Bağlantı xətası baş verdi." }]);
     } finally {
@@ -76,6 +107,9 @@ export default function AIAgronomWidget() {
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[85%] rounded-2xl p-3 text-sm ${msg.role === "user" ? "bg-violet-600 text-white rounded-br-sm" : "bg-white border border-gray-100 text-gray-800 shadow-sm rounded-bl-sm"}`}>
+                  {msg.imagePreview && (
+                    <img src={msg.imagePreview} alt="Yüklənilən şəkil" className="mb-2 max-h-36 rounded-xl object-cover w-full" />
+                  )}
                   <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                   
                   {msg.products && msg.products.length > 0 && (
@@ -111,19 +145,42 @@ export default function AIAgronomWidget() {
           </div>
 
           <div className="p-3 bg-white border-t border-gray-100">
+            {imagePreview && (
+              <div className="mb-2 flex items-center gap-2 bg-violet-50 border border-violet-100 rounded-xl p-2">
+                <img src={imagePreview} alt="Seçilmiş şəkil" className="w-10 h-10 rounded-lg object-cover" />
+                <p className="flex-1 text-[11px] text-violet-700 font-medium truncate">Şəkil əlavə edildi</p>
+                <button onClick={clearImage} className="p-1 hover:bg-violet-100 rounded-full text-violet-600">
+                  <Icon name="x" size={14} />
+                </button>
+              </div>
+            )}
             <div className="flex items-center gap-2 bg-gray-100 rounded-2xl p-1 pr-2">
+              <input 
+                ref={fileInputRef}
+                type="file" 
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                title="Şəkil yüklə"
+                className="w-8 h-8 flex-shrink-0 flex items-center justify-center text-gray-500 hover:text-violet-600 rounded-xl hover:bg-violet-50 transition-colors"
+              >
+                <Icon name="image" size={18} />
+              </button>
               <input 
                 type="text" 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Sualınızı yazın..."
-                className="flex-1 bg-transparent px-3 py-2 text-sm outline-none"
+                placeholder="Sualınızı yazın və ya şəkil yükləyin..."
+                className="flex-1 bg-transparent px-1 py-2 text-sm outline-none min-w-0"
               />
               <button 
                 onClick={handleSend}
-                disabled={!input.trim() || loading}
-                className="w-8 h-8 flex items-center justify-center bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                disabled={(!input.trim() && !image) || loading}
+                className="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-50 transition-colors"
               >
                 <Icon name="send" size={16} />
               </button>
