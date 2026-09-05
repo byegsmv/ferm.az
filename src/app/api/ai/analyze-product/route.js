@@ -91,6 +91,7 @@ missing massivi yalnız çatışmayan məlumatlar üçün olmalıdır (price, st
       imageBase64: imageBase64 || undefined,
       imageMimeType: imageBase64 ? imageMimeType : undefined,
       maxOutputTokens: 2048,
+      jsonMode: true,
     });
     aiText = typeof r === "string" ? r : JSON.stringify(r);
   } catch (e) {
@@ -102,9 +103,23 @@ missing massivi yalnız çatışmayan məlumatlar üçün olmalıdır (price, st
 
   let draft = null;
   try {
-    const m = aiText.match(/\{[\s\S]*\}/);
-    if (m) draft = JSON.parse(m[0]);
-  } catch {}
+    // Strip markdown code fences if the model still wraps the JSON in them.
+    let cleaned = aiText.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+    const m = cleaned.match(/\{[\s\S]*\}/);
+    const candidate = m ? m[0] : cleaned;
+    try {
+      draft = JSON.parse(candidate);
+    } catch {
+      // Fallback: escape stray raw newlines/tabs that landed inside string
+      // literals (common when the model ignores jsonMode on long descriptions).
+      const sanitized = candidate.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/gs, (match, inner) =>
+        '"' + inner.replace(/\r?\n/g, "\\n").replace(/\t/g, "\\t") + '"'
+      );
+      draft = JSON.parse(sanitized);
+    }
+  } catch (e) {
+    console.log("⚠️ AI JSON parse xətası:", e.message, "| aiText:", aiText.slice(0, 500));
+  }
   if (!draft) {
     return Response.json({ error: "AI cavabı oxunmadı, yenidən cəhd edin" }, { status: 502 });
   }
