@@ -31,8 +31,35 @@ export default function AdminCopilotWidget() {
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const chatRef = useRef(null);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  // Direct-listing continuation: keeps the AI draft + original image while
+  // the admin answers the AI's missing-info questions (price, store, etc).
+  const pendingListingRef = useRef(null);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const isImage = typeof file.type === "string" && file.type.startsWith("image/");
+    const isValidSize = file.size <= 4 * 1024 * 1024;
+    if (!isImage || !isValidSize) {
+      addMessage({ role: "ai", content: "Yalnız 4MB-a qədər şəkil faylı yükləyə bilərsiniz." });
+      e.target.value = "";
+      return;
+    }
+    setImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearImage = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   // Persist messages
   useEffect(() => {
@@ -112,24 +139,52 @@ export default function AdminCopilotWidget() {
 
   const handleSend = async (text) => {
     const userText = (text || input).trim();
-    if (!userText || loading) return;
+    if ((!userText && !image) || loading) return;
 
-    addMessage({ role: "user", content: userText });
+    const sentImage = image;
+    const sentPreview = imagePreview;
+    addMessage({ role: "user", content: userText || "(şəkil göndərildi)", imagePreview: sentImage ? sentPreview : undefined });
     setInput("");
+    clearImage();
     setLoading(true);
 
-    // Add a placeholder AI message
-    const aiPlaceholderIdx = messages.length + 1;
-
     try {
-      const res = await fetch("/api/admin/copilot-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...messages, { role: "user", content: userText }] }),
-      });
+      const pending = pendingListingRef.current;
+      let content = userText;
+      if (pending) {
+        if (pending.draft) content += `\n\n(Əvvəlki AI hazırlığı: ${JSON.stringify(pending.draft)})`;
+      }
+
+      let res;
+      if (sentImage || pending?.image) {
+        const formData = new FormData();
+        formData.append("messages", JSON.stringify([...messages, { role: "user", content }]));
+        if (pending) formData.append("listingMode", "1");
+        formData.append("image", sentImage || pending.image);
+        res = await fetch("/api/admin/copilot-chat", { method: "POST", body: formData });
+      } else {
+        res = await fetch("/api/admin/copilot-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: [...messages, { role: "user", content }] }),
+        });
+      }
       const data = await res.json();
 
       if (res.ok) {
+        if (data.listing) {
+          if (data.listing.created) {
+            pendingListingRef.current = null;
+            addMessage({ role: "ai", content: data.reply, listing: data.listing });
+          } else {
+            pendingListingRef.current = { draft: data.listing.draft, image: sentImage || pending?.image || null };
+            addMessage({ role: "ai", content: data.reply });
+          }
+          setLoading(false);
+          return;
+        }
+
+        pendingListingRef.current = null;
         let aiText = data.reply || "";
         let mutationAction = null;
 
@@ -143,8 +198,6 @@ export default function AdminCopilotWidget() {
             }
           } catch (e) {}
         }
-
-        const newMsgIdx = messages.length + 1; // user msg is at messages.length, ai is at +1
 
         setMessages(prev => {
           const aiMsg = {
@@ -247,8 +300,22 @@ export default function AdminCopilotWidget() {
                     ? "bg-brand-600 text-white rounded-br-sm"
                     : "bg-white border border-gray-200 text-gray-800 rounded-bl-sm"
                 }`}>
+                  {msg.imagePreview && (
+                    <img src={msg.imagePreview} alt="Yüklənilən şəkil" className="mb-2 max-h-32 rounded-lg object-cover w-full" />
+                  )}
                   {msg.content && (
                     <p className="whitespace-pre-wrap leading-relaxed text-[13px]">{msg.content}</p>
+                  )}
+
+                  {msg.listing?.created && (
+                    <a href={`/products/${msg.listing.slug}`} target="_blank" rel="noreferrer" className="mt-2.5 block p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors">
+                      <p className="text-[12px] font-bold text-emerald-800 flex items-center gap-1">
+                        <Icon name="checkCircle" size={13} /> {msg.listing.title}
+                      </p>
+                      <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                        {msg.listing.price} AZN · {msg.listing.storeName || "şəxsi"} · dərhal AKTİF · səhifəyə bax →
+                      </p>
+                    </a>
                   )}
 
                   {/* Mutation confirm block */}
@@ -306,7 +373,24 @@ export default function AdminCopilotWidget() {
 
           {/* Input */}
           <div className="p-3 bg-white border-t border-gray-100 shrink-0">
+            {imagePreview && (
+              <div className="mb-2 flex items-center gap-2 bg-brand-50 border border-brand-100 rounded-xl p-2">
+                <img src={imagePreview} alt="Seçilmiş şəkil" className="w-9 h-9 rounded-lg object-cover" />
+                <p className="flex-1 text-[11px] text-brand-700 font-medium truncate">Şəkil əlavə edildi — məhsul kimi analiz olunacaq</p>
+                <button onClick={clearImage} className="p-1 hover:bg-brand-100 rounded-full text-brand-600">
+                  <Icon name="x" size={13} />
+                </button>
+              </div>
+            )}
             <div className="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-xl p-1.5 focus-within:border-brand-400 transition-colors">
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                title="Məhsul şəkli yüklə"
+                className="w-8 h-8 flex-shrink-0 flex items-center justify-center text-gray-500 hover:text-brand-600 rounded-lg hover:bg-brand-50 transition-colors self-end mb-0.5"
+              >
+                <Icon name="image" size={16} />
+              </button>
               <textarea
                 ref={inputRef}
                 rows={1}
@@ -322,13 +406,13 @@ export default function AdminCopilotWidget() {
                     handleSend();
                   }
                 }}
-                placeholder="Admin əmrini yazın... (Enter göndər, Shift+Enter yeni sətir)"
+                placeholder="Admin əmrini yazın və ya şəkil yükləyin... (Enter göndər)"
                 className="flex-1 bg-transparent px-2 py-1 text-sm outline-none resize-none leading-relaxed min-h-[32px] max-h-[100px]"
                 style={{ overflow: "hidden" }}
               />
               <button
                 onClick={() => handleSend()}
-                disabled={!input.trim() || loading}
+                disabled={(!input.trim() && !image) || loading}
                 className="w-8 h-8 flex items-center justify-center bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-40 transition-all active:scale-95 shrink-0"
               >
                 <Icon name="arrowRight" size={15} />
