@@ -29,6 +29,7 @@ export async function POST(request) {
     }
 
     const uploaded = [];
+    let uploadDebug = null;
     for (const file of files) {
       if (!ALLOWED_TYPES.includes(file.type)) {
         return Response.json({ error: `Dəstəklənməyən fayl növü: ${file.type || "naməlum"}. Yalnız JPG, PNG, WEBP, GIF.` }, { status: 422 });
@@ -56,6 +57,7 @@ export async function POST(request) {
           continue;
         } catch (blobErr) {
           console.error("Vercel Blob upload failed, falling back:", blobErr?.message || blobErr);
+          uploadDebug = blobErr?.message || String(blobErr);
         }
       }
       
@@ -81,7 +83,14 @@ export async function POST(request) {
       }
     }
 
-    return Response.json({ images: uploaded }, { status: 201 });
+    return Response.json({
+      images: uploaded,
+      v: 2,
+      debug: uploadDebug,
+      envTokenState: process.env.BLOB_READ_WRITE_TOKEN
+        ? "set:" + process.env.BLOB_READ_WRITE_TOKEN.length + "chars"
+        : "MISSING",
+    }, { status: 201 });
   } catch (err) {
     console.error("Upload API Error:", err);
     return Response.json({ error: err.message || "Fayl yüklənərkən xəta baş verdi" }, { status: 500 });
