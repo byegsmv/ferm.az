@@ -3,6 +3,8 @@ import { Link } from "@/i18n/routing";
 import { prisma } from "@/lib/prisma";
 import SideBanner from "@/components/Banners/SideBanner";
 import { blogExcerpt } from "@/lib/blogContent";
+import { after } from "next/server";
+import { migrateBlogImages, requalifyBlobImages } from "@/lib/blogImages";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,18 @@ const CATEGORY_ICONS = {
   agronomy: "leaf",
 };
 
+function formatPostDate(d) {
+  const date = d ? new Date(d) : null;
+  if (!date || isNaN(date.getTime())) return "";
+  try {
+    const day = new Intl.DateTimeFormat("az", { day: "numeric", month: "long", year: "numeric" }).format(date);
+    const time = new Intl.DateTimeFormat("az", { hour: "2-digit", minute: "2-digit" }).format(date);
+    return `${day}, ${time}`;
+  } catch {
+    return "";
+  }
+}
+
 export default async function BlogPage() {
   let posts = [];
   try {
@@ -37,6 +51,9 @@ export default async function BlogPage() {
   } catch (e) {
     console.error("Blog fetch error:", e.message);
   }
+
+  // Self-heal: re-host unreliable pollinations images in background (after response)
+  try { after(async () => { await migrateBlogImages(10000); await requalifyBlobImages(10000); }); } catch {}
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen">
@@ -124,6 +141,9 @@ export default async function BlogPage() {
                           {(post.author?.fullName || "F")[0].toUpperCase()}
                         </span>
                         <span className="font-medium">{post.author?.fullName || "FermerMarket"}</span>
+                        <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                          <Icon name="calendar" size={11} /> {formatPostDate(post.publishedAt || post.createdAt)}
+                        </span>
                         <span className="ml-auto inline-flex items-center gap-1 text-brand-600 font-semibold group-hover:gap-1.5 transition-all">
                           Oxu <Icon name="arrowRight" size={12} />
                         </span>

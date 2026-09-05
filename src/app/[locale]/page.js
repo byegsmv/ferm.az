@@ -58,7 +58,7 @@ async function getHomeData() {
       prisma.blogPost.findMany({
         where: { isPublished: true },
         orderBy: { createdAt: "desc" },
-        take: 3,
+        take: 8,
         include: { author: { select: { fullName: true } } },
       }),
       prisma.campaign.findMany({

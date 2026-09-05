@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Link } from "@/i18n/routing";
 import { prisma } from "@/lib/prisma";
 import { normalizeBlogContent, blogExcerpt } from "@/lib/blogContent";
+import { after } from "next/server";
+import { migrateBlogImages, requalifyBlobImages } from "@/lib/blogImages";
 
 export const dynamic = "force-dynamic";
 
@@ -46,10 +48,25 @@ const CATEGORY_ICONS = {
   agronomy: "leaf",
 };
 
+function formatPostDate(d) {
+  const date = d ? new Date(d) : null;
+  if (!date || isNaN(date.getTime())) return "";
+  try {
+    const day = new Intl.DateTimeFormat("az", { day: "numeric", month: "long", year: "numeric" }).format(date);
+    const time = new Intl.DateTimeFormat("az", { hour: "2-digit", minute: "2-digit" }).format(date);
+    return `${day}, ${time}`;
+  } catch {
+    return "";
+  }
+}
+
 export default async function BlogPostPage({ params }) {
   const p = await params;
   const post = await getPost(p.slug);
   if (!post) notFound();
+
+  // Self-heal: re-host unreliable pollinations images in background (after response)
+  try { after(async () => { await migrateBlogImages(20000); await requalifyBlobImages(20000); }); } catch {}
 
   const content = normalizeBlogContent(post.contentAz);
   const category = post.category && (CATEGORY_LABELS[post.category] || post.category);
@@ -103,7 +120,10 @@ export default async function BlogPostPage({ params }) {
                 <p className="text-sm font-semibold text-gray-900 leading-tight">
                   {post.author?.fullName || "FermerMarket"}
                 </p>
-                <p className="text-xs text-gray-400">FermerMarket Bloq</p>
+                <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                  <Icon name="calendar" size={11} />
+                  {formatPostDate(post.publishedAt || post.createdAt)}
+                </p>
               </div>
             </div>
 
