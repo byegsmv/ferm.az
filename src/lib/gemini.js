@@ -104,7 +104,7 @@ export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOu
     // Force Gemini to emit strictly valid JSON (no markdown fences, no raw
     // control chars inside strings) — otherwise multi-paragraph text fields
     // (e.g. descriptions) often contain literal newlines that break JSON.parse.
-    if (jsonMode) generationConfig.response_mime_type = "application/json";
+    if (jsonMode) generationConfig.responseMimeType = "application/json";
 
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,
