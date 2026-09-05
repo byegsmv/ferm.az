@@ -1,39 +1,61 @@
-// Thin wrapper around Google's Gemini REST API. Server-side only.
-// Reads API key from: 1) DB Setting table (admin-managed), 2) env var, 3) offline fallback.
+// AI provider wrapper with fallback chain: Google Gemini → Groq → xAI (Grok) → offline simulation.
+// Server-side only. Keys are read from: 1) DB Setting table (admin-managed), 2) env vars.
+// Keys are routed to providers by prefix: AIza* → Gemini, gsk_* → Groq, xai-* → xAI Grok.
+// Any other format is attempted against the Gemini endpoint (legacy behavior).
 const MODEL = "gemini-2.5-flash";
 
-// Temporary diagnostics: last Gemini error (null when last call succeeded)
-export const geminiDebug = { lastError: null, lastStatus: null };
+// Vision-capable chat models for OpenAI-compatible providers (tried in order).
+const GROQ_MODELS = ["meta-llama/llama-4-scout-17b-16e-instruct", "meta-llama/llama-4-maverick-17b-128e-instruct"];
+const XAI_MODELS = ["grok-2-vision-1212", "grok-vision-beta"];
 
-let cachedKey = null;
+// Temporary diagnostics: last AI provider used / last error (null when last call succeeded)
+export const geminiDebug = { lastError: null, lastStatus: null, lastProvider: null };
+
+let keyCache = null; // { gemini, groq, xai }
 let cacheExpiry = 0;
 
-async function getApiKey() {
-  // Check cache (valid for 60 seconds)
-  if (cachedKey !== null && Date.now() < cacheExpiry) return cachedKey;
+const DB_KEY_FIELDS = ["geminiApiKey", "groqApiKey", "huggingfaceApiKey", "togetherApiKey"];
 
+function classifyKey(keys, value) {
+  if (!value) return;
+  if (/^AIza/.test(value)) keys.gemini = keys.gemini || value;
+  else if (/^gsk_/.test(value)) keys.groq = keys.groq || value;
+  else if (/^xai-/.test(value)) keys.xai = keys.xai || value;
+  else keys.gemini = keys.gemini || value; // unknown format: try Gemini endpoint (legacy)
+}
+
+async function loadKeys() {
+  // Check cache (valid for 60 seconds)
+  if (keyCache !== null && Date.now() < cacheExpiry) return keyCache;
+
+  const keys = { gemini: "", groq: "", xai: "" };
   try {
     // Dynamic import to avoid circular dependencies
     const { prisma } = await import("@/lib/prisma");
-    const setting = await prisma.setting.findUnique({ where: { key: "geminiApiKey" } });
-    if (setting && setting.value) {
-      cachedKey = setting.value;
-      cacheExpiry = Date.now() + 60000;
-      return cachedKey;
-    }
+    const settings = await prisma.setting.findMany({
+      where: { key: { in: DB_KEY_FIELDS }, category: "ai" },
+    });
+    const dbMap = {};
+    for (const s of settings) dbMap[s.key] = s.value;
+    classifyKey(keys, dbMap.geminiApiKey);
+    classifyKey(keys, dbMap.groqApiKey);
+    classifyKey(keys, dbMap.huggingfaceApiKey);
+    classifyKey(keys, dbMap.togetherApiKey);
   } catch (e) {
     // DB not available, fall through to env
   }
 
-  // Fall back to env var
-  cachedKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+  classifyKey(keys, process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "");
+  classifyKey(keys, process.env.GROQ_API_KEY || process.env.XAI_API_KEY || "");
+
+  keyCache = keys;
   cacheExpiry = Date.now() + 60000;
-  return cachedKey;
+  return keys;
 }
 
-// Clear cache when admin updates the key (called from the API route)
+// Clear cache when admin updates any AI key (called from the API route)
 export function clearGeminiKeyCache() {
-  cachedKey = null;
+  keyCache = null;
   cacheExpiry = 0;
 }
 
@@ -49,7 +71,7 @@ function offlineGenerate(prompt) {
         treatment: ["İnsektisidlərlə çiləmə aparmaq (məs. İmidakloprid tərkibli)", "Yarpaqları sabunlu məhlulla yumaq"],
         recommendedProducts: ["İmidakloprid 200", "Karate Zeon"],
         needsExpertConsult: false,
-        summary: "Hörmətli fermer, sahənizdə mənənə zərərvericisi aşkarlanıb. İmidakloprid tərkibli preparatlarla vaxtında mübarizə aparmağınız tövsiyə olunur."
+        summary: "Hörmətli fermer, sahənizdə mənənə zərəvericisi aşkarlanıb. İmidakloprid tərkibli preparatlarla vaxtında mübarizə aparmağınız tövsiyə olunur."
       });
     }
     if (promptLower.includes("kolorado") || promptLower.includes("beetle") || promptLower.includes("kartof")) {
@@ -57,7 +79,7 @@ function offlineGenerate(prompt) {
         diagnosis: "Kolorado Kartof Böcəyi",
         confidencePercent: 98,
         causes: ["Növbəli əkin qaydalarına əməl edilməməsi", "İsti və quru hava şəraiti"],
-        treatment: ["Böcəklərin və yumurtalarının mexaniki yığılması", "Sürfələrə qarşı xüsusi insektisidlərin tətbiqi"],
+        treatment: ["Böcəklərin və yumurtalarının mexaniki yığılması", "Sürfälərə qarşı xüsusi insektisidlərin tətbiqi"],
         recommendedProducts: ["Mospilan", "Decis Profi"],
         needsExpertConsult: false,
         summary: "Hörmətli fermer, sahənizdə Kolorado böcəyi yayılmışdır. Sürətli inkişafın qarşısını almaq üçün dərhal insektisid çiləməsi tövsiyə olunur."
@@ -89,55 +111,151 @@ function offlineGenerate(prompt) {
   return "Lokal simulyasiya cavabı: Kənd təsərrüfatı layihəsi uğurla işləyir.";
 }
 
-export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOutputTokens = 2048, jsonMode = false }) {
-  const key = await getApiKey();
-
-  if (!key) {
-    console.log("⚠️ AI bağlantı açarı tapılmadı. Offline simulyasiya rejimində işləyir.");
-    return offlineGenerate(prompt);
+// Google Gemini (native REST API)
+async function callGemini({ key, prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode }) {
+  const parts = [{ text: prompt }];
+  if (imageBase64) {
+    parts.push({ inline_data: { mime_type: imageMimeType || "image/jpeg", data: imageBase64 } });
   }
 
-  try {
-    const parts = [{ text: prompt }];
-    if (imageBase64) {
-      parts.push({ inline_data: { mime_type: imageMimeType || "image/jpeg", data: imageBase64 } });
+  const generationConfig = { temperature: 0.6, maxOutputTokens, thinkingConfig: { thinkingBudget: 0 } };
+  // Force the model to emit strictly valid JSON (no markdown fences, no raw
+  // control chars inside strings) — otherwise multi-paragraph text fields
+  // (e.g. descriptions) often contain literal newlines that break JSON.parse.
+  if (jsonMode) generationConfig.responseMimeType = "application/json";
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig,
+      }),
     }
+  );
 
-    const generationConfig = { temperature: 0.6, maxOutputTokens, thinkingConfig: { thinkingBudget: 0 } };
-    // Force Gemini to emit strictly valid JSON (no markdown fences, no raw
-    // control chars inside strings) — otherwise multi-paragraph text fields
-    // (e.g. descriptions) often contain literal newlines that break JSON.parse.
-    if (jsonMode) generationConfig.responseMimeType = "application/json";
+  const data = await res.json().catch(() => ({}));
+  geminiDebug.lastStatus = res.status;
+  if (!res.ok) {
+    throw new Error((data?.error?.message || "AI sorğusu uğursuz oldu") + ` [HTTP ${res.status}]`);
+  }
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,
-      {
+  const candidate = data?.candidates?.[0];
+  const text = candidate?.content?.parts?.map((p) => p.text).join("\n") || "";
+  if (candidate?.finishReason === "MAX_TOKENS" && !text) throw new Error("AI cavabı çox uzun oldu, yenidən cəhd edin");
+  return text.trim();
+}
+
+// OpenAI-compatible chat completions (Groq / xAI)
+async function callOpenAICompat({ endpoint, key, models, prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode }) {
+  const content = [{ type: "text", text: prompt }];
+  if (imageBase64) {
+    content.push({
+      type: "image_url",
+      image_url: { url: `data:${imageMimeType || "image/jpeg"};base64,${imageBase64}` },
+    });
+  }
+
+  let lastErr = null;
+  for (const model of models) {
+    try {
+      const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
         body: JSON.stringify({
-          contents: [{ parts }],
-          generationConfig,
+          model,
+          messages: [{ role: "user", content }],
+          temperature: 0.6,
+          max_completion_tokens: maxOutputTokens,
+          max_tokens: maxOutputTokens,
+          ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
         }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      geminiDebug.lastStatus = res.status;
+      if (!res.ok) {
+        lastErr = new Error((data?.error?.message || "AI sorğusu uğursuz oldu") + ` [${model} HTTP ${res.status}]`);
+        // Bad/expired key — no point trying other models
+        if (res.status === 401 || res.status === 403) throw lastErr;
+        continue;
       }
-    );
 
-    const data = await res.json().catch(() => ({}));
-    geminiDebug.lastStatus = res.status;
-    if (!res.ok) {
-      geminiDebug.lastError = (data?.error?.message || "AI sorğusu uğursuz oldu") + ` [HTTP ${res.status}]`;
-      throw new Error(geminiDebug.lastError);
+      const text = (data?.choices?.[0]?.message?.content || "").trim();
+      if (text) return text;
+      lastErr = new Error(`Boş cavab [${model}]`);
+    } catch (e) {
+      lastErr = e;
+      if (e.message?.includes("HTTP 401") || e.message?.includes("HTTP 403")) throw e;
     }
-    geminiDebug.lastError = null;
-
-    const candidate = data?.candidates?.[0];
-    const text = candidate?.content?.parts?.map((p) => p.text).join("\n") || "";
-    if (candidate?.finishReason === "MAX_TOKENS" && !text) throw new Error("AI cavabı çox uzun oldu, yenidən cəhd edin");
-    return text.trim();
-  } catch (err) {
-    console.log("⚠️ AI xətası, offline rejimə keçilir:", err.message);
-    geminiDebug.lastError = geminiDebug.lastError || err.message;
-    return offlineGenerate(prompt);
   }
+  throw lastErr || new Error("AI cavabı alınmadı");
+}
+
+export async function geminiGenerate({ prompt, imageBase64, imageMimeType, maxOutputTokens = 2048, jsonMode = false }) {
+  const keys = await loadKeys();
+  const errors = [];
+
+  // 1) Google Gemini
+  if (keys.gemini) {
+    try {
+      const text = await callGemini({ key: keys.gemini, prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode });
+      geminiDebug.lastProvider = `gemini:${MODEL}`;
+      geminiDebug.lastError = null;
+      return text;
+    } catch (err) {
+      errors.push(`Gemini: ${err.message}`);
+      geminiDebug.lastError = errors.join(" | ");
+      console.log("⚠️ Gemini xətası:", err.message);
+    }
+  }
+
+  // 2) Groq (OpenAI-compatible)
+  if (keys.groq) {
+    try {
+      const text = await callOpenAICompat({
+        endpoint: "https://api.groq.com/openai/v1/chat/completions",
+        key: keys.groq,
+        models: GROQ_MODELS,
+        prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode,
+      });
+      geminiDebug.lastProvider = "groq";
+      geminiDebug.lastError = null;
+      return text;
+    } catch (err) {
+      errors.push(`Groq: ${err.message}`);
+      geminiDebug.lastError = errors.join(" | ");
+      console.log("⚠️ Groq xətası:", err.message);
+    }
+  }
+
+  // 3) xAI Grok (OpenAI-compatible)
+  if (keys.xai) {
+    try {
+      const text = await callOpenAICompat({
+        endpoint: "https://api.x.ai/v1/chat/completions",
+        key: keys.xai,
+        models: XAI_MODELS,
+        prompt, imageBase64, imageMimeType, maxOutputTokens, jsonMode,
+      });
+      geminiDebug.lastProvider = "grok";
+      geminiDebug.lastError = null;
+      return text;
+    } catch (err) {
+      errors.push(`Grok: ${err.message}`);
+      geminiDebug.lastError = errors.join(" | ");
+      console.log("⚠️ Grok (xAI) xətası:", err.message);
+    }
+  }
+
+  if (errors.length) {
+    console.log("⚠️ Bütün AI provayderləri xəta verdi, offline rejimə keçilir:", errors.join(" | "));
+  } else {
+    console.log("⚠️ AI bağlantı açarı tapılmadı. Offline simulyasiya rejimində işləyir.");
+  }
+  return offlineGenerate(prompt);
 }
 
 // Check if an AI module is active (DB setting)
