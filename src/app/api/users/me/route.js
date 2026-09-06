@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { publicStoreLogo, publicStoreCover } from "@/lib/imageUrl";
 import { getAuthUser, hashPassword, verifyPassword } from "@/lib/auth";
 import { profileUpdateSchema } from "@/lib/validators";
 import { z } from "zod";
@@ -20,6 +21,9 @@ export async function GET(request) {
   });
 
   if (!user) return Response.json({ error: "İstifadəçi tapılmadı" }, { status: 404 });
+  if (user.store) {
+    user.store = { ...user.store, logoUrl: publicStoreLogo(user.store), coverUrl: publicStoreCover(user.store) };
+  }
   return Response.json({ user });
 }
 
