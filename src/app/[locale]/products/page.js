@@ -1,5 +1,5 @@
 import { Fragment, Suspense } from "react";
-import { mapProductImages } from "@/lib/imageUrl";
+import { mapProductImages, publicStoreLogo } from "@/lib/imageUrl";
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
 import { Link } from "@/i18n/routing";
@@ -187,6 +187,7 @@ export default async function ProductsPage({ searchParams }) {
   }
 
   products = products.map(mapProductImages);
+  stores = stores.map((st) => ({ ...st, logoUrl: publicStoreLogo(st) }));
 
   const siteTextsMap = {};
   for (const st of siteTextsList || []) {
