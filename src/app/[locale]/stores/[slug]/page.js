@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { mapProductImages } from "@/lib/imageUrl";
+import { mapProductImages, publicStoreLogo, publicStoreCover } from "@/lib/imageUrl";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/routing";
 import ProductCard from "@/components/ProductCard";
@@ -47,7 +47,7 @@ export default async function StorePage({ params }) {
   });
 
   if (!store) notFound();
-  store = { ...store, products: (store.products || []).map(mapProductImages) };
+  store = { ...store, logoUrl: publicStoreLogo(store), coverUrl: publicStoreCover(store), products: (store.products || []).map(mapProductImages) };
 
   // Check if current user is the owner
   const isOwner = authUser?.sub === store.ownerId;
