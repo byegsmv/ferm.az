@@ -4,6 +4,7 @@ import { productCreateSchema } from "@/lib/validators";
 import { resolveCategorySlugs } from "@/lib/categoryFilter";
 import slugify from "slugify";
 import { extractAndSaveKeywords } from "@/lib/keywords";
+import { publicImgUrl } from "@/lib/imageUrl";
 
 // GET /api/products?category=&minPrice=&maxPrice=&region=&search=&page=&pageSize=&locale=
 // GET /api/products?mine=1 (auth) — caller's own listings, any status
@@ -191,9 +192,9 @@ export async function GET(request) {
       city: p.city,
       stock: p.stock,
       status: p.status,
-      coverImage: p.images?.[0]?.url || null,
+      coverImage: p.images?.[0] ? publicImgUrl(p.images[0]) : null,
       titleAz: p.titleAz,
-      images: p.images?.map((img) => ({ url: img.url, altText: img.altText })),
+      images: p.images?.map((img) => ({ url: publicImgUrl(img), altText: img.altText })),
       category: p.category ? { slug: p.category.slug, nameAz: p.category.nameAz, nameEn: p.category.nameEn, nameRu: p.category.nameRu } : null,
       brand: p.brand || null,
       store: p.store ? { name: p.store.name, slug: p.store.slug } : null,

@@ -6,7 +6,6 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
-  optimizePackageImports: ["lucide-react", "recharts"],
   images: {
     minimumCacheTTL: 86400,
     remotePatterns: [

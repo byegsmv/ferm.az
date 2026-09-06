@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { mapProductImages } from "@/lib/imageUrl";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/routing";
 import ProductCard from "@/components/ProductCard";
@@ -26,7 +27,7 @@ export default async function StorePage({ params }) {
   const authUser = await getServerAuthUser();
 
   const slug = decodeURIComponent(p.slug);
-  const store = await prisma.store.findUnique({
+  let store = await prisma.store.findUnique({
     where: { slug },
     include: {
       owner: { select: { id: true, fullName: true, createdAt: true } },
@@ -46,6 +47,7 @@ export default async function StorePage({ params }) {
   });
 
   if (!store) notFound();
+  store = { ...store, products: (store.products || []).map(mapProductImages) };
 
   // Check if current user is the owner
   const isOwner = authUser?.sub === store.ownerId;

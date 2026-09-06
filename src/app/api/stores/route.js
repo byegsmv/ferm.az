@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { publicStoreLogo, publicStoreCover } from "@/lib/imageUrl";
 import { getAuthUser } from "@/lib/auth";
 import { storeCreateSchema } from "@/lib/validators";
 import slugify from "slugify";
@@ -53,7 +54,7 @@ export async function GET(request) {
   ]);
 
   return Response.json({
-    stores,
+    stores: stores.map((s) => ({ ...s, logoUrl: publicStoreLogo(s), coverUrl: publicStoreCover(s) })),
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   });
 }

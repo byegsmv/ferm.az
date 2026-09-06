@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { mapProductImages } from "@/lib/imageUrl";
 import { getAuthUser } from "@/lib/auth";
 import { productUpdateSchema } from "@/lib/validators";
 import { extractAndSaveKeywords } from "@/lib/keywords";
@@ -37,7 +38,7 @@ export async function GET(request, { params }) {
       prisma.product.update({ where: { id: product.id }, data: { viewCount: { increment: 1 } } }).catch(() => {});
     }
 
-    return Response.json({ product });
+    return Response.json({ product: mapProductImages(product) });
   } catch (error) {
     console.error("GET /api/products/[id] error:", error);
     return Response.json({ error: "Server xətası" }, { status: 500 });
