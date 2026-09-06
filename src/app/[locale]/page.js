@@ -1,4 +1,5 @@
 import { Link } from "@/i18n/routing";
+import { mapProductImages, publicStoreLogo, publicStoreCover } from "@/lib/imageUrl";
 import SafeImage from "@/components/SafeImage";
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
@@ -79,7 +80,7 @@ async function getHomeData() {
       }),
     ]);
     const serializeProduct = (p) => ({
-      ...p,
+      ...mapProductImages(p),
       price: p.price ? p.price.toString() : null,
       wholesalePrice: p.wholesalePrice ? p.wholesalePrice.toString() : null,
       discountedPrice: p.discountedPrice ? p.discountedPrice.toString() : null,
@@ -104,7 +105,7 @@ async function getHomeData() {
       blogPosts,
       campaigns,
       brands,
-      stores,
+      stores: stores.map((st) => ({ ...st, logoUrl: publicStoreLogo(st), coverUrl: publicStoreCover(st) })),
     };
   } catch (error) {
     console.warn("Falling back to mock home data:", error.message);

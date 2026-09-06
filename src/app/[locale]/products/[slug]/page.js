@@ -1,4 +1,5 @@
 import Icon from "@/components/ui/Icon";
+import { mapProductImages } from "@/lib/imageUrl";
 import SafeImage from "@/components/SafeImage";
 import ProductGallery from "@/components/ProductGallery";
 import AddToCartButton from "@/components/AddToCartButton";
@@ -57,7 +58,7 @@ async function getRelatedProducts(product) {
   });
 
   if (sameCategory.length > 0) {
-    return { heading: "Bu kateqoriyada digər elanlar", items: sameCategory, tierById: {} };
+    return { heading: "Bu kateqoriyada digər elanlar", items: sameCategory.map(mapProductImages), tierById: {} };
   }
 
   const now = new Date();
@@ -85,11 +86,11 @@ async function getRelatedProducts(product) {
     });
 
   const seen = new Set(vipProducts.map((p) => p.id));
-  const combined = [...vipProducts];
+  const combined = vipProducts.map(mapProductImages);
   for (const p of latest) {
     if (!seen.has(p.id) && combined.length < 8) {
       seen.add(p.id);
-      combined.push(p);
+      combined.push(mapProductImages(p));
     }
   }
 
@@ -129,6 +130,7 @@ export default async function ProductDetailPage({ params }) {
   let product = null;
   try { product = await getProduct(slug); } catch(e) { console.error("getProduct error:", e.message); }
   if (!product || product.status === "DRAFT" || product.status === "REJECTED") notFound();
+  product = mapProductImages(product);
 
   // Fetch active ingredients of this product and alternatives
   let alternatives = [];
@@ -199,6 +201,9 @@ export default async function ProductDetailPage({ params }) {
   } catch (e) {
     console.error("alternatives fetch error:", e.message);
   }
+  alternatives = alternatives.map(mapProductImages);
+  diseaseAlternatives = diseaseAlternatives.map(mapProductImages);
+  pestAlternatives = pestAlternatives.map(mapProductImages);
 
   let sidebarAd = null, related = { heading: "", items: [], tierById: {} };
   let otherListings = [];
@@ -225,7 +230,7 @@ export default async function ProductDetailPage({ params }) {
     sidebarAd = resolved[0];
     related = resolved[1];
     if (product.sellerId) {
-      otherListings = resolved[2] || [];
+      otherListings = (resolved[2] || []).map(mapProductImages);
     }
   } catch(e) {
     console.error("product page sidebar/related/seller error:", e.message);

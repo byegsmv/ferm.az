@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { publicStoreLogo } from "@/lib/imageUrl";
 import { Link } from "@/i18n/routing";
 import Icon from "@/components/ui/Icon";
 import SideBanner from "@/components/Banners/SideBanner";
@@ -14,7 +15,7 @@ export async function generateMetadata() {
 }
 
 export default async function StoresPage() {
-  const stores = await prisma.store.findMany({
+  let stores = await prisma.store.findMany({
     where: { isActive: true },
     select: {
       id: true,
@@ -30,6 +31,7 @@ export default async function StoresPage() {
     },
     orderBy: { createdAt: 'desc' }
   });
+  stores = stores.map((st) => ({ ...st, logoUrl: publicStoreLogo(st) }));
 
   let salesPoints = [];
   try {
