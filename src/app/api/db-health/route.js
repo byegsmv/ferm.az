@@ -26,5 +26,19 @@ export async function GET(request) {
   } catch (e) {
     connect = { ok: false, error: String(e.message).slice(0, 400) };
   }
-  return NextResponse.json({ hasUrl: !!url, host, dbname, parseErr, connect });
+  const envCheck = {
+    NEXT_PUBLIC_SITE_URL: !!process.env.NEXT_PUBLIC_SITE_URL,
+    JWT_ACCESS_SECRET: !!process.env.JWT_ACCESS_SECRET,
+    JWT_REFRESH_SECRET: !!process.env.JWT_REFRESH_SECRET,
+    BLOB_READ_WRITE_TOKEN: !!process.env.BLOB_READ_WRITE_TOKEN,
+    RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+    GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
+    GROQ_API_KEY: !!process.env.GROQ_API_KEY,
+    XAI_API_KEY: !!process.env.XAI_API_KEY,
+    VAPID_PUBLIC_KEY: !!process.env.VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY: !!process.env.VAPID_PRIVATE_KEY,
+    CRON_SECRET: !!process.env.CRON_SECRET,
+    PAYMENT_PROVIDER: process.env.PAYMENT_PROVIDER || null,
+  };
+  return NextResponse.json({ hasUrl: !!url, host, dbname, parseErr, connect, envCheck });
 }
