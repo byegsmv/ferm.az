@@ -59,13 +59,11 @@ export async function PATCH(request) {
   const allowedData = {};
   if (body.fullName !== undefined) allowedData.fullName = body.fullName;
   if (body.phone !== undefined) allowedData.phone = body.phone;
-  if (body.region !== undefined) allowedData.region = body.region;
-  if (body.city !== undefined) allowedData.city = body.city;
 
   const user = await prisma.user.update({
     where: { id: authUser.sub },
     data: allowedData,
-    select: { id: true, email: true, fullName: true, phone: true, locale: true, region: true, city: true },
+    select: { id: true, email: true, fullName: true, phone: true, locale: true },
   });
 
   return Response.json({ user });
