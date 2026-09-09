@@ -22,11 +22,13 @@ import { verifyPassword } from "@/lib/auth";
  *
  *   node -e "console.log(require('bcryptjs').hashSync(process.argv[1], 12))" 'your-password'
  */
+
 /**
- * A bcrypt hash is full of "$" characters, which a .env file treats as variable
+ * A bcrypt hash is full of "$" characters, which an env file treats as variable
  * references and expands away, silently leaving an empty value. Writing them as
  * "\$" survives that, but a hash pasted straight into a hosting dashboard has no
- * backslashes. Accept either shape rather than fail on the difference.
+ * backslashes. Accept either shape rather than fail on the difference, and treat
+ * anything that is not a well-formed bcrypt hash as "not configured".
  */
 function readConfiguredHash() {
   const raw = process.env.ADMIN_FALLBACK_PASSWORD_HASH || "";
