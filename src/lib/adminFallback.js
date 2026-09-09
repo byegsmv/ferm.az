@@ -22,8 +22,22 @@ import { verifyPassword } from "@/lib/auth";
  *
  *   node -e "console.log(require('bcryptjs').hashSync(process.argv[1], 12))" 'your-password'
  */
+
+/**
+ * A bcrypt hash is full of "$" characters, which an env file treats as variable
+ * references and expands away, silently leaving an empty value. Writing them as
+ * "\$" survives that, but a hash pasted straight into a hosting dashboard has no
+ * backslashes. Accept either shape rather than fail on the difference, and treat
+ * anything that is not a well-formed bcrypt hash as "not configured".
+ */
+function readConfiguredHash() {
+  const raw = process.env.ADMIN_FALLBACK_PASSWORD_HASH || "";
+  const normalized = raw.trim().replace(/\\\$/g, "$");
+  return /^\$2[aby]?\$\d{2}\$/.test(normalized) ? normalized : "";
+}
+
 export function isAdminFallbackConfigured() {
-  return Boolean(process.env.ADMIN_FALLBACK_EMAIL && process.env.ADMIN_FALLBACK_PASSWORD_HASH);
+  return Boolean(process.env.ADMIN_FALLBACK_EMAIL && readConfiguredHash());
 }
 
 export async function verifyAdminFallback(login, password) {
@@ -33,7 +47,7 @@ export async function verifyAdminFallback(login, password) {
   const configured = process.env.ADMIN_FALLBACK_EMAIL.trim().toLowerCase();
   if (login.trim().toLowerCase() !== configured) return null;
 
-  const ok = await verifyPassword(password, process.env.ADMIN_FALLBACK_PASSWORD_HASH).catch(() => false);
+  const ok = await verifyPassword(password, readConfiguredHash()).catch(() => false);
   if (!ok) return null;
 
   return {
