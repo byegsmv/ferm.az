@@ -192,10 +192,10 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
           <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center">
             <Icon name="layers" size={16} />
           </span>
-          {title || t('homepage.categoriesTitle', 'Kateqoriyalar')}
+          <span data-ve-key="title">{title || t('homepage.categoriesTitle', 'Kateqoriyalar')}</span>
         </h2>
         <p className="text-xs sm:text-sm text-gray-500 font-medium">
-          {subtitle || t('homepage.categoriesSubtitle', 'Məhsul növünü seçin')}
+          <span data-ve-key="subtitle">{subtitle || t('homepage.categoriesSubtitle', 'Məhsul növünü seçin')}</span>
         </p>
         <Link
           href="/products"

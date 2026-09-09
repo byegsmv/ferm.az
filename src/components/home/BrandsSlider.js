@@ -120,7 +120,7 @@ export default function BrandsSlider({ brands, title, subtitle }) {
           {title || 'Populyar brendlər'}
         </h2>
         {subtitle && (
-          <p className="text-xs sm:text-sm text-gray-500 font-medium">{subtitle}</p>
+          <p className="text-xs sm:text-sm text-gray-500 font-medium"><span data-ve-key="subtitle">{subtitle}</span></p>
         )}
       </div>
 

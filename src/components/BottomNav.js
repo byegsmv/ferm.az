@@ -6,7 +6,7 @@ import { apiFetch, getUser } from "@/lib/apiClient";
 import Icon from "@/components/ui/Icon";
 import { useSiteTexts } from "@/lib/siteTexts";
 
-function NavItem({ href, label, icon, active, badge }) {
+function NavItem({ href, label, icon, active, badge, veKey }) {
   return (
     <Link
       href={href}
@@ -18,7 +18,7 @@ function NavItem({ href, label, icon, active, badge }) {
       <span className="leading-none transition-transform duration-200">
         <Icon name={icon} size={22} strokeWidth={active ? 2.2 : 1.8} />
       </span>
-      <span className="text-[10px] font-medium leading-none whitespace-nowrap truncate max-w-full px-0.5">
+      <span data-ve-key={veKey} className="text-[10px] font-medium leading-none whitespace-nowrap truncate max-w-full px-0.5">
         {label}
       </span>
       {badge > 0 && (
@@ -58,17 +58,17 @@ export default function BottomNav() {
   if (!mounted) return null;
 
   const leftItems = [
-    { href: "/",           label: st("nav.home", "Əsas"),        icon: "home" },
-    { href: "/favorites",  label: st("nav.favorites", "Seçilmiş"), icon: "heart" },
+    { href: "/",           label: st("nav.home", "Əsas"),        icon: "home", veKey: "nav.home" },
+    { href: "/favorites",  label: st("nav.favorites", "Seçilmiş"), icon: "heart", veKey: "nav.favorites" },
   ];
   const rightItems = isLoggedIn
     ? [
-        { href: "/messages",  label: st("nav.messages", "Mesajlar"), icon: "message", badge: unreadMsg },
-        { href: "/dashboard", label: st("nav.profile", "Profil"),   icon: "user" },
+        { href: "/messages",  label: st("nav.messages", "Mesajlar"), icon: "message", badge: unreadMsg, veKey: "nav.messages" },
+        { href: "/dashboard", label: st("nav.profile", "Profil"),   icon: "user", veKey: "nav.profile" },
       ]
     : [
-        { href: "/products",  label: st("nav.catalog", "Kataloq"),  icon: "dashboard" },
-        { href: "/login",     label: st("nav.login", "Giriş"),    icon: "user" },
+        { href: "/products",  label: st("nav.catalog", "Kataloq"),  icon: "dashboard", veKey: "nav.catalog" },
+        { href: "/login",     label: st("nav.login", "Giriş"),    icon: "user", veKey: "nav.login" },
       ];
 
   return (
@@ -84,6 +84,7 @@ export default function BottomNav() {
             href={item.href}
             label={item.label}
             icon={item.icon}
+            veKey={item.veKey}
             active={item.href === "/" ? pathname === "/" : pathname.includes(item.href)}
           />
         ))}
@@ -97,7 +98,7 @@ export default function BottomNav() {
           >
             <Icon name="plus" size={24} strokeWidth={2.8} />
           </Link>
-          <span className="text-[9px] font-bold text-brand-600 leading-none mt-1">{st("nav.sell", "Sat")}</span>
+          <span className="text-[9px] font-bold text-brand-600 leading-none mt-1"><span data-ve-key="nav.sell">{st("nav.sell", "Sat")}</span></span>
         </div>
 
         {/* Sağ 2 buton — bərabər flex-1 */}
@@ -107,6 +108,7 @@ export default function BottomNav() {
             href={item.href}
             label={item.label}
             icon={item.icon}
+            veKey={item.veKey}
             active={pathname.includes(item.href)}
             badge={item.badge || 0}
           />

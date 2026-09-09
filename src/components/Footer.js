@@ -91,12 +91,12 @@ export default function Footer() {
             )}
             <li>
               <a href={`tel:${phoneTel}`} className="flex items-center gap-2 hover:text-brand-400 transition-colors">
-                <Icon name="phone" size={16} className="text-brand-500" /> {phone}
+                <Icon name="phone" size={16} className="text-brand-500" /> <span data-ve-key="footer.phone">{phone}</span>
               </a>
             </li>
             <li>
               <a href={`mailto:${email}`} className="flex items-center gap-2 hover:text-brand-400 transition-colors">
-                <Icon name="message" size={16} className="text-brand-500" /> {email}
+                <Icon name="message" size={16} className="text-brand-500" /> <span data-ve-key="footer.email">{email}</span>
               </a>
             </li>
           </ul>

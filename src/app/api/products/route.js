@@ -299,16 +299,37 @@ export async function GET(request) {
 }
 
 // POST /api/products
-// - Logged-in FARMER/STORE/ADMIN/SUPER_ADMIN: normal listing tied to their account (existing behavior).
-// - Anyone else (not logged in, or logged in as BUYER/AGRONOMIST/etc.): a "guest" classified
-//   listing is allowed — no registration required — as long as guestName + guestPhone are
-//   provided. Guest listings have no online order/wallet flow; buyers just call the phone number.
+// Elan yerləşdirmək üçün AKTİV MAĞAZA mütləqdir (2026-09-10 qərarı):
+// - İstənilən autentifikasiya olmuş istifadəçi əgər aktiv mağazaya sahibdirsə elan verə bilər.
+// - ADMIN/SUPER_ADMIN/MODERATOR personalı istisnadır.
+// - Qonaq (login-sız) elan axını tamamilə ləğv edilib.
 // In every case the listing starts as PENDING_REVIEW and only becomes publicly visible once
 // an admin (or staff they've set up) approves it.
 export async function POST(request) {
   try {
     const authUser = await getAuthUser(request);
-    const canPostAsSeller = !!authUser;
+    const isStaff = !!authUser && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(authUser.role);
+
+    let userStore = null;
+    if (authUser && !isStaff) {
+      userStore = await prisma.store.findFirst({
+        where: { ownerId: authUser.sub, isActive: true },
+        select: { id: true },
+      });
+      if (!userStore) {
+        return Response.json(
+          { error: "Elan yerləşdirmək üçün aktiv mağazanız olmalıdır. Zəhmət olmasa əvvəlcə mağaza yaradın.", needStore: true },
+          { status: 403 }
+        );
+      }
+    }
+    if (!authUser) {
+      return Response.json(
+        { error: "Elan yerləşdirmək üçün hesabınıza daxil olun və mağaza yaradın.", needStore: true },
+        { status: 401 }
+      );
+    }
+    const canPostAsSeller = true;
 
     let body;
     try {
@@ -325,7 +346,7 @@ export async function POST(request) {
       );
     }
 
-    const { images, guestName, guestPhone, durationDays: rawDuration, ...data } = parsed.data;
+    const { images, durationDays: rawDuration, ...data } = parsed.data;
     const durationDays = Number(rawDuration) || 1;
 
     // Fetch dynamic listing pricing
@@ -347,7 +368,6 @@ export async function POST(request) {
       packagePrice = durationDays === 30 ? 15 : durationDays === 15 ? 7 : 0;
     }
 
-    const isStaff = authUser && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(authUser.role);
 
     if (!isStaff && packagePrice > 0 && canPostAsSeller) {
       const wallet = await prisma.wallet.findUnique({ where: { userId: authUser.sub } });
@@ -370,34 +390,18 @@ export async function POST(request) {
       });
     }
 
-    if (!canPostAsSeller) {
-      // Guest path — require contact info instead of an account.
-      if (!guestName || !guestPhone) {
-        return Response.json(
-          {
-            error: "Validasiya xətası",
-            details: {
-              guestName: !guestName ? ["Ad tələb olunur"] : undefined,
-              guestPhone: !guestPhone ? ["Əlaqə nömrəsi tələb olunur"] : undefined,
-            },
-          },
-          { status: 422 }
-        );
-      }
-    }
+
+    if (!data.storeId && userStore) data.storeId = userStore.id;
 
     const category = await prisma.category.findUnique({ where: { id: data.categoryId } });
     if (!category || !category.isActive) {
       return Response.json({ error: "Kateqoriya tapılmadı və ya deaktivdir" }, { status: 404 });
     }
 
-    if (data.storeId) {
-      const isStaff = authUser && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(authUser.role);
-      if (!isStaff) {
-        const store = await prisma.store.findUnique({ where: { id: data.storeId } });
-        if (!store || store.ownerId !== authUser?.sub) {
-          return Response.json({ error: "Bu mağaza sizə məxsus deyil" }, { status: 403 });
-        }
+    if (data.storeId && !isStaff) {
+      const store = await prisma.store.findUnique({ where: { id: data.storeId } });
+      if (!store || store.ownerId !== authUser.sub) {
+        return Response.json({ error: "Bu mağaza sizə məxsus deyil" }, { status: 403 });
       }
     }
 
@@ -410,9 +414,8 @@ export async function POST(request) {
       data: {
         ...data,
         slug: baseSlug,
-        sellerId: canPostAsSeller ? authUser.sub : null,
-        guestName: canPostAsSeller ? undefined : guestName,
-        guestPhone: canPostAsSeller ? undefined : guestPhone,
+        sellerId: authUser.sub,
+        storeId: data.storeId || (userStore ? userStore.id : undefined),
         status: isStaff ? "ACTIVE" : "PENDING_REVIEW",
         images: images?.length
           ? {
@@ -454,9 +457,7 @@ export async function POST(request) {
         entity: "Product",
         entityId: product.id,
         metadata: {
-          guest: !canPostAsSeller,
-          guestName,
-          guestPhone,
+          guest: false,
           durationDays,
           packagePrice,
         },

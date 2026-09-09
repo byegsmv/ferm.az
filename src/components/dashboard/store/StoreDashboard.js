@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "@/i18n/routing";
 import { apiFetch } from "@/lib/apiClient";
 import Icon from "@/components/ui/Icon";
+import StoreCreateWizard from "@/components/dashboard/store/StoreCreateWizard";
 
 import ImageUploader from "@/components/ImageUploader";
 import BoostModal from "@/components/products/BoostModal";
@@ -754,111 +755,18 @@ export default function StoreDashboard({ user }) {
 
 // ─── Create Store Form (shown when user has no store) ───────────────────
 export function CreateStoreForm({ user, onCreated }) {
-  const [form, setForm] = useState({ name: "", description: "", address: "", phone: "", whatsapp: "" });
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState("");
-
-  async function handleCreate(e) {
-    e.preventDefault();
-    if (!form.name.trim()) { setError("Mağaza adı tələb olunur"); return; }
-    setCreating(true);
-    setError("");
-    try {
-      const res = await apiFetch("/api/stores", {
-        method: "POST",
-        body: JSON.stringify(form),
-      });
-      if (res?.store) {
-        onCreated(res.store);
-      } else if (res?.error) {
-        setError(res.error);
-      }
-    } catch (err) {
-      setError(err.message || "Mağaza yaradılarkən xəta baş verdi");
-    } finally {
-      setCreating(false);
-    }
-  }
-
+  // 2026-09-10: şərtlər qəbulu + düzgün ad + xəritə konumu tələbi ilə tam sihirbaza keçid
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 space-y-6">
-        <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mx-auto">
-            <Icon name="store" size={32} />
-          </div>
-          <h2 className="text-2xl font-extrabold text-gray-900">Mağaza Yarat</h2>
-          <p className="text-sm text-gray-500">Öz mağazanızı yaradın və məhsullarınızı satışa çıxarın</p>
+    <div className="max-w-2xl mx-auto">
+      <div className="text-center space-y-2 mb-6">
+        <div className="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mx-auto">
+          <Icon name="store" size={32} />
         </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleCreate} className="space-y-4">
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Mağaza Adı *</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Məsələn: Agro Tədarük MMC"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Təsvir</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Mağazanız haqqında qısa məlumat..."
-              rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all resize-none"
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Telefon</label>
-              <input
-                type="text"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="+994 50 123 45 67"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">WhatsApp</label>
-              <input
-                type="text"
-                value={form.whatsapp}
-                onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
-                placeholder="+994 50 123 45 67"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Ünvan</label>
-            <input
-              type="text"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-              placeholder="Bakı, Azərbaycan"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={creating}
-            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95"
-          >
-            {creating ? "Yaradılır..." : "Mağaza Yarat"}
-          </button>
-        </form>
+        <h2 className="text-2xl font-extrabold text-gray-900">Mağaza Yarat</h2>
+        <p className="text-sm text-gray-500">Öz mağazanızı yaradın və məhsullarınızı satışa çıxarın</p>
       </div>
+      <StoreCreateWizard user={user} onCreated={onCreated} />
     </div>
   );
 }
+

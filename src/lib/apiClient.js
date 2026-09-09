@@ -73,6 +73,19 @@ export function getRefreshToken() {
   return localStorage.getItem(REFRESH_KEY);
 }
 
+/**
+ * Sync the stored (localStorage) user object with fresh server data so the
+ * Header/profile UI never shows a stale fullName after a profile update.
+ */
+export function syncStoredUser(user) {
+  if (typeof window === "undefined" || !user) return;
+  try {
+    const existing = JSON.parse(localStorage.getItem(USER_KEY) || "null") || {};
+    localStorage.setItem(USER_KEY, JSON.stringify({ ...existing, ...user }));
+    window.dispatchEvent(new Event("fmk-auth-changed"));
+  } catch {}
+}
+
 export function getUser() {
   if (typeof window === "undefined") return null;
   try {
