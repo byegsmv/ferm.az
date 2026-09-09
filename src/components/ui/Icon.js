@@ -178,6 +178,7 @@ export const ICONS = {
   message: MessageCircle,
   newspaper: Newspaper,
   package: Package,
+  ai: Sparkles,
   plus: Plus,
   search: Search,
   cart: ShoppingCart,
