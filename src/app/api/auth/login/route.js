@@ -1,5 +1,5 @@
 import { rateLimit } from "@/lib/rateLimit";
-import { prisma, withDbRetry, isDbConnectionError } from "@/lib/prisma";
+import { prisma, withDbRetry, isDbConnectionError, isDbQuotaError } from "@/lib/prisma";
 import { verifyPassword, signAccessToken, signRefreshToken, refreshTokenExpiryDate } from "@/lib/auth";
 import { loginSchema } from "@/lib/validators";
 
@@ -56,6 +56,12 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error("Database connection error in login:", error);
+    if (isDbQuotaError(error)) {
+      return Response.json({
+        error: "Verilənlər bazası provayderinin limiti (kvotası) tükənib, ona görə baza cavab vermir. Sayt idarəçisi Neon planını yeniləməlidir.",
+        code: "DB_QUOTA"
+      }, { status: 503 });
+    }
     if (isDbConnectionError(error)) {
       return Response.json({
         error: "Verilənlər bazası müvəqqəti əlçatmazdır. Bir neçə saniyədən sonra yenidən cəhd edin.",
