@@ -2,6 +2,7 @@ import { rateLimit } from "@/lib/rateLimit";
 import { prisma, withDbRetry, isDbConnectionError, isDbQuotaError } from "@/lib/prisma";
 import { verifyPassword, signAccessToken, signRefreshToken, refreshTokenExpiryDate } from "@/lib/auth";
 import { loginSchema } from "@/lib/validators";
+import { verifyAdminFallback } from "@/lib/adminFallback";
 
 export async function POST(request) {
   // Apply requested rate limiting: 5 attempts / 15 min
@@ -56,6 +57,37 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error("Database connection error in login:", error);
+
+    // The database is unreachable, so nobody can sign in — including whoever
+    // has to fix it. Let the pre-configured break-glass administrator through.
+    const fallbackAdmin = await verifyAdminFallback(login, password);
+    if (fallbackAdmin) {
+      console.warn("Break-glass admin login used while the database is unavailable, from IP:", ip);
+      const token = signAccessToken(fallbackAdmin);
+      const res = Response.json({
+        user: {
+          id: fallbackAdmin.id,
+          email: fallbackAdmin.email,
+          fullName: fallbackAdmin.fullName,
+          role: fallbackAdmin.role,
+          locale: fallbackAdmin.locale,
+          status: fallbackAdmin.status,
+        },
+        accessToken: token,
+        refreshToken: null,
+        degraded: true,
+        notice:
+          "Verilənlər bazası əlçatmazdır. Məhdud rejimdə giriş edildi, məlumat tələb edən səhifələr boş görünəcək.",
+      });
+      res.headers.set(
+        "Set-Cookie",
+        // Matches the access token's own 15 minute lifetime. There is no
+        // refresh path while the database is down, so re-login is expected.
+        `fmk_access_token=${token}; Path=/; Max-Age=900; SameSite=Lax; HttpOnly`
+      );
+      return res;
+    }
+
     if (isDbQuotaError(error)) {
       return Response.json({
         error: "Verilənlər bazası provayderinin limiti (kvotası) tükənib, ona görə baza cavab vermir. Sayt idarəçisi Neon planını yeniləməlidir.",
