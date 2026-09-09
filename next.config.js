@@ -4,6 +4,9 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.js');
 const nextConfig = {
   reactStrictMode: true,
   compress: true,
+  // The Neon serverless driver and its WebSocket transport must be required
+  // natively at runtime, not bundled — `ws` carries optional native bindings.
+  serverExternalPackages: ["@neondatabase/serverless", "@prisma/adapter-neon", "ws"],
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
   images: {
