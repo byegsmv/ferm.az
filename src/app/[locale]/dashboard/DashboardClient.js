@@ -2,7 +2,7 @@
 import Icon from "@/components/ui/Icon";
 import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/routing";
-import { apiFetch, getUser } from "@/lib/apiClient";
+import { apiFetch, getUser, syncStoredUser } from "@/lib/apiClient";
 import StoreDashboard from "@/components/dashboard/store/StoreDashboard";
 import BuyerPanel from "@/components/dashboard/BuyerPanel";
 import DeliveryPanel from "@/components/dashboard/DeliveryPanel";
@@ -53,6 +53,8 @@ export default function DashboardClient({ searchParams }) {
         if (u?.ownedStores?.length > 0 || u?.store) {
           setShowCreateStore(false);
         }
+        // Keep localStorage (Header UI) in sync with the fresh server user
+        syncStoredUser(u);
         setUser(u);
       })
       .catch(() => router.push("/login"))

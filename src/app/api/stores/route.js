@@ -92,6 +92,34 @@ export async function POST(request) {
   }
 
   const data = parsed.data;
+
+  // ── 2026-09-10 tələbləri: şərtlər qəbulu məcburi, düzgün ad + unvan ──
+  if (body.acceptTerms !== true) {
+    return Response.json(
+      { error: "Mağaza yaratmaq üçün istifadəçi şərtlərini qəbul etməlisiniz.", details: { acceptTerms: ["Şərtlərin qəbulu məcburidir"] } },
+      { status: 422 }
+    );
+  }
+  const nameHasLetters = /[A-Za-zƏəÖöÜüÇçŞşĞğIı]/.test(data.name || "");
+  if (!nameHasLetters) {
+    return Response.json(
+      { error: "Mağaza adı düzgün yazılmalıdır (yalnız rəqəm/simvol qəbul edilmir).", details: { name: ["Ad hərflərdən ibarət olmalıdır"] } },
+      { status: 422 }
+    );
+  }
+  if (!data.address || data.address.trim().length < 5) {
+    return Response.json(
+      { error: "Mağaza ünvanı düzgün əlavə edilməlidir (ən azı 5 simvol).", details: { address: ["Ünvan tələb olunur"] } },
+      { status: 422 }
+    );
+  }
+  if (data.lat === null || data.lat === undefined || data.lng === null || data.lng === undefined) {
+    return Response.json(
+      { error: "Mağaza konumu xəritədən seçilməlidir.", details: { lat: ["Konum tələb olunur"], lng: ["Konum tələb olunur"] } },
+      { status: 422 }
+    );
+  }
+
   const baseSlug = slugify(data.name, { lower: true, strict: true }) || `magaza-${Date.now().toString(36)}`;
   let slug = baseSlug;
   let counter = 1;

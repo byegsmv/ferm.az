@@ -382,7 +382,15 @@ function ProfileSettings({ user }) {
     e.preventDefault();
     setSaving(true); setMsg(""); setError("");
     try {
-      await apiFetch("/api/users/me", { method: "PATCH", body: JSON.stringify(form) });
+      const res = await apiFetch("/api/users/me", { method: "PATCH", body: JSON.stringify(form) });
+      // Dərhal tətbiq et: lokalları və paneli sinxronlaşdır ki, refresh-də köhnə ad qayıtmasın
+      if (res?.user) {
+        try {
+          const existing = JSON.parse(localStorage.getItem("fmk_user") || "null") || {};
+          localStorage.setItem("fmk_user", JSON.stringify({ ...existing, ...res.user }));
+        } catch {}
+        window.dispatchEvent(new Event("fmk-auth-changed"));
+      }
       setMsg("Profil güncəlləndi");
     } catch (err) {
       setError(err.message || "Xəta baş verdi");

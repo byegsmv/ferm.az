@@ -92,7 +92,7 @@ export default function HeroSlider() {
         >
            {slide.imageUrl && (
              <>
-               <img 
+               <img data-ve-img={`slide-${slide.id}`} 
                  src={slide.imageUrl} 
                  alt="" 
                  className={`absolute inset-0 w-full h-full object-cover transition-transform duration-[10000ms] ease-out ${current === idx ? "scale-100" : "scale-110"}`}

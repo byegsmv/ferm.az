@@ -1,0 +1,84 @@
+/**
+ * VisualEditor — Styles
+ * =====================
+ * Import this CSS alongside visual-editor.js
+ * to get all the edit overlay styles.
+ */
+
+/* Edit Mode Active Indicator */
+.visual-edit-active * {
+  box-sizing: border-box;
+}
+
+.visual-edit-active .ve-editable {
+  outline: 2px dashed rgba(106, 90, 205, 0.6) !important;
+  outline-offset: 3px !important;
+  cursor: pointer !important;
+  transition: outline 0.2s ease, background 0.2s ease;
+  position: relative;
+}
+
+.visual-edit-active .ve-editable:hover {
+  outline: 2px solid rgba(106, 90, 205, 1) !important;
+  background: rgba(106, 90, 205, 0.08) !important;
+}
+
+.visual-edit-active .ve-editable[contenteditable="true"] {
+  outline: 2px solid #00c853 !important;
+  background: rgba(0, 200, 83, 0.07) !important;
+  cursor: text !important;
+  min-width: 30px;
+  min-height: 1em;
+}
+
+/* Image hover overlay */
+.visual-edit-active .ve-image {
+  outline: 2px dashed rgba(255, 144, 0, 0.7) !important;
+  cursor: crosshair !important;
+  position: relative;
+}
+
+.visual-edit-active .ve-image:hover {
+  outline: 2px solid rgba(255, 144, 0, 1) !important;
+  opacity: 0.85;
+}
+
+/* Edit top bar */
+#ve-editbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 99999;
+  background: rgba(106, 90, 205, 0.95);
+  color: #fff;
+  padding: 0.4rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  backdrop-filter: blur(8px);
+  font-size: 0.8rem;
+}
+
+/* Tooltip on hover */
+.visual-edit-active .ve-editable::before {
+  content: attr(data-ve-key);
+  display: none;
+  position: absolute;
+  top: -1.8rem;
+  left: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  z-index: 100000;
+  font-family: monospace;
+  pointer-events: none;
+}
+
+.visual-edit-active .ve-editable:hover::before {
+  display: block;
+}

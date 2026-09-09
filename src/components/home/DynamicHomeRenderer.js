@@ -18,6 +18,22 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
 
   useEffect(() => {
     if (!editMode) return;
+
+    // Visual Editor modulunu yalnız redaktə rejimində yüklə (normal istifadəçilər üçün sıfır xərc)
+    if (!document.getElementById('ve-asset-css')) {
+      const link = document.createElement('link');
+      link.id = 've-asset-css';
+      link.rel = 'stylesheet';
+      link.href = '/visual-editor/visual-editor.css';
+      document.head.appendChild(link);
+    }
+    if (!document.getElementById('ve-asset-js')) {
+      const sc = document.createElement('script');
+      sc.id = 've-asset-js';
+      sc.src = '/visual-editor/visual-editor.js';
+      document.body.appendChild(sc);
+    }
+
     const handleMessage = (e) => {
       if (e.data?.type === "FMK_LIVE_UPDATE") {
         setBlocks(e.data.blocks);
@@ -83,9 +99,9 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
                     <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-500">
                       <Icon name="star" size={18} />
                     </div>
-                    {p.title || "Premium Elanlar"}
+                    <span data-ve-key="title">{p.title || "Premium Elanlar"}</span>
                   </h2>
-                  <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Önə çıxan elanlar"}</p>
+                  <p data-ve-key="subtitle" className="text-xs sm:text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Önə çıxan elanlar"}</p>
                 </div>
                 <Link href="/products?tier=premium" className="text-xs sm:text-sm text-brand-600 font-semibold hover:text-brand-700">
                   <span className="flex items-center gap-1">Hamısı <Icon name="arrowRight" size={14} /></span>
@@ -119,9 +135,9 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
                     <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600">
                       <Icon name="tag" size={18} />
                     </div>
-                    {p.title || "Yeni Elanlar"}
+                    <span data-ve-key="title">{p.title || "Yeni Elanlar"}</span>
                   </h2>
-                  <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Ən son əlavə edilmiş məhsullar"}</p>
+                  <p data-ve-key="subtitle" className="text-xs sm:text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Ən son əlavə edilmiş məhsullar"}</p>
                 </div>
                 <Link href="/products" className="text-xs sm:text-sm text-brand-600 font-semibold hover:text-brand-700">
                   <span className="flex items-center gap-1">Hamısı <Icon name="arrowRight" size={14} /></span>
@@ -151,7 +167,7 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
                   <Icon name="package" size={18} />
                 </div>
-                {p.title || "Bağlamalar"}
+                <span data-ve-key="title">{p.title || "Bağlamalar"}</span>
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                 {homeData.bundles.map((b) => <BundleCard key={b.id} bundle={b} />)}
@@ -171,9 +187,9 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
                     <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500">
                       <Icon name="megaphone" size={18} />
                     </div>
-                    {p.title || "Kampaniyalar"}
+                    <span data-ve-key="title">{p.title || "Kampaniyalar"}</span>
                   </h2>
-                  <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Aktiv kampaniya və endirimlər"}</p>
+                  <p data-ve-key="subtitle" className="text-xs sm:text-sm text-gray-500 font-medium mt-1">{p.subtitle || "Aktiv kampaniya və endirimlər"}</p>
                 </div>
                 <Link href="/campaigns" className="text-xs sm:text-sm text-brand-600 font-semibold hover:text-brand-700">
                   <span className="flex items-center gap-1">Hamısı <Icon name="arrowRight" size={14} /></span>
@@ -225,6 +241,7 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
           <ScrollReveal 
             key={index} 
             delay={50}
+            data-ve-block={editMode ? String(index) : undefined}
             className={`${editMode ? 'relative cursor-pointer ring-2 ring-transparent hover:ring-brand-500 rounded-3xl transition group' : ''}`}
           >
             <div onClick={(e) => onBlockClick(index, e)}>

@@ -247,6 +247,7 @@ export const brandUpdateSchema = brandCreateSchema.partial();
 
 export const storeCreateSchema = z.object({
   name: z.string().min(2, "Mağaza adı ən azı 2 simvol olmalıdır"),
+  acceptTerms: z.boolean().optional(),
   description: z.string().optional().nullable().or(z.literal("")),
   logoUrl: z.string().optional().nullable().or(z.literal("")),
   coverUrl: z.string().optional().nullable().or(z.literal("")),
