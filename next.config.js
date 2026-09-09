@@ -4,6 +4,9 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.js');
 const nextConfig = {
   reactStrictMode: true,
   compress: true,
+  // The Neon serverless driver and its WebSocket transport must be required
+  // natively at runtime, not bundled — `ws` carries optional native bindings.
+  serverExternalPackages: ["@neondatabase/serverless", "@prisma/adapter-neon", "ws"],
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
   images: {
@@ -58,6 +61,16 @@ const nextConfig = {
         source: "/api/categories",
         headers: [
           { key: "Cache-Control", value: "public, max-age=0, s-maxage=300, stale-while-revalidate=600" },
+        ],
+      },
+      {
+        // Şəkil proxy-si. Blanket /api/:path* qaydası bu marşrutu da "no-store"
+        // edirdi, ona görə hər şəkil baxışı bazadan megabaytlarla base64 çəkirdi
+        // və Neon-un data transfer kvotasını yandırırdı. Şəkil məzmunu id-yə
+        // görə dəyişməzdir, ona görə həmişəlik keşlənir.
+        source: "/api/img/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, s-maxage=31536000, immutable" },
         ],
       },
     ];

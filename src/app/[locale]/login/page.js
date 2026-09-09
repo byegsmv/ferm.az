@@ -5,7 +5,7 @@ import { useLocale } from "next-intl";
 import { useSearchParams } from "next/navigation";
 
 import { useEffect } from "react";
-import { apiFetch, saveSession, getToken } from "@/lib/apiClient";
+import { apiFetch, saveSession, getToken, getValidToken, clearLocalSession } from "@/lib/apiClient";
 import PasswordInput from "@/components/PasswordInput";
 import Icon from "@/components/ui/Icon";
 
@@ -21,7 +21,16 @@ function LoginContent() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      if (getToken()) {
+      // Only bounce to the destination when the stored token is still valid.
+      // A present-but-expired token used to send the visitor to a protected
+      // page, which the middleware rejected, which sent them back here: an
+      // endless refresh loop. Drop the dead session and show the form instead.
+      if (getToken() && !getValidToken()) {
+        clearLocalSession();
+        setChecking(false);
+        return;
+      }
+      if (getValidToken()) {
         const callbackUrl = searchParams.get("callbackUrl");
         let target = callbackUrl || "/dashboard";
         if (locale === 'az') {
@@ -59,9 +68,12 @@ function LoginContent() {
       
       window.location.href = target;
     } catch (err) {
-      const msg = err?.code === "DB_CONN"
-        ? "Server bağlantısı xətası. Zəhmət olmasa administratorla əlaqə saxlayın."
-        : err.message || "Giriş mümkün olmadı";
+      // The server already words database outages precisely, quota included,
+      // so pass its message through instead of flattening it to one string.
+      const msg = err?.message
+        || (err?.code === "DB_CONN"
+          ? "Server bağlantısı xətası. Zəhmət olmasa administratorla əlaqə saxlayın."
+          : "Giriş mümkün olmadı");
       setError(msg);
     } finally {
       setLoading(false);

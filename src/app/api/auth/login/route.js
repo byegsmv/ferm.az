@@ -1,7 +1,8 @@
 import { rateLimit } from "@/lib/rateLimit";
-import { prisma } from "@/lib/prisma";
+import { prisma, withDbRetry, isDbConnectionError, isDbQuotaError, isDatabaseConfigured } from "@/lib/prisma";
 import { verifyPassword, signAccessToken, signRefreshToken, refreshTokenExpiryDate } from "@/lib/auth";
 import { loginSchema } from "@/lib/validators";
+import { verifyAdminFallback } from "@/lib/adminFallback";
 
 export async function POST(request) {
   // Apply requested rate limiting: 5 attempts / 15 min
@@ -41,22 +42,78 @@ export async function POST(request) {
   const { login, password } = parsed.data;
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "127.0.0.1";
 
+  // With no database configured, prisma is the offline stub: the lookup below
+  // would return nothing and this route would call that a wrong password. Say
+  // what is actually wrong instead.
+  if (!isDatabaseConfigured()) {
+    console.error("Login attempted with no DATABASE_URL configured.");
+    return Response.json({
+      error: "Verilənlər bazası konfiqurasiya olunmayıb (DATABASE_URL boşdur). Sayt idarəçisi ilə əlaqə saxlayın.",
+      code: "DB_NOT_CONFIGURED"
+    }, { status: 503 });
+  }
+
   let user;
   try {
-    user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: login },
-          { phone: login },
-          { username: login },
-        ]
-      }
-    });
+    user = await withDbRetry(() =>
+      prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: login },
+            { phone: login },
+            { username: login },
+          ]
+        }
+      })
+    );
   } catch (error) {
     console.error("Database connection error in login:", error);
+
+    // The database is unreachable, so nobody can sign in — including whoever
+    // has to fix it. Let the pre-configured break-glass administrator through.
+    const fallbackAdmin = await verifyAdminFallback(login, password);
+    if (fallbackAdmin) {
+      console.warn("Break-glass admin login used while the database is unavailable, from IP:", ip);
+      const token = signAccessToken(fallbackAdmin);
+      const res = Response.json({
+        user: {
+          id: fallbackAdmin.id,
+          email: fallbackAdmin.email,
+          fullName: fallbackAdmin.fullName,
+          role: fallbackAdmin.role,
+          locale: fallbackAdmin.locale,
+          status: fallbackAdmin.status,
+        },
+        accessToken: token,
+        refreshToken: null,
+        degraded: true,
+        notice:
+          "Verilənlər bazası əlçatmazdır. Məhdud rejimdə giriş edildi, məlumat tələb edən səhifələr boş görünəcək.",
+      });
+      res.headers.set(
+        "Set-Cookie",
+        // Matches the access token's own 15 minute lifetime. There is no
+        // refresh path while the database is down, so re-login is expected.
+        `fmk_access_token=${token}; Path=/; Max-Age=900; SameSite=Lax; HttpOnly`
+      );
+      return res;
+    }
+
+    if (isDbQuotaError(error)) {
+      return Response.json({
+        error: "Verilənlər bazası provayderinin limiti (kvotası) tükənib, ona görə baza cavab vermir. Sayt idarəçisi Neon planını yeniləməlidir.",
+        code: "DB_QUOTA"
+      }, { status: 503 });
+    }
+    if (isDbConnectionError(error)) {
+      return Response.json({
+        error: "Verilənlər bazası müvəqqəti əlçatmazdır. Bir neçə saniyədən sonra yenidən cəhd edin.",
+        code: "DB_CONN"
+      }, { status: 503 });
+    }
     return Response.json({
-      error: "Verilənlər bazasına qoşulmaq mümkün olmadı. Zəhmət olmasa Vercel-də DATABASE_URL tənzimləməsini yoxlayın.",
-      code: "DB_CONN"
+      error: "Giriş zamanı server xətası baş verdi. Bir az sonra yenidən cəhd edin.",
+      code: "DB_ERROR"
     }, { status: 500 });
   }
 
@@ -101,13 +158,22 @@ export async function POST(request) {
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
 
-  await prisma.refreshToken.create({
-    data: {
-      token: refreshToken,
-      userId: user.id,
-      expiresAt: refreshTokenExpiryDate(),
-    },
-  });
+  // A failure to persist the refresh token must not block a successful login:
+  // the access token is already signed and valid, the user simply re-logs in
+  // when it expires instead of silently refreshing.
+  try {
+    await withDbRetry(() =>
+      prisma.refreshToken.create({
+        data: {
+          token: refreshToken,
+          userId: user.id,
+          expiresAt: refreshTokenExpiryDate(),
+        },
+      })
+    );
+  } catch (error) {
+    console.error("Could not persist refresh token for user", user.id, error?.message);
+  }
 
   // Log successful login too
   await prisma.auditLog.create({

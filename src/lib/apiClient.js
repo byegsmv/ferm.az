@@ -30,6 +30,44 @@ export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+/**
+ * True when the stored access token is missing, malformed, or past its expiry.
+ *
+ * The access token lives 15 minutes while the cookie that carries it lives far
+ * longer, so a stored token routinely outlives its own validity. Code that only
+ * checked "is a token present" would send the visitor to a protected page, the
+ * middleware would reject the expired token and bounce them back, and the two
+ * would ping-pong forever.
+ */
+export function isTokenExpired(token) {
+  const value = token ?? getToken();
+  if (!value) return true;
+  try {
+    const payload = value.split(".")[1];
+    if (!payload) return true;
+    const decoded = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    if (!decoded || typeof decoded.exp !== "number") return false;
+    return decoded.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+}
+
+/** The stored access token, but only while it is actually still usable. */
+export function getValidToken() {
+  const token = getToken();
+  return token && !isTokenExpired(token) ? token : null;
+}
+
+/** Drops the local half of the session without calling the logout endpoint. */
+export function clearLocalSession() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(REFRESH_KEY);
+  localStorage.removeItem(USER_KEY);
+  window.dispatchEvent(new Event("fmk-auth-changed"));
+}
+
 export function getRefreshToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(REFRESH_KEY);

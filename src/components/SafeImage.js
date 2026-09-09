@@ -6,11 +6,17 @@
  */
 import Image from "next/image";
 import Icon from "@/components/ui/Icon";
+import { IMG_PROXY } from "@/lib/imageUrl";
 
 const UNOPTIMIZED_HOSTS = ["placehold.co", "via.placeholder.com"];
 
 function needsPlainImg(src) {
   if (typeof src !== "string") return false;
+  // Images served by our own /api/img proxy are already final bytes behind a
+  // one-year immutable cache. Sending them through next/image adds a second
+  // fetch of the same row on every optimizer miss, which is what exhausted the
+  // database's data transfer budget, and the optimizer route was failing anyway.
+  if (src.startsWith(IMG_PROXY)) return true;
   try {
     const { hostname } = new URL(src);
     return UNOPTIMIZED_HOSTS.some((h) => hostname === h || hostname.endsWith(`.${h}`));
