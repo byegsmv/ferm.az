@@ -1,5 +1,5 @@
 import { rateLimit } from "@/lib/rateLimit";
-import { prisma } from "@/lib/prisma";
+import { prisma, withDbRetry, isDbConnectionError } from "@/lib/prisma";
 import { verifyPassword, signAccessToken, signRefreshToken, refreshTokenExpiryDate } from "@/lib/auth";
 import { loginSchema } from "@/lib/validators";
 
@@ -43,20 +43,28 @@ export async function POST(request) {
 
   let user;
   try {
-    user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: login },
-          { phone: login },
-          { username: login },
-        ]
-      }
-    });
+    user = await withDbRetry(() =>
+      prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: login },
+            { phone: login },
+            { username: login },
+          ]
+        }
+      })
+    );
   } catch (error) {
     console.error("Database connection error in login:", error);
+    if (isDbConnectionError(error)) {
+      return Response.json({
+        error: "Verilənlər bazası müvəqqəti əlçatmazdır. Bir neçə saniyədən sonra yenidən cəhd edin.",
+        code: "DB_CONN"
+      }, { status: 503 });
+    }
     return Response.json({
-      error: "Verilənlər bazasına qoşulmaq mümkün olmadı. Zəhmət olmasa Vercel-də DATABASE_URL tənzimləməsini yoxlayın.",
-      code: "DB_CONN"
+      error: "Giriş zamanı server xətası baş verdi. Bir az sonra yenidən cəhd edin.",
+      code: "DB_ERROR"
     }, { status: 500 });
   }
 
@@ -101,13 +109,22 @@ export async function POST(request) {
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
 
-  await prisma.refreshToken.create({
-    data: {
-      token: refreshToken,
-      userId: user.id,
-      expiresAt: refreshTokenExpiryDate(),
-    },
-  });
+  // A failure to persist the refresh token must not block a successful login:
+  // the access token is already signed and valid, the user simply re-logs in
+  // when it expires instead of silently refreshing.
+  try {
+    await withDbRetry(() =>
+      prisma.refreshToken.create({
+        data: {
+          token: refreshToken,
+          userId: user.id,
+          expiresAt: refreshTokenExpiryDate(),
+        },
+      })
+    );
+  } catch (error) {
+    console.error("Could not persist refresh token for user", user.id, error?.message);
+  }
 
   // Log successful login too
   await prisma.auditLog.create({
