@@ -1,0 +1,60 @@
+name: Daily DB Backup
+
+# Every night at 00:00 UTC (04:00 Baku), dump the production database and
+# commit the gzipped SQL to the private `db-backups` branch of this repo.
+# The connection string is read from the committed .env.production
+# (DIRECT_URL, non-pooler endpoint — pg_dump must bypass pgbouncer).
+# Backups older than 30 days are pruned automatically.
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (for .env.production)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install PostgreSQL 18 client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq curl ca-certificates
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/pgdg.gpg
+          echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt noble-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-18
+
+      - name: Dump database
+        run: |
+          set -euo pipefail
+          DB_URL=$(grep -E '^DIRECT_URL=' .env.production | head -1 | cut -d'"' -f2)
+          echo "Backing up $(echo "$DB_URL" | grep -oE '@[^/?]+')"
+          mkdir -p backups
+          TS=$(date -u +%Y-%m-%d)
+          /usr/lib/postgresql/18/bin/pg_dump --no-owner --no-acl "$DB_URL" | gzip > "backups/fermermarket_${TS}.sql.gz"
+          echo "Dump size: $(du -h backups/fermermarket_${TS}.sql.gz | cut -f1)"
+
+      - name: Commit to db-backups branch (30-day retention)
+        run: |
+          set -euo pipefail
+          git config user.name "db-backup-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin db-backups >/dev/null 2>&1; then
+            git fetch origin db-backups
+            git checkout -B db-backups FETCH_HEAD
+          else
+            git checkout --orphan db-backups
+            git rm -rf --quiet . 2>/dev/null || true
+          fi
+          mkdir -p backups
+          find backups -name "*.sql.gz" -mtime +30 -delete || true
+          git add backups/
+          git commit -m "db backup $(date -u +%Y-%m-%d)" || echo "no changes to commit"
+          git push origin db-backups
