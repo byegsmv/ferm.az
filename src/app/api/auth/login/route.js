@@ -1,5 +1,5 @@
 import { rateLimit } from "@/lib/rateLimit";
-import { prisma, withDbRetry, isDbConnectionError, isDbQuotaError } from "@/lib/prisma";
+import { prisma, withDbRetry, isDbConnectionError, isDbQuotaError, isDatabaseConfigured } from "@/lib/prisma";
 import { verifyPassword, signAccessToken, signRefreshToken, refreshTokenExpiryDate } from "@/lib/auth";
 import { loginSchema } from "@/lib/validators";
 import { verifyAdminFallback } from "@/lib/adminFallback";
@@ -41,6 +41,17 @@ export async function POST(request) {
 
   const { login, password } = parsed.data;
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "127.0.0.1";
+
+  // With no database configured, prisma is the offline stub: the lookup below
+  // would return nothing and this route would call that a wrong password. Say
+  // what is actually wrong instead.
+  if (!isDatabaseConfigured()) {
+    console.error("Login attempted with no DATABASE_URL configured.");
+    return Response.json({
+      error: "Verilənlər bazası konfiqurasiya olunmayıb (DATABASE_URL boşdur). Sayt idarəçisi ilə əlaqə saxlayın.",
+      code: "DB_NOT_CONFIGURED"
+    }, { status: 503 });
+  }
 
   let user;
   try {
