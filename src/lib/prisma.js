@@ -121,6 +121,18 @@ if (!globalForPrisma.prisma) {
 export const prisma = globalForPrisma.prisma;
 
 /**
+ * True when the database provider is refusing service because the plan's quota
+ * is exhausted. Neon answers its HTTPS SQL endpoint with HTTP 402 and a
+ * "exceeded the ... quota" message, and disables the compute so raw TCP
+ * connections simply time out. No retry or code change clears this — the plan
+ * has to be upgraded or the quota window has to reset.
+ */
+export function isDbQuotaError(error) {
+  const message = error?.message || "";
+  return /HTTP status 402/i.test(message) || /exceeded the .*quota/i.test(message);
+}
+
+/**
  * True when the error is a connection-level failure (database unreachable),
  * as opposed to a query/validation error. Used by routes that need to tell
  * the user "the database is down" instead of a misleading business error.
@@ -131,7 +143,9 @@ export function isDbConnectionError(error) {
   const code = error.code || "";
   const message = error.message || "";
   return (
+    isDbQuotaError(error) ||
     name === "PrismaClientInitializationError" ||
+    name === "NeonDbError" ||
     code === "P1001" ||
     code === "P1002" ||
     code === "P1017" ||
@@ -156,7 +170,8 @@ export async function withDbRetry(operation, { retries = 1, delayMs = 600 } = {}
       return await operation();
     } catch (error) {
       lastError = error;
-      if (!isDbConnectionError(error) || attempt === retries) throw error;
+      // A quota rejection is deterministic — retrying only burns more quota.
+      if (isDbQuotaError(error) || !isDbConnectionError(error) || attempt === retries) throw error;
       await new Promise((resolve) => setTimeout(resolve, delayMs * (attempt + 1)));
     }
   }
