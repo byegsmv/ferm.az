@@ -1,6 +1,6 @@
 import { sendWelcomeEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rateLimit";
-import { prisma } from "@/lib/prisma";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { hashPassword, signAccessToken, signRefreshToken, refreshTokenExpiryDate } from "@/lib/auth";
 import { registerSchema } from "@/lib/validators";
 
@@ -30,6 +30,16 @@ export async function POST(request) {
   const cleanEmail = email?.trim() || null;
   const cleanPhone = phone?.trim() || null;
   const cleanUsername = username?.trim() || null;
+
+  // Without a configured database every write resolves to null and this route
+  // would fail somewhere further down with an opaque error. Refuse up front.
+  if (!isDatabaseConfigured()) {
+    console.error("Registration attempted with no DATABASE_URL configured.");
+    return Response.json({
+      error: "Verilənlər bazası konfiqurasiya olunmayıb. Sayt idarəçisi ilə əlaqə saxlayın.",
+      code: "DB_NOT_CONFIGURED"
+    }, { status: 503 });
+  }
 
   const existing = await prisma.user.findFirst({
     where: {
