@@ -19,7 +19,21 @@ import ws from "ws";
  * fall back to the normal client rather than taking the site down.
  */
 
-const DATABASE_URL = process.env.DATABASE_URL || "";
+/**
+ * Hosting integrations do not agree on what to call the connection string.
+ * Vercel's Neon integration writes DATABASE_URL, other setups write
+ * POSTGRES_URL or POSTGRES_PRISMA_URL. Accept any of them rather than reporting
+ * "no database configured" while a perfectly good URL sits under another name.
+ */
+const readDatabaseUrl = () => {
+  for (const name of ["DATABASE_URL", "POSTGRES_PRISMA_URL", "POSTGRES_URL"]) {
+    const value = (process.env[name] || "").trim();
+    if (/^(postgres|postgresql|prisma):\/\//i.test(value)) return value;
+  }
+  return "";
+};
+
+const DATABASE_URL = readDatabaseUrl();
 
 const isPostgresUrl = () =>
   /^(postgres|postgresql):\/\//i.test(DATABASE_URL) || /^prisma:\/\//i.test(DATABASE_URL);

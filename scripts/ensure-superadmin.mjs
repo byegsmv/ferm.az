@@ -16,6 +16,11 @@
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { applyDbEnv } from "./resolve-db-env.mjs";
+
+// The hosting integration may name the connection string something other than
+// DATABASE_URL; normalise before anything reads it.
+applyDbEnv();
 
 const email = (process.env.SUPERADMIN_EMAIL || "").trim().toLowerCase();
 const password = process.env.SUPERADMIN_PASSWORD || "";
