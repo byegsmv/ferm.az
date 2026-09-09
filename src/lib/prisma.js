@@ -121,6 +121,20 @@ if (!globalForPrisma.prisma) {
 export const prisma = globalForPrisma.prisma;
 
 /**
+ * Whether a usable database URL is configured at all.
+ *
+ * When it is not, `prisma` is the offline stub: reads resolve empty and writes
+ * resolve null. That is right for a local checkout without a database, but on a
+ * deployment it is a trap. A missing DATABASE_URL made the user lookup return
+ * nothing, which login reported as "wrong username or password" while the real
+ * problem was that the site had no database at all. Callers that would otherwise
+ * mistake absence for a business answer must check this first.
+ */
+export function isDatabaseConfigured() {
+  return isPostgresUrl();
+}
+
+/**
  * True when the database provider is refusing service because the plan's quota
  * is exhausted. Neon answers its HTTPS SQL endpoint with HTTP 402 and a
  * "exceeded the ... quota" message, and disables the compute so raw TCP
