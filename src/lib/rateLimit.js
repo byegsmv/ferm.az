@@ -1,6 +1,6 @@
 /**
  * Simple in-memory rate limiter for Next.js Route Handlers.
- * Resets on each cold-start (Vercel serverless). Good enough for basic
+ * Resets on each cold-start (serverless). Good enough for basic
  * brute-force protection on auth endpoints.
  *
  * For production-grade rate limiting, use Upstash Redis + @upstash/ratelimit.

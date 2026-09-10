@@ -43,7 +43,7 @@ export async function POST(request) {
       if (process.env.BLOB_READ_WRITE_TOKEN) {
         try {
           // Convert the web File/Blob to a plain Buffer before handing it to
-          // @vercel/blob's put() — passing the raw File object directly has
+          // Blob SDK put() — passing the raw File object directly has
           // proven unreliable in some serverless runtimes (silent failures
           // that fell through to a base64 data-URI fallback in production).
           const arrayBuffer = await file.arrayBuffer();
@@ -56,7 +56,7 @@ export async function POST(request) {
           uploaded.push({ url: blob.url });
           continue;
         } catch (blobErr) {
-          console.error("Vercel Blob upload failed, falling back:", blobErr?.message || blobErr);
+          console.error("Blob upload failed, falling back:", blobErr?.message || blobErr);
           uploadDebug = blobErr?.message || String(blobErr);
         }
       }
@@ -75,7 +75,7 @@ export async function POST(request) {
         
         uploaded.push({ url: `/uploads/products/${fileName}` });
       } catch (fsErr) {
-        // If filesystem is read-only (e.g. Vercel without BLOB token), generate high quality base64 data URI
+        // If blob storage is unavailable, generate high quality base64 data URI
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;

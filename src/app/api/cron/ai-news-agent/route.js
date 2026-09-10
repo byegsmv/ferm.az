@@ -120,7 +120,7 @@ ${newsListStr}`;
       return NextResponse.json({ error: "AI returned empty title/content" }, { status: 500 });
     }
 
-    // Re-host AI-generated (pollinations) images on Vercel Blob so they load
+    // Re-host AI-generated (pollinations) images on blob storage so they load
     // reliably and never appear broken to visitors.
     const persisted = await persistBlogImages(cleanContent, coverUrl);
     const finalContent = persisted.content;

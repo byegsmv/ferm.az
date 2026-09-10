@@ -5,7 +5,7 @@ export default async function sitemap() {
   try {
     // Use VERCEL_URL if NEXT_PUBLIC_SITE_URL is not set
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://fermermarket.az");
+      (process.env.NEXT_PUBLIC_SITE_URL || "https://www.fermermarket.az");
     const locales = routing.locales;
 
     // Get active products

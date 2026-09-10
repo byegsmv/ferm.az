@@ -244,7 +244,7 @@ export default function AISettingsManager() {
 
   const keySourceLabels = {
     database: { label: "DB-də saxlanır", color: "bg-emerald-50 text-emerald-600" },
-    env: { label: "Vercel ENV", color: "bg-blue-50 text-blue-600" },
+    env: { label: "Server ENV", color: "bg-blue-50 text-blue-600" },
     none: { label: "Yoxdur", color: "bg-red-50 text-red-600" },
   };
 

@@ -31,7 +31,7 @@ export async function POST(request) {
   let imageBase64 = body.imageBase64 || null;
   let imageMimeType = body.imageMimeType || "image/jpeg";
 
-  // Convenience: accept an uploaded image URL (e.g. Vercel Blob) and fetch it
+  // Convenience: accept an uploaded image URL (e.g. blob storage) and fetch it
   // server-side, converting to base64 for the Gemini vision request.
   if (!imageBase64 && body.imageUrl) {
     try {

@@ -95,7 +95,7 @@ export default async function StorePage({ params }) {
     isPremium,
   };
 
-  const storeUrl = `https://fermermarket.vercel.app/az/stores/${store.slug}`;
+  const storeUrl = `https://www.fermermarket.az/az/stores/${store.slug}`;
 
   
   // SEO: structured data

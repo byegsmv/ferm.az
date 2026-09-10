@@ -77,7 +77,7 @@ export default function SystemHealthPage() {
               <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                 <Database className="w-4 h-4" />
               </div>
-              <h4 className="font-bold text-gray-900 text-sm">PostgreSQL (Neon)</h4>
+              <h4 className="font-bold text-gray-900 text-sm">PostgreSQL (Bulud)</h4>
             </div>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
               {health?.services?.database?.status || 'HEALTHY'}
@@ -147,7 +147,7 @@ export default function SystemHealthPage() {
           <div className="space-y-2 text-xs text-gray-600 pt-2 border-t border-gray-100">
             <div className="flex justify-between">
               <span>Media & Fayl Saxlanc:</span>
-              <strong className="text-emerald-700 font-bold">Vercel Blob (Aktiv)</strong>
+              <strong className="text-emerald-700 font-bold">Bulud Yaddaş (Aktiv)</strong>
             </div>
             <div className="flex justify-between">
               <span>Autentifikasiya Sistemi:</span>

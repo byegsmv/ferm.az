@@ -1,5 +1,5 @@
 // Pure string-based, server-safe blog content normalizer + sanitizer.
-// No jsdom/DOMPurify needed — safe in server components and Vercel serverless.
+// No jsdom/DOMPurify needed — safe in server components.
 
 /**
  * Normalizes AI-generated (or manually pasted) blog HTML:

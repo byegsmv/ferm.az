@@ -101,7 +101,7 @@ export async function POST(request) {
 
     if (isDbQuotaError(error)) {
       return Response.json({
-        error: "Verilənlər bazası provayderinin limiti (kvotası) tükənib, ona görə baza cavab vermir. Sayt idarəçisi Neon planını yeniləməlidir.",
+        error: "Verilənlər bazası provayderinin limiti (kvotası) tükənib, ona görə baza cavab vermir. Sayt idarəçisi verilənlər bazası tarifini yeniləməlidir.",
         code: "DB_QUOTA"
       }, { status: 503 });
     }

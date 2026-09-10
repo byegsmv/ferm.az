@@ -130,7 +130,7 @@ export default function AdminSupport() {
             <summary className="cursor-pointer text-xs font-semibold text-gray-700 hover:text-brand-600">
               Sistem yavaş işləyirsə nə etməli?
             </summary>
-            <p className="text-xs text-gray-500 mt-1 ml-4">Vercel status səhifəsini yoxlayın və lazım gəlsə brauzer keşini təmizləyin.</p>
+            <p className="text-xs text-gray-500 mt-1 ml-4">Xidmət statusunu yoxlayın və lazım olduqda dəstək ilə əlaqə saxlayın.</p>
           </details>
           <details className="group">
             <summary className="cursor-pointer text-xs font-semibold text-gray-700 hover:text-brand-600">

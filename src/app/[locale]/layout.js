@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 import AIAgronomWidget from "@/components/AIAgronomWidget";
 import SmoothScroll from "@/components/SmoothScroll";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
-import { Analytics } from "@vercel/analytics/next";
+import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { routing } from "@/i18n/routing";
@@ -19,7 +19,7 @@ import { prisma } from "@/lib/prisma";
 const inter = Inter({ subsets: ["latin"] });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://fermermarket.az");
+  (process.env.NEXT_PUBLIC_SITE_URL || "https://www.fermermarket.az");
 
 export async function generateMetadata() {
   let dbTitle = "FermerMarket — Aqrar Bazar Platforması | Heyvan, Gübrə, Texnika Satışı";
@@ -91,6 +91,7 @@ export default async function RootLayout({ children, params }) {
           <SmoothScroll>
             <ServiceWorkerRegister />
             <PWAInstallPrompt />
+            <WhatsAppFloat />
             <Toaster position="top-center" />
             
             {topAd && <AdBanner ad={topAd} position="top" />}
@@ -107,7 +108,6 @@ export default async function RootLayout({ children, params }) {
             <AIAgronomWidget />
           </SmoothScroll>
         </NextIntlClientProvider>
-        <Analytics />
       {/* Universal Visual Editor — bütün səhifələrdə override tətbiqi (?ve=1 = redaktə rejimi) */}
       <script defer src="/visual-editor/visual-editor.js" />
       </body>

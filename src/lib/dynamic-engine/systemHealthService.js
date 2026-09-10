@@ -49,7 +49,7 @@ export async function checkSystemHealth() {
 
   // 3. Third-party Integrations status check
   report.services.storage = {
-    name: 'Media & File Storage (Vercel Blob / S3)',
+    name: 'Media & File Storage (Bulud / S3)',
     status: 'HEALTHY',
     type: 'Cloud Storage'
   };
