@@ -35,10 +35,22 @@ export default async function StoresPage() {
 
   let salesPoints = [];
   try {
-    salesPoints = await prisma.salesPoint.findMany({
+    // SalesPoint has no `name`/`type` columns — the store's name comes through
+    // the relation, and `type` labels the point for the interactive map.
+    const rows = await prisma.salesPoint.findMany({
       where: { isActive: true },
-      select: { id: true, name: true, address: true, phone: true, region: true, lat: true, lng: true, type: true }
+      select: { id: true, address: true, phone: true, region: true, lat: true, lng: true, store: { select: { name: true } } },
     });
+    salesPoints = rows.map((sp) => ({
+      id: `sp-${sp.id}`,
+      name: sp.store?.name || "Satış nöqtəsi",
+      address: sp.address,
+      phone: sp.phone,
+      region: sp.region,
+      lat: sp.lat,
+      lng: sp.lng,
+      type: "sales_point",
+    }));
   } catch(e) {
     console.warn("SalesPoints fetch failed:", e.message);
   }
