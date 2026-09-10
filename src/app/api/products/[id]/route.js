@@ -1,3 +1,4 @@
+import { normalizeIncomingImages } from "@/lib/imageStorage";
 import { prisma } from "@/lib/prisma";
 import { mapProductImages } from "@/lib/imageUrl";
 import { getAuthUser } from "@/lib/auth";
@@ -128,6 +129,21 @@ export async function PATCH(request, { params }) {
       finalData = corpData;
     }
 
+    // Şəkil dəyişikliyi VARSA: transaction-dan əvvəl mövcud qeydləri oxu və
+    // gələn istinadları həll et. Bu addım olmadan formaların geri göndərdiyi
+    // "/api/img/<id>" yolları öz qeydlərinə işarə edirdi — deleteMany əsl
+    // datanı silir, yeni qeyd isə artıq mövcud olmayan qeydə bağlanırdı və
+    // şəkil 404 düşürdü (data loss). Blob yükləmə də burada, DB bağlantısını
+    // tutmadan icra olunur.
+    let finalImages;
+    if (images) {
+      const existingRows = await prisma.productImage.findMany({
+        where: { productId },
+        select: { id: true, url: true },
+      });
+      finalImages = await normalizeIncomingImages(images, existingRows);
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
       const result = await tx.product.update({
         where: { id: productId },
@@ -136,9 +152,9 @@ export async function PATCH(request, { params }) {
       // Replace the image set if the caller sent a new `images` array (owner or admin editing photos).
       if (images) {
         await tx.productImage.deleteMany({ where: { productId } });
-        if (images.length) {
+        if (finalImages.length) {
           await tx.productImage.createMany({
-            data: images.map((img, idx) => ({
+            data: finalImages.map((img, idx) => ({
               productId,
               url: img.url,
               altText: img.altText,
