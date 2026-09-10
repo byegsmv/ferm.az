@@ -430,6 +430,10 @@ export async function POST(request) {
       include: { images: true },
     });
 
+    // AI avtomatik tərcümə: az → en + ru (yeni elan dərhal 3 dildə olur)
+    const { autoTranslateProduct } = await import("@/lib/autoTranslate");
+    await autoTranslateProduct(product.id).catch(() => {});
+
     // Create listing duration record
     const startDate = new Date();
     const endDate = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);

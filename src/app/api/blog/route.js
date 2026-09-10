@@ -74,6 +74,9 @@ export async function POST(request) {
       publishedAt: parsed.data.isPublished ? new Date() : null,
     },
   });
+    // AI avtomatik tərcümə (başlıq + məzmun)
+    const { autoTranslateBlogPost } = await import("@/lib/autoTranslate");
+    await autoTranslateBlogPost(post.id).catch(() => {});
 
   // Auto-reward coins for writing a blog post
   const COIN_REWARD = 5;

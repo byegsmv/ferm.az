@@ -97,6 +97,9 @@ export async function POST(request) {
   const category = await prisma.category.create({
     data: { ...data, slug },
   });
+    // AI avtomatik tərcümə
+    const { autoTranslateCategory } = await import("@/lib/autoTranslate");
+    await autoTranslateCategory(category.id).catch(() => {});
 
   await prisma.auditLog.create({
     data: {
