@@ -39,6 +39,8 @@ export async function GET(request) {
         logoUrl: true,
         coverUrl: true,
         address: true,
+        lat: true,
+        lng: true,
         isVerified: true,
         isActive: true,
         _count: { select: { products: true } },
