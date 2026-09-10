@@ -1,6 +1,6 @@
 "use client";
 import { Link, useRouter, usePathname } from "@/i18n/routing";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { getUser } from "@/lib/apiClient";
 import { getCart, cartCount } from "@/lib/cartClient";
 import NotificationBell from "@/components/NotificationBell";
@@ -87,7 +87,12 @@ export default function Header() {
   const [showCityModal, setShowCityModal] = useState(false);
   const [wallet, setWallet] = useState(null);
 
-  const [navLinks, setNavLinks] = useState([
+  const [categoryTree, setCategoryTree] = useState([]);
+  // useMemo: siteTexts async yükləndikdə (və locale dəyişdikdə) nav etiketləri
+  // yenidən qurulur — köhnə useState variantı ilk render-in AZ fallback-ində donurdğu
+  // üçün /en və /ru-da nav həmişə Azərbaycanca qalırdı.
+  const navLinks = useMemo(() => {
+    const base = [
     { href: "/products", label: st("nav.products", "Məhsullar") },
     { href: "/categories", label: st("nav.categories", "Kateqoriyalar") },
     { href: "/brands", label: st("nav.brands", "Brendlər") },
@@ -109,8 +114,13 @@ export default function Header() {
         { href: "/xidmetler/satinalma", label: "Satınalma xidməti" },
         { href: "/xidmetler/mehsul-qeydiyyati", label: "Məhsulların qeydiyyata alınması" },
       ]
-    },
-  ]);
+    }
+    ];
+    if (categoryTree.length > 0) {
+      return base.map((l) => (l.href === "/categories" ? { ...l, subLinks: categoryTree } : l));
+    }
+    return base;
+  }, [categoryTree, st, locale]);
 
   useEffect(() => {
     setMounted(true);
@@ -136,12 +146,7 @@ export default function Header() {
             const categoryTree = buildCatTree(null);
             
             if (categoryTree.length > 0) {
-              setNavLinks(prev => prev.map(l => {
-                if (l.href === '/categories') {
-                  return { ...l, subLinks: categoryTree };
-                }
-                return l;
-              }));
+              setCategoryTree(categoryTree);
             }
           }
         })
