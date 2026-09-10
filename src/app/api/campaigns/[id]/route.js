@@ -46,6 +46,10 @@ export async function PATCH(request, { params }) {
   }
 
   const data = { ...parsed.data };
+  if (data.bannerUrl) {
+    const { optimizeCampaignBanner } = await import("@/lib/campaignBanner");
+    data.bannerUrl = await optimizeCampaignBanner(data.bannerUrl, parsed.data.type || campaign.type);
+  }
   if (data.startDate) data.startDate = new Date(data.startDate);
   if (data.endDate) data.endDate = new Date(data.endDate);
 
