@@ -12,11 +12,11 @@ function loadLeaflet() {
       const css = document.createElement("link");
       css.id = "leaflet-css";
       css.rel = "stylesheet";
-      css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      css.href = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css";
       document.head.appendChild(css);
     }
     const s = document.createElement("script");
-    s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    s.src = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js";
     s.onload = () => resolve(window.L);
     s.onerror = reject;
     document.body.appendChild(s);

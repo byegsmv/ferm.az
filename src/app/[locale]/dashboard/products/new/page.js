@@ -12,6 +12,7 @@ export default function StoreNewProductPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [storeId, setStoreId] = useState(null);
   const [storeName, setStoreName] = useState("");
   const [images, setImages] = useState([]);
@@ -32,9 +33,16 @@ export default function StoreNewProductPage() {
     stock: "1",
     unit: "ədəd",
     categoryId: "",
+    brandId: "",
     wholesalePrice: "",
     wholesaleMinQty: "",
   });
+
+  useEffect(() => {
+    apiFetch("/api/brands")
+      .then((d) => setBrands(d.brands || []))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const user = getUser();
@@ -79,6 +87,7 @@ export default function StoreNewProductPage() {
         stock: parseInt(formData.stock || "1", 10),
         unit: formData.unit || "ədəd",
         categoryId: formData.categoryId,
+        brandId: formData.brandId || null,
         durationDays: 1,
         images: images.map((img) => ({ url: img.url, altText: formData.titleAz })),
       };
@@ -202,6 +211,15 @@ export default function StoreNewProductPage() {
               ))}
             </select>
           )}
+        </div>
+
+        {/* Brend — istəyə bağlı */}
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">BREND (İSTƏYƏ BAĞLI)</label>
+          <select className="input-field" value={formData.brandId} onChange={set("brandId")}>
+            <option value="">Brend seçilməyib</option>
+            {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
         </div>
 
         {/* Retail + Discounted Price */}
