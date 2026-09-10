@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && (node scripts/db-migrate.mjs || echo '[build] db-migrate skip') && (node scripts/ensure-superadmin.mjs || echo '[build] superadmin skip') && next build",
+    "build": "node scripts/build-capture.mjs",
     "start": "next start",
     "test": "jest",
     "prisma:migrate": "prisma migrate dev",
