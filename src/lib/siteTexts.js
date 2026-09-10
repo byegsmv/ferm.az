@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useLocale } from "next-intl";
 
 let cache = null;
 let fetchPromise = null;
@@ -28,12 +29,15 @@ export function clearSiteTextsCache() {
   fetchPromise = null;
 }
 
+// Module-level helper — defaults to "az" since it has no locale context.
+// Prefer useSiteTexts() inside components; this is kept for any non-hook callers.
 export function t(key, fallback = "") {
   if (!cache || !cache[key]) return fallback;
   return cache[key].az || fallback;
 }
 
 export function useSiteTexts() {
+  const locale = useLocale();
   const [texts, setTexts] = useState(cache || {});
   const [loading, setLoading] = useState(!cache);
 
@@ -51,9 +55,13 @@ export function useSiteTexts() {
   }, []);
 
   const t = useCallback((key, fallback = "") => {
-    if (!texts[key]) return fallback;
-    return texts[key].az || fallback;
-  }, [texts]);
+    const entry = texts[key];
+    if (!entry) return fallback;
+    // Fall back through the requested locale -> az -> given fallback,
+    // so a text that has no EN/RU translation yet still shows something
+    // sensible instead of silently staying in Azerbaijani.
+    return entry[locale] || entry.az || fallback;
+  }, [texts, locale]);
 
-  return { texts, t, loading };
+  return { texts, t, loading, locale };
 }
