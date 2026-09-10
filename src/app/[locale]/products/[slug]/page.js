@@ -135,11 +135,16 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function ProductDetailPage({ params }) {
-  const { slug } = await params;
+  const { slug, locale } = await params;
   let product = null;
   try { product = await getProduct(slug); } catch(e) { console.error("getProduct error:", e.message); }
   if (!product || product.status === "DRAFT" || product.status === "REJECTED") notFound();
   product = mapProductImages(product);
+
+  // Locale-uyğun başlıq/təsvir: EN/RU AI tərcüməsi varsa onu göstər, yoxsa AZ
+  const loc = (az, en, ru) => (locale === "en" && en) ? en : (locale === "ru" && ru) ? ru : az;
+  product.titleAz = loc(product.titleAz, product.titleEn, product.titleRu);
+  if (product.descriptionAz) product.descriptionAz = loc(product.descriptionAz, product.descriptionEn, product.descriptionRu);
 
   // Fetch active ingredients of this product and alternatives
   let alternatives = [];
