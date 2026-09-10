@@ -108,6 +108,8 @@ export default async function RootLayout({ children, params }) {
           </SmoothScroll>
         </NextIntlClientProvider>
         <Analytics />
+      {/* Universal Visual Editor — bütün səhifələrdə override tətbiqi (?ve=1 = redaktə rejimi) */}
+      <script defer src="/visual-editor/visual-editor.js" />
       </body>
     </html>
   );
