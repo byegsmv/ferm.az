@@ -34,7 +34,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
       addToCart(
         {
           id: product.id,
-          title: product.titleAz || product.title,
+          title: product.title || product.titleAz || product.title,
           price: product.price,
           coverImage: product.coverImage || product.images?.[0]?.url || null,
           isCorporate: !!product.isCorporate,
@@ -182,7 +182,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
       <Link
         href={`/products/${product.slug}`}
         className="absolute inset-0 z-0"
-        aria-label={product.titleAz || product.title}
+        aria-label={product.title || product.titleAz || product.title}
       />
 
       {/* Image Container — subtle gradient backdrop instead of flat gray */}
@@ -190,7 +190,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
         {product.coverImage ? (
           <SafeImage
             src={product.coverImage}
-            alt={product.titleAz || product.title}
+            alt={product.title || product.titleAz || product.title}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-contain p-3 group-hover:scale-105 transition-transform duration-500"
@@ -261,8 +261,8 @@ export default function ProductCard({ product, tier, compact = false, initialFav
       <div className={`flex flex-col flex-1 z-10 pointer-events-none ${compact ? "p-2.5" : "p-3 sm:p-4"}`}>
 
         {/* Title - Fixed minimum height for 2 lines to prevent jagged grids */}
-        <h3 className={`font-semibold text-gray-900 line-clamp-2 mb-1 group-hover:text-brand-600 transition-colors ${compact ? "text-[13px] leading-tight min-h-[30px]" : "text-[14px] sm:text-[15px] leading-snug min-h-[42px]"}`} title={product.titleAz || product.title}>
-          {product.titleAz || product.title}
+        <h3 className={`font-semibold text-gray-900 line-clamp-2 mb-1 group-hover:text-brand-600 transition-colors ${compact ? "text-[13px] leading-tight min-h-[30px]" : "text-[14px] sm:text-[15px] leading-snug min-h-[42px]"}`} title={product.title || product.titleAz || product.title}>
+          {product.title || product.titleAz || product.title}
         </h3>
 
         {/* Pricing Area */}
