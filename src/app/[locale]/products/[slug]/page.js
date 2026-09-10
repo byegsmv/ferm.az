@@ -27,6 +27,7 @@ async function getProduct(slug) {
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       category: true,
+      brand: true,
       seller: {
         select: {
           id: true,
@@ -488,6 +489,17 @@ export default async function ProductDetailPage({ params }) {
                 <div className="flex justify-between border-b border-gray-50 pb-1">
                   <span className="text-gray-500">Maksimum tətbiq:</span>
                   <span className="font-medium">{product.maxApplications} dəfə</span>
+                </div>
+              )}
+              {product.brand && (
+                <div className="flex items-center justify-between bg-brand-50/50 rounded-lg px-3 py-2 border border-brand-100">
+                  <span className="text-gray-500 text-sm">Brend:</span>
+                  <span className="flex items-center gap-2">
+                    {product.brand.logoUrl && (
+                      <img src={product.brand.logoUrl} alt={product.brand.name} className="w-8 h-8 rounded-lg bg-white border border-gray-200 object-contain p-0.5" />
+                    )}
+                    <span className="font-medium text-sm text-brand-700">{product.brand.name}</span>
+                  </span>
                 </div>
               )}
               {product.manufacturer && (

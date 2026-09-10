@@ -75,7 +75,7 @@ export async function POST(request) {
   }
 
   const {
-    titleAz, descriptionAz, price, categoryId, stock = 0,
+    titleAz, descriptionAz, price, categoryId, stock = 0, brandId,
     productCode, barcode, packaging, manufacturer, countryOfOrigin,
     unit = "ədəd", images = [], labelPdfUrl, instructionPdfUrl,
     wholesalePrice, wholesaleMinQty, isCorporate = false, tags = [],
@@ -121,6 +121,7 @@ export async function POST(request) {
       stock: Number(stock),
       unit,
       categoryId,
+      brandId: brandId || null,
       storeId: store?.id || null,
       sellerId: authUser.sub,
       status: isAdmin ? "ACTIVE" : "PENDING_REVIEW",
