@@ -196,6 +196,7 @@ export async function GET(request) {
       titleAz: p.titleAz,
       images: p.images?.map((img) => ({ url: publicImgUrl(img), altText: img.altText })),
       category: p.category ? { slug: p.category.slug, nameAz: p.category.nameAz, nameEn: p.category.nameEn, nameRu: p.category.nameRu } : null,
+      brandId: p.brandId,
       brand: p.brand || null,
       store: p.store ? { name: p.store.name, slug: p.store.slug } : null,
       preparativeForm: p.preparativeForm,

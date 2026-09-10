@@ -83,7 +83,7 @@ function CatalogProductCard({ product, onEdit, onDelete, isOwner }) {
 }
 
 // ─── Add / Edit Product Modal ──────────────────────────────────────────────────
-function CatalogProductModal({ editProduct, categories, storeId, onClose, onSaved }) {
+function CatalogProductModal({ editProduct, categories, brands = [], storeId, onClose, onSaved }) {
   const isEdit = !!editProduct;
   const [form, setForm] = useState({
     titleAz: editProduct?.titleAz || "",
@@ -92,6 +92,7 @@ function CatalogProductModal({ editProduct, categories, storeId, onClose, onSave
     stock: editProduct?.stock ?? 0,
     unit: editProduct?.unit || "ədəd",
     categoryId: editProduct?.categoryId || "",
+    brandId: editProduct?.brandId || editProduct?.brand?.id || "",
     productCode: editProduct?.productCode || "",
     barcode: editProduct?.barcode || "",
     packaging: editProduct?.packaging || "",
@@ -167,6 +168,23 @@ function CatalogProductModal({ editProduct, categories, storeId, onClose, onSave
                     <option key={c.id} value={c.id}>{c.nameAz}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="label-sm flex items-center gap-1">Brend <span className="text-gray-400 font-normal">(istəyə bağlı)</span></label>
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const sel = brands.find(b => b.id === form.brandId);
+                    return sel?.logoUrl ? (
+                      <img src={sel.logoUrl} alt={sel.name} className="w-8 h-8 rounded-lg border border-gray-200 object-contain bg-white p-0.5 shrink-0" />
+                    ) : null;
+                  })()}
+                  <select value={form.brandId} onChange={e => set("brandId", e.target.value)} className="input-field">
+                    <option value="">Brend seçilməyib</option>
+                    {brands.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}{b.country ? ` (${b.country})` : ""}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div>
                 <label className="label-sm">Təsvir</label>
@@ -292,6 +310,7 @@ function CatalogProductModal({ editProduct, categories, storeId, onClose, onSave
 export default function CatalogPanel({ user }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
@@ -316,6 +335,9 @@ export default function CatalogPanel({ user }) {
   useEffect(() => {
     apiFetch("/api/categories?pageSize=100")
       .then(d => setCategories(d.categories || d || []))
+      .catch(() => {});
+    apiFetch("/api/brands?all=true")
+      .then(d => setBrands(d.brands || []))
       .catch(() => {});
     fetchProducts();
   }, [fetchProducts]);
@@ -417,6 +439,7 @@ export default function CatalogPanel({ user }) {
         <CatalogProductModal
           editProduct={editProduct}
           categories={categories}
+          brands={brands}
           storeId={storeId}
           onClose={() => { setShowModal(false); setEditProduct(null); }}
           onSaved={onSaved}
