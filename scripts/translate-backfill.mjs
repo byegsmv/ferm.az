@@ -133,10 +133,12 @@ async function main() {
   }
 
   // 2) Kateqoriyalar
-  const cats = await prisma.category.findMany({
+  let cats = await prisma.category.findMany({
     where: FORCE ? {} : { OR: [{ nameEn: null }, { nameRu: null }] },
-    select: { id: true, nameAz: true }, take: 200,
+    select: { id: true, nameAz: true, nameEn: true }, take: 200,
   });
+  if (!FORCE) cats = cats.concat((await prisma.category.findMany({ where: {}, select: { id: true, nameAz: true, nameEn: true }, take: 200 })).filter(c => c.nameEn === c.nameAz));
+  cats = [...new Map(cats.map(c => [c.id, c])).values()];
   console.log(`Kateqoriyalar: ${cats.length}`);
   for (const c of cats) {
     try {
@@ -147,10 +149,12 @@ async function main() {
   }
 
   // 3) Site textlər (menyu, etiketlər)
-  const texts = await prisma.siteText.findMany({
+  let texts = await prisma.siteText.findMany({
     where: FORCE ? { valueAz: { not: "" } } : { OR: [{ valueEn: null }, { valueRu: null }] },
-    select: { key: true, valueAz: true }, take: 400,
+    select: { key: true, valueAz: true, valueEn: true }, take: 400,
   });
+  if (!FORCE) texts = texts.concat((await prisma.siteText.findMany({ where: {}, select: { key: true, valueAz: true, valueEn: true }, take: 400 })).filter(t => t.valueAz && t.valueEn === t.valueAz));
+  texts = [...new Map(texts.map(t => [t.key, t])).values()];
   console.log(`Site textlər: ${texts.length}`);
   for (const t of texts) {
     if (!t.valueAz?.trim()) continue;

@@ -36,11 +36,11 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://va.vercel-scripts.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src * data: blob:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://api.resend.com https://*.vercel.app https://*.neon.tech https://api.open-meteo.com https://vitals.vercel-insights.com",
+              "connect-src 'self' https://api.open-meteo.com",
               "frame-ancestors 'none'",
             ].join("; "),
           },
