@@ -1,4 +1,5 @@
 import { Link } from "@/i18n/routing";
+import { getLocale } from "next-intl/server";
 import { mapProductImages, publicStoreLogo, publicStoreCover } from "@/lib/imageUrl";
 import SafeImage from "@/components/SafeImage";
 import { prisma } from "@/lib/prisma";
@@ -113,9 +114,17 @@ async function getHomeData() {
   }
 }
 
+const HOME_BLOCK_TITLES = {
+  az: { categories: "Kateqoriyalar", brands: "Populyar brendlər", stores: "Populyar satıcılar", campaigns: "Kampaniyalar", premium: "Premium Elanlar", latest: "Yeni Elanlar", bundles: "Bağlamalar" },
+  en: { categories: "Categories", brands: "Popular Brands", stores: "Popular Sellers", campaigns: "Campaigns", premium: "Premium Listings", latest: "Newest Listings", bundles: "Bundles" },
+  ru: { categories: "Категории", brands: "Популярные бренды", stores: "Популярные продавцы", campaigns: "Кампании", premium: "Премиум объявления", latest: "Новые объявления", bundles: "Наборы" },
+};
+
 export default async function HomePage({ searchParams }) {
   const resolvedSearchParams = await searchParams;
   const editMode = resolvedSearchParams?.editMode === "true";
+  const locale = await getLocale();
+  const bt = HOME_BLOCK_TITLES[locale] || HOME_BLOCK_TITLES.az;
 
   let homeData = { categories: [], premiumListings: [], homepageAd: null, latestProducts: [], bundles: [], blogPosts: [], campaigns: [] };
   let blocks = [];
@@ -148,14 +157,14 @@ export default async function HomePage({ searchParams }) {
   if (blocks.length === 0) {
     blocks = [
       { type: "HERO_SLIDER", props: {} },
-      { type: "CATEGORIES", props: { title: "Kateqoriyalar", count: 20 } },
-      { type: "BRANDS", props: { title: "Populyar brendlər", count: 15 } },
-      { type: "STORES", props: { title: "Populyar satıcılar", count: 15 } },
+      { type: "CATEGORIES", props: { title: bt.categories, count: 20 } },
+      { type: "BRANDS", props: { title: bt.brands, count: 15 } },
+      { type: "STORES", props: { title: bt.stores, count: 15 } },
       { type: "AD_BANNER", props: {} },
-      { type: "CAMPAIGNS", props: { title: "Kampaniyalar" } },
-      { type: "PREMIUM_ADS", props: { title: "Premium Elanlar" } },
-      { type: "LATEST_ADS", props: { title: "Yeni Elanlar", count: 8 } },
-      { type: "BUNDLES", props: { title: "Bağlamalar" } },
+      { type: "CAMPAIGNS", props: { title: bt.campaigns } },
+      { type: "PREMIUM_ADS", props: { title: bt.premium } },
+      { type: "LATEST_ADS", props: { title: bt.latest, count: 8 } },
+      { type: "BUNDLES", props: { title: bt.bundles } },
       { type: "BLOG", props: {} }
     ];
   }

@@ -1,53 +1,56 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import Icon from "@/components/ui/Icon";
 
-const DEFAULT_SLIDES = [
-  {
-    title: "Kənd Təsərrüfatının Rəqəmsal Bazarı",
-    text: "Fermerlər, mağazalar və alıcılar üçün vahid ekosistem. Alış-verişə indi başlayın.",
-    iconName: "cart",
-    bg: "from-brand-700 via-brand-600 to-brand-500",
-    href: "/products",
-    btn: "Elanları Gör"
-  },
-  {
-    title: "Süni İntellekt Dəstəyi",
-    text: "Aqronom asistanı ilə məhsul, xəstəlik və çeşidləmə ilə bağlı 24/7 pulsuz cavablar alın.",
-    iconName: "bot",
-    bg: "from-sky-600 via-blue-600 to-indigo-600",
-    href: "/agronom",
-    btn: "Aqronoma Soruş"
-  },
-  {
-    title: "Premium Təcrübə & Satış",
-    text: "Sürətli axtarış, premium elanlar və 24/7 onlayn sifariş sistemi ilə satışınızı artırın.",
-    iconName: "sparkles",
-    bg: "from-amber-500 via-orange-500 to-red-500",
-    href: "/elan-yerlesdir",
-    btn: "Mağaza Aç"
-  },
-  {
-    title: "İndi Al, Hissə-Hissə Ödə!",
-    text: "Təklif olunan məhsulları Birbank vasitəsilə hissəli ödənişlə asanlıqla əldə edin. Tək şəxsiyyət vəsiqəsi ilə WhatsApp-dan müraciət edin.",
-    iconName: "creditCard",
-    bg: "from-emerald-500 via-green-600 to-teal-600",
-    href: "/products",
-    btn: "Məhsullara Bax"
-  }
+// Slayd mətnləri əvvəllər sabit (yalnız Azərbaycanca) idi — /en və /ru-da
+// da eyni Azərbaycanca mətn göstərilirdi. İndi hər dil üçün ayrıca mətn var,
+// iconName/bg/href dillər arasında ortaqdır.
+const SHARED = [
+  { iconName: "cart", bg: "from-brand-700 via-brand-600 to-brand-500", href: "/products" },
+  { iconName: "bot", bg: "from-sky-600 via-blue-600 to-indigo-600", href: "/agronom" },
+  { iconName: "sparkles", bg: "from-amber-500 via-orange-500 to-red-500", href: "/elan-yerlesdir" },
+  { iconName: "creditCard", bg: "from-emerald-500 via-green-600 to-teal-600", href: "/products" },
 ];
 
+const TEXT_BY_LOCALE = {
+  az: [
+    { title: "Kənd Təsərrüfatının Rəqəmsal Bazarı", text: "Fermerlər, mağazalar və alıcılar üçün vahid ekosistem. Alış-verişə indi başlayın.", btn: "Elanları Gör" },
+    { title: "Süni İntellekt Dəstəyi", text: "Aqronom asistanı ilə məhsul, xəstəlik və çeşidləmə ilə bağlı 24/7 pulsuz cavablar alın.", btn: "Aqronoma Soruş" },
+    { title: "Premium Təcrübə & Satış", text: "Sürətli axtarış, premium elanlar və 24/7 onlayn sifariş sistemi ilə satışınızı artırın.", btn: "Mağaza Aç" },
+    { title: "İndi Al, Hissə-Hissə Ödə!", text: "Təklif olunan məhsulları Birbank vasitəsilə hissəli ödənişlə asanlıqla əldə edin. Tək şəxsiyyət vəsiqəsi ilə WhatsApp-dan müraciət edin.", btn: "Məhsullara Bax" },
+  ],
+  en: [
+    { title: "The Digital Marketplace for Agriculture", text: "A unified ecosystem for farmers, stores and buyers. Start shopping now.", btn: "See Listings" },
+    { title: "AI-Powered Support", text: "Get free 24/7 answers about crops, diseases and selection from our agronomist assistant.", btn: "Ask the Agronomist" },
+    { title: "Premium Experience & Sales", text: "Boost your sales with fast search, premium listings and a 24/7 online ordering system.", btn: "Open a Store" },
+    { title: "Buy Now, Pay in Installments!", text: "Get featured products easily via Birbank installment payments. Apply on WhatsApp with just your ID.", btn: "Browse Products" },
+  ],
+  ru: [
+    { title: "Цифровой рынок сельского хозяйства", text: "Единая экосистема для фермеров, магазинов и покупателей. Начните покупки прямо сейчас.", btn: "Смотреть объявления" },
+    { title: "Поддержка искусственного интеллекта", text: "Получайте бесплатные ответы 24/7 об урожае, болезнях и выборе от нашего агроном-ассистента.", btn: "Спросить агронома" },
+    { title: "Премиум-опыт и продажи", text: "Увеличьте продажи с быстрым поиском, премиум-объявлениями и системой онлайн-заказов 24/7.", btn: "Открыть магазин" },
+    { title: "Купите сейчас, платите частями!", text: "Легко приобретайте товары через рассрочку Birbank. Обратитесь в WhatsApp, имея при себе удостоверение личности.", btn: "Смотреть товары" },
+  ],
+};
+
+function getDefaultSlides(locale) {
+  const texts = TEXT_BY_LOCALE[locale] || TEXT_BY_LOCALE.az;
+  return SHARED.map((s, i) => ({ ...s, ...texts[i] }));
+}
+
 export default function HeroSlider() {
+  const locale = useLocale();
   const [current, setCurrent] = useState(0);
-  const [slides, setSlides] = useState(DEFAULT_SLIDES);
+  const [dbSlides, setDbSlides] = useState([]);
 
   useEffect(() => {
     fetch("/api/slides")
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d?.slides?.length) {
-          const dbSlides = d.slides.map(s => ({
+          setDbSlides(d.slides.map(s => ({
             title: s.title,
             text: s.subtitle,
             iconName: "flame",
@@ -55,12 +58,15 @@ export default function HeroSlider() {
             imageUrl: s.imageUrl || null,
             href: s.href || "/products",
             btn: s.cta || "İndi Bax"
-          }));
-          setSlides([...DEFAULT_SLIDES, ...dbSlides]);
+          })));
         }
       })
       .catch(() => {});
   }, []);
+
+  // Default slaydlar locale dəyişəndə yenidən lokallaşdırılır; DB slaydları
+  // (admin-in əlavə etdiyi, hələ tək dilli sahələr) olduğu kimi qalır.
+  const slides = useMemo(() => [...getDefaultSlides(locale), ...dbSlides], [locale, dbSlides]);
 
   function getHeroBg(bg) {
     if (!bg) return "from-brand-700 via-brand-600 to-brand-500";

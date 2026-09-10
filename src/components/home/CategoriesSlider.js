@@ -68,7 +68,7 @@ function getCategoryIcon(c) {
 const AUTO_SPEED = 0.5;
 
 export default function CategoriesSlider({ categories = [], title, subtitle }) {
-  const { t } = useSiteTexts();
+  const { t, locale } = useSiteTexts();
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -247,7 +247,7 @@ export default function CategoriesSlider({ categories = [], title, subtitle }) {
                 </span>
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className={`text-xs sm:text-sm font-bold leading-snug ${theme.text} line-clamp-2`}>
-                    {c.nameAz}
+                    {(locale === "en" ? c.nameEn : locale === "ru" ? c.nameRu : c.nameAz) || c.nameAz || c.name}
                   </span>
                 </div>
               </Link>

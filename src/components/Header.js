@@ -87,7 +87,30 @@ export default function Header() {
   const [showCityModal, setShowCityModal] = useState(false);
   const [wallet, setWallet] = useState(null);
 
-  const [categoryTree, setCategoryTree] = useState([]);
+  const [rawCategories, setRawCategories] = useState([]);
+  // useMemo: locale dəyişdikdə (remount olmadan) kateqoriya adları yenidən
+  // etiketlənir — köhnə versiya ağacı bir dəfəlik effekt daxilində quraşdırıb
+  // locale-i həmin an closure-a "dondururdu", sonrakı dil dəyişimində
+  // yenilənmirdi (/ru-da kateqoriyalar həmişə AZ qalırdı).
+  const categoryTree = useMemo(() => {
+    const buildCatTree = (parentId = null) => {
+      return rawCategories
+        .filter((c) => c.parentId === parentId && c.isActive)
+        .map((c) => {
+          const children = buildCatTree(c.id);
+          const localizedName =
+            (locale === "en" ? c.nameEn : locale === "ru" ? c.nameRu : c.nameAz) ||
+            c.nameAz || c.name;
+          return {
+            href: `/products?category=${c.slug}`,
+            label: localizedName,
+            ...(children.length > 0 ? { subLinks: children } : {})
+          };
+        });
+    };
+    return buildCatTree(null);
+  }, [rawCategories, locale]);
+
   // useMemo: siteTexts async yükləndikdə (və locale dəyişdikdə) nav etiketləri
   // yenidən qurulur — köhnə useState variantı ilk render-in AZ fallback-ində donurdğu
   // üçün /en və /ru-da nav həmişə Azərbaycanca qalırdı.
@@ -102,7 +125,7 @@ export default function Header() {
       href: "/agronom", 
       label: st("nav.agronom", "Aqronom"),
       subLinks: [
-        { href: "/agronom", label: "Aqronom paneli" },
+        { href: "/agronom", label: st("nav.agronom_panel", "Aqronom paneli") },
         { href: "/blog", label: st("nav.blog", "Bloq") }
       ]
     },
@@ -110,9 +133,9 @@ export default function Header() {
       href: "/xidmetler", 
       label: st("nav.services", "Xidmətlər"),
       subLinks: [
-        { href: "/xidmetler", label: "Bütün xidmətlər" },
-        { href: "/xidmetler/satinalma", label: "Satınalma xidməti" },
-        { href: "/xidmetler/mehsul-qeydiyyati", label: "Məhsulların qeydiyyata alınması" },
+        { href: "/xidmetler", label: st("nav.services_all", "Bütün xidmətlər") },
+        { href: "/xidmetler/satinalma", label: st("nav.services_purchase", "Satınalma xidməti") },
+        { href: "/xidmetler/mehsul-qeydiyyati", label: st("nav.services_registration", "Məhsulların qeydiyyata alınması") },
       ]
     }
     ];
@@ -125,29 +148,13 @@ export default function Header() {
   useEffect(() => {
     setMounted(true);
     
-    // Fetch categories and inject to navLinks
+    // Fetch categories once — the locale-aware tree is derived below in a
+    // useMemo so switching language (without a remount) relabels it live.
     import("@/lib/apiClient").then(({ apiFetch }) => {
       apiFetch('/api/categories?all=true')
         .then(res => {
           if (res && res.categories) {
-            const buildCatTree = (parentId = null) => {
-              return res.categories
-                .filter(c => c.parentId === parentId && c.isActive)
-                .map(c => {
-                  const children = buildCatTree(c.id);
-                  return {
-                    href: `/products?category=${c.slug}`,
-                    label: c.nameAz || c.name,
-                    ...(children.length > 0 ? { subLinks: children } : {})
-                  };
-                });
-            };
-            
-            const categoryTree = buildCatTree(null);
-            
-            if (categoryTree.length > 0) {
-              setCategoryTree(categoryTree);
-            }
+            setRawCategories(res.categories);
           }
         })
         .catch(console.error);

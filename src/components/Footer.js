@@ -39,7 +39,7 @@ export default function Footer() {
             <img src="/logo.png" alt="FermerMarket Logo" className="h-10 md:h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-200" />
           </Link>
           <p className="text-sm text-gray-400">
-            Fermerlər, mağazalar, aqronomlar və alıcılar üçün AI dəstəkli vahid kənd təsərrüfatı ekosistemi.
+            {st("footer.description", "Fermerlər, mağazalar, aqronomlar və alıcılar üçün AI dəstəkli vahid kənd təsərrüfatı ekosistemi.")}
           </p>
           <div className="flex gap-4 mt-2">
             <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#1877F2] hover:text-white transition-colors">
@@ -56,38 +56,38 @@ export default function Footer() {
 
         {/* Links Column 1 - Platforma */}
         <div>
-          <h3 className="text-white font-bold mb-4">Platforma</h3>
+          <h3 className="text-white font-bold mb-4">{st("footer.colPlatform", "Platforma")}</h3>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/products" className="hover:text-brand-400 transition-colors">Elanlar</Link></li>
-            <li><Link href="/categories" className="hover:text-brand-400 transition-colors">Kateqoriyalar</Link></li>
-            <li><Link href="/stores" className="hover:text-brand-400 transition-colors">Mağazalar</Link></li>
-            <li><Link href="/campaigns" className="hover:text-brand-400 transition-colors">Kampaniyalar</Link></li>
-            <li><Link href="/elan-yerlesdir" className="hover:text-brand-400 transition-colors flex items-center gap-2">Mağazam <span className="bg-brand-600/20 text-brand-400 px-1.5 py-0.5 rounded text-[10px] font-bold">+</span></Link></li>
+            <li><Link href="/products" className="hover:text-brand-400 transition-colors">{st("footer.navListings", "Elanlar")}</Link></li>
+            <li><Link href="/categories" className="hover:text-brand-400 transition-colors">{st("nav.categories", "Kateqoriyalar")}</Link></li>
+            <li><Link href="/stores" className="hover:text-brand-400 transition-colors">{st("nav.stores", "Mağazalar")}</Link></li>
+            <li><Link href="/campaigns" className="hover:text-brand-400 transition-colors">{st("nav.campaigns", "Kampaniyalar")}</Link></li>
+            <li><Link href="/elan-yerlesdir" className="hover:text-brand-400 transition-colors flex items-center gap-2">{st("footer.myStore", "Mağazam")} <span className="bg-brand-600/20 text-brand-400 px-1.5 py-0.5 rounded text-[10px] font-bold">+</span></Link></li>
           </ul>
         </div>
 
         {/* Links Column 2 - Xidmətlər */}
         <div>
-          <h3 className="text-white font-bold mb-4">Xidmətlər & Məlumat</h3>
+          <h3 className="text-white font-bold mb-4">{st("footer.colServices", "Xidmətlər & Məlumat")}</h3>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/agronom" className="hover:text-brand-400 transition-colors flex items-center gap-2">AI Aqronom <span className="bg-brand-600/20 text-brand-400 px-1.5 py-0.5 rounded text-[10px] font-bold">YENİ</span></Link></li>
-            <li><Link href="/farmer-club" className="hover:text-brand-400 transition-colors">Fermer Klubu</Link></li>
-            <li><Link href="/blog" className="hover:text-brand-400 transition-colors">Bloq</Link></li>
-            <li><Link href="/leaderboard" className="hover:text-brand-400 transition-colors">Liderlər Lövhəsi</Link></li>
-            <li><Link href="/cart" className="hover:text-brand-400 transition-colors">Səbət</Link></li>
-            <li><Link href="/favorites" className="hover:text-brand-400 transition-colors">Seçilmişlər</Link></li>
+            <li><Link href="/agronom" className="hover:text-brand-400 transition-colors flex items-center gap-2">{st("nav.agronom", "AI Aqronom")} <span className="bg-brand-600/20 text-brand-400 px-1.5 py-0.5 rounded text-[10px] font-bold">{st("footer.badgeNew", "YENİ")}</span></Link></li>
+            <li><Link href="/farmer-club" className="hover:text-brand-400 transition-colors">{st("footer.farmerClub", "Fermer Klubu")}</Link></li>
+            <li><Link href="/blog" className="hover:text-brand-400 transition-colors">{st("nav.blog", "Bloq")}</Link></li>
+            <li><Link href="/leaderboard" className="hover:text-brand-400 transition-colors">{st("footer.leaderboard", "Liderlər Lövhəsi")}</Link></li>
+            <li><Link href="/cart" className="hover:text-brand-400 transition-colors">{st("footer.cart", "Səbət")}</Link></li>
+            <li><Link href="/favorites" className="hover:text-brand-400 transition-colors">{st("nav.favorites", "Seçilmişlər")}</Link></li>
           </ul>
         </div>
 
         {/* Links Column 3 - Əlaqə & Şirkət */}
         <div>
-          <h3 className="text-white font-bold mb-4">Əlaqə & Şirkət</h3>
+          <h3 className="text-white font-bold mb-4">{st("footer.colContact", "Əlaqə & Şirkət")}</h3>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/about" className="hover:text-brand-400 transition-colors">Haqqımızda</Link></li>
-            <li><Link href="/contact" className="hover:text-brand-400 transition-colors">Əlaqə</Link></li>
-            <li><Link href="/dashboard" className="hover:text-brand-400 transition-colors">Hesabım</Link></li>
+            <li><Link href="/about" className="hover:text-brand-400 transition-colors">{st("footer.aboutUs", "Haqqımızda")}</Link></li>
+            <li><Link href="/contact" className="hover:text-brand-400 transition-colors">{st("footer.contact", "Əlaqə")}</Link></li>
+            <li><Link href="/dashboard" className="hover:text-brand-400 transition-colors">{st("footer.myAccount", "Hesabım")}</Link></li>
             {!isLoggedIn && (
-              <li><Link href="/register" className="hover:text-brand-400 transition-colors">Qeydiyyat</Link></li>
+              <li><Link href="/register" className="hover:text-brand-400 transition-colors">{st("footer.register", "Qeydiyyat")}</Link></li>
             )}
             <li>
               <a href={`tel:${phoneTel}`} className="flex items-center gap-2 hover:text-brand-400 transition-colors">
@@ -105,10 +105,10 @@ export default function Footer() {
       </div>
       
       <div className="max-w-6xl mx-auto px-4 mt-12 pt-6 border-t border-gray-800 text-sm flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-gray-500">© {currentYear} FermerMarket. Bütün hüquqlar qorunur. Designed By AzVeb Media Marketing Agency</p>
+        <p className="text-gray-500">© {currentYear} FermerMarket. {st("footer.copyright", "Bütün hüquqlar qorunur.")}</p>
         <div className="flex gap-4">
-          <Link href="/terms" className="text-gray-500 hover:text-white transition-colors">İstifadə qaydaları</Link>
-          <Link href="/privacy" className="text-gray-500 hover:text-white transition-colors">Məxfilik siyasəti</Link>
+          <Link href="/terms" className="text-gray-500 hover:text-white transition-colors">{st("footer.terms", "İstifadə qaydaları")}</Link>
+          <Link href="/privacy" className="text-gray-500 hover:text-white transition-colors">{st("footer.privacy", "Məxfilik siyasəti")}</Link>
         </div>
       </div>
     </footer>
