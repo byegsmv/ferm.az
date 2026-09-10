@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import LeafletPicker from "@/components/LeafletPicker";
 import Icon from "@/components/ui/Icon";
 
 const DAYS_LIST = [
@@ -55,6 +56,8 @@ export default function StoreSettings({ store, onSave, loading = false }) {
     email: "",
     website: "",
     address: "",
+    lat: null,
+    lng: null,
     facebook: "",
     instagram: "",
     tiktok: "",
@@ -107,6 +110,8 @@ export default function StoreSettings({ store, onSave, loading = false }) {
         email: store.email || "",
         website: store.website || "",
         address: store.address || "",
+        lat: store.lat ?? null,
+        lng: store.lng ?? null,
         facebook: store.facebook || "",
         instagram: store.instagram || "",
         tiktok: store.tiktok || "",
@@ -381,6 +386,12 @@ export default function StoreSettings({ store, onSave, loading = false }) {
                 placeholder="Bakı ş., Nərimanov r., Atatürk pr. 45"
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 focus:outline-none"
               />
+              <div className="mt-2">
+                <LeafletPicker
+                  value={formData.lat != null && formData.lng != null ? { lat: formData.lat, lng: formData.lng } : null}
+                  onChange={(p) => setFormData(f => ({ ...f, lat: p.lat, lng: p.lng }))}
+                />
+              </div>
             </div>
           </div>
         )}
