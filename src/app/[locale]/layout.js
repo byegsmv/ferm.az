@@ -46,6 +46,10 @@ export async function generateMetadata() {
     description: dbDesc,
     keywords: dbKeywords,
     manifest: "/manifest.json",
+    alternates: {
+      canonical: "/",
+      languages: { az: `${SITE_URL}/az`, en: `${SITE_URL}/en`, ru: `${SITE_URL}/ru` },
+    },
     openGraph: {
       type: "website",
       locale: "az_AZ",

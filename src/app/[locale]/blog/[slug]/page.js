@@ -71,6 +71,19 @@ export default async function BlogPostPage({ params }) {
   const content = normalizeBlogContent(post.contentAz);
   const category = post.category && (CATEGORY_LABELS[post.category] || post.category);
 
+    // SEO: Article JSON-LD
+  const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.fermermarket.az";
+  const articleLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: (post?.titleAz || post?.title || "").slice(0, 110),
+    description: ((post?.excerptAz || post?.contentAz || "") + "").slice(0, 200).replace(/<[^>]*>/g, ""),
+    author: { "@type": "Organization", name: "FermerMarket" },
+    publisher: { "@type": "Organization", name: "FermerMarket" },
+    datePublished: post?.createdAt || undefined,
+    dateModified: post?.updatedAt || undefined,
+    mainEntityOfPage: `${SITE}/blog/${post?.slug || ""}`,
+  };
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <main className="max-w-3xl mx-auto px-4 py-6 pb-28 md:py-10 md:pb-16">
@@ -135,6 +148,8 @@ export default async function BlogPostPage({ params }) {
           </div>
         </article>
       </main>
+    {/* SEO: Article JSON-LD */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }} />
     </div>
   );
 }

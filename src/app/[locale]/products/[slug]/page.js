@@ -112,14 +112,23 @@ export async function generateMetadata({ params }) {
   const categoryName = product.category?.nameAz || "Ümumi";
   const keywords = [...(product.tags || []), categoryName, product.titleAz?.split(' ')[0] || ""].join(", ");
 
+  const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.fermermarket.az";
+  const locales = ["az", "en", "ru"];
+  const ogImg = product.images?.[0]?.url
+    ? (product.images[0].url.startsWith("http") ? product.images[0].url : `${SITE}${product.images[0].url}`)
+    : `${SITE}/logo.png`;
   return {
     title: `${product.status !== "ACTIVE" ? "(Satılıb) " : ""}${product.titleAz} — ${product.price} ${product.currency}`,
     description: product.descriptionAz?.slice(0, 155) || `${product.titleAz} FermerMarket-də satılır.`,
     keywords: keywords,
+    alternates: {
+      canonical: `${SITE}/products/${product.slug}`,
+      languages: Object.fromEntries(locales.map(l => [l, `${SITE}/${l}/products/${product.slug}`])),
+    },
     openGraph: {
       title: product.titleAz,
       description: product.descriptionAz || "",
-      images: product.images?.[0] ? [product.images[0].url] : [],
+      images: [ogImg],
       type: "website",
     },
   };
@@ -245,7 +254,7 @@ export default async function ProductDetailPage({ params }) {
     "@type": "Product",
     name: product.titleAz,
     description: product.descriptionAz || `${product.titleAz} məhsulu FermerMarket-də`,
-    image: (product.images || []).map((i) => i.url),
+    image: (product.images || []).map((i) => i.url && (i.url.startsWith("http") ? i.url : `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.fermermarket.az"}${i.url}`)),
     sku: product.productCode || product.id,
     mpn: product.barcode || undefined,
     brand: {
@@ -254,7 +263,7 @@ export default async function ProductDetailPage({ params }) {
     },
     offers: {
       "@type": "Offer",
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/products/${product.slug}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.fermermarket.az"}/products/${product.slug}`,
       priceCurrency: product.currency,
       price: product.price,
       itemCondition: "https://schema.org/NewCondition",

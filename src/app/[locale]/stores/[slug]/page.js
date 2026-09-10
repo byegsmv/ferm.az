@@ -97,6 +97,20 @@ export default async function StorePage({ params }) {
 
   const storeUrl = `https://fermermarket.vercel.app/az/stores/${store.slug}`;
 
+  
+  // SEO: structured data
+  const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.fermermarket.az";
+  const localBusinessLd = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: store?.name || "FermerMarket",
+    description: store?.description || undefined,
+    url: `${SITE}/stores/${store?.slug || ""}`,
+    telephone: store?.phone || undefined,
+    image: store?.logoUrl ? (store.logoUrl.startsWith("http") ? store.logoUrl : `${SITE}${store.logoUrl}`) : undefined,
+    address: store?.address ? { "@type": "PostalAddress", streetAddress: store.address, addressCountry: "AZ" } : undefined,
+    geo: store?.lat != null && store?.lng != null ? { "@type": "GeoCoordinates", latitude: store.lat, longitude: store.lng } : undefined,
+  };
   return (
     <main className="max-w-6xl mx-auto px-4 py-6 pb-24">
       <StoreProfilePublic
@@ -123,6 +137,8 @@ export default async function StorePage({ params }) {
       ) : (
         <PublicStoreFilters products={store.products} storeSlug={store.slug} />
       )}
+    {/* SEO: LocalBusiness JSON-LD */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessLd) }} />
     </main>
   );
 }
