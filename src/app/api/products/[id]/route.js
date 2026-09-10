@@ -150,6 +150,12 @@ export async function PATCH(request, { params }) {
       return result;
     });
 
+    // Az məzmun dəyişəndə AI yenidən tərcümə edir (az → en + ru)
+    if (finalData.titleAz || finalData.descriptionAz) {
+      const { autoTranslateProduct } = await import("@/lib/autoTranslate");
+      await autoTranslateProduct(productId, { force: true }).catch(() => {});
+    }
+
     // Notify the seller when an admin resolves a pending review (approve/reject).
     if (
       isAdmin &&

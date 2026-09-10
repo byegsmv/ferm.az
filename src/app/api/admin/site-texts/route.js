@@ -67,6 +67,9 @@ export async function POST(request) {
       valueRu: valueRu || null,
     },
   });
+    // AI avtomatik tərcümə (az → en + ru)
+    const { autoTranslateSiteText } = await import("@/lib/autoTranslate");
+    await autoTranslateSiteText(siteText.key).catch(() => {});
 
   return Response.json({ success: true, siteText }, { status: 201 });
 }
@@ -112,17 +115,16 @@ export async function PUT(request) {
     if (item.isActive !== undefined) data.isActive = item.isActive;
 
     if (item.id) {
-      await prisma.siteText.update({
-        where: { id: item.id },
-        data,
-      });
+      await prisma.siteText.update({ where: { id: item.id }, data });
       updatedCount++;
     } else if (item.key) {
-      await prisma.siteText.update({
-        where: { key: item.key },
-        data,
-      });
+      await prisma.siteText.update({ where: { key: item.key }, data });
       updatedCount++;
+    }
+    // AI avtomatik tərcümə: AZ dəyişəndə en/ru yenilənir
+    if (data.valueAz !== undefined) {
+      const key = item.key || (item.id ? (await prisma.siteText.findUnique({ where: { id: item.id }, select: { key: true } }))?.key : null);
+      if (key) await (await import("@/lib/autoTranslate")).autoTranslateSiteText(key, { force: true }).catch(() => {});
     }
   }
 
