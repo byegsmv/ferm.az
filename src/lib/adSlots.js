@@ -64,7 +64,7 @@ export async function getSidebarRails() {
       prisma.adSlot.findUnique({ where: { key: "SIDEBAR_RIGHT" } }),
       prisma.siteText.findUnique({ where: { key: "footer.whatsappPhone" } }),
     ]);
-    const waPhone = (waText?.valueAz || "+994 10 521 09 09").replace(/[^\d]/g, "");
+    const waPhone = (waText?.valueAz || "+994 10 223 89 89").replace(/[^\d]/g, "");
     const waMsg = encodeURIComponent("Salam! FermerMarket-də reklam yerləşdirmək istəyirəm.");
     const whatsappUrl = `https://wa.me/${waPhone}?text=${waMsg}`;
 

@@ -8,7 +8,7 @@ export default function Footer() {
 
   const facebookUrl = st("footer.facebookUrl", "https://www.facebook.com/share/1LDQEgQBcd/?mibextid=wwXIfr");
   const instagramUrl = st("footer.instagramUrl", "https://instagram.com/fermermarket.az");
-  const whatsappPhone = st("footer.whatsappPhone", "+994 10 521 09 09");
+  const whatsappPhone = st("footer.whatsappPhone", "+994 10 223 89 89");
   const cleanWhatsapp = whatsappPhone.replace(/[^\d+]/g, "").replace("+", "");
   const whatsappUrl = whatsappPhone.startsWith("http") ? whatsappPhone : `https://wa.me/${cleanWhatsapp}`;
   const tiktokUrl = st("footer.tiktokUrl", "https://tiktok.com/@fermermarket.az");
