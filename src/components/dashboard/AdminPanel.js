@@ -1630,10 +1630,28 @@ function CampaignsManager() {
   const [items, setItems] = useState([]); const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ title: "", type: "HOMEPAGE_BANNER", targetUrl: "", imageUrl: "", startDate: "", endDate: "", status: "ACTIVE" });
   const [showForm, setShowForm] = useState(false);
+  const [aiProducts, setAiProducts] = useState([]);
+  const [aiSlot, setAiSlot] = useState("SIDEBAR_LEFT");
+  const [aiProduct, setAiProduct] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiPreview, setAiPreview] = useState("");
+  const [aiMsg, setAiMsg] = useState("");
   const { toast, ToastContainer } = useToast();
   const TYPES = ["HOMEPAGE_BANNER", "CATEGORY_BANNER", "STORE_PROMOTION", "FLASH_SALE", "DAILY_DEAL", "SPONSORED_PRODUCT", "REGIONAL"];
   function getCampaignStatusLabel(status, t) { const labels = { ACTIVE: "admin.campaign.active", PAUSED: "admin.campaign.paused", SCHEDULED: "admin.campaign.scheduled" }; return t(labels[status] || status, status); }
   useEffect(() => { apiFetch("/api/campaigns?all=1").then(d => setItems(d.campaigns || [])).finally(() => setLoading(false)); }, []);
+  useEffect(() => { apiFetch("/api/products?pageSize=200").then(d => setAiProducts(d.products || [])).catch(() => {}); }, []);
+  async function generateAiBanner() {
+    if (!aiProduct) { setAiMsg("Məhsul seçin"); return; }
+    setAiBusy(true); setAiMsg("AI banner hazırlanır...");
+    try {
+      const res = await apiFetch("/api/admin/ai-creative", { method: "POST", body: JSON.stringify({ slotKey: aiSlot, productId: aiProduct }) });
+      setAiPreview(res.dataUri);
+      setForm(p => ({ ...p, imageUrl: res.dataUri }));
+      setAiMsg(`✓ Hazır — ${res.slot.w}×${res.slot.h} ölçüsündə${res.aiUsed ? " (AI copy)" : " (avtomatik copy)"} — yadda saxla düyməsi ilə əlavə edin`);
+    } catch (e) { setAiMsg("⚠ " + e.message); }
+    finally { setAiBusy(false); }
+  }
   async function create(e) {
     e.preventDefault();
     const payload = {
@@ -1678,6 +1696,24 @@ function CampaignsManager() {
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><label className="label">Başlıq *</label><input required value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} className="input-field" placeholder="Payız Kampaniyası" /></div>
             <div><label className="label">Tip</label><select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))} className="select-field">{TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+          <div className="card p-4 bg-purple-50/50 border border-purple-200 space-y-2">
+            <p className="text-xs font-bold text-purple-800 flex items-center gap-1"><Icon name="ai" size={14} /> AI ilə banner hazırla — slot ölçüsünə avtomatik uyğun</p>
+            <div className="grid grid-cols-2 gap-2">
+              <select value={aiSlot} onChange={e => setAiSlot(e.target.value)} className="select-field text-xs">
+                {Object.entries(AD_SLOT_LABELS).map(([k, label]) => <option key={k} value={k}>{label} ({SLOT_SIZE_MAP[k]?.w}×{SLOT_SIZE_MAP[k]?.h})</option>)}
+              </select>
+              <select value={aiProduct} onChange={e => setAiProduct(e.target.value)} className="select-field text-xs">
+                <option value="">— məhsul seç —</option>
+                {aiProducts.map(p => <option key={p.id} value={p.id}>{(p.titleAz || "").slice(0, 40)} — {Number(p.discountedPrice ?? p.price).toFixed(2)} ₼</option>)}
+              </select>
+            </div>
+            <button type="button" onClick={generateAiBanner} disabled={aiBusy} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold w-full disabled:opacity-50">
+              {aiBusy ? "AI hazırlayır..." : "AI Banner Yarat"}
+            </button>
+            {aiMsg && <p className="text-[11px] text-purple-700">{aiMsg}</p>}
+            {aiPreview && <img src={aiPreview} alt="AI banner" className="w-32 rounded-xl border border-purple-200 mx-auto" />}
+          </div>
+
             <div><label className="label">Status</label><select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} className="select-field"><option value="ACTIVE">Aktiv</option><option value="SCHEDULED">Planlanmış</option><option value="PAUSED">Dayandırılmış</option></select></div>
             <div><label className="label">Başlama *</label><input type="date" required value={form.startDate} onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))} className="input-field" /></div>
             <div><label className="label">Bitmə *</label><input type="date" required value={form.endDate} onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))} className="input-field" /></div>
@@ -1723,6 +1759,16 @@ function CampaignsManager() {
     </div>
   );
 }
+
+const SLOT_SIZE_MAP = {
+  SIDEBAR_LEFT: { w: 160, h: 600 },
+  SIDEBAR_RIGHT: { w: 160, h: 600 },
+  HOMEPAGE_TOP: { w: 970, h: 250 },
+  LIST_TOP: { w: 728, h: 90 },
+  INFEED_SPONSORED: { w: 300, h: 250 },
+  DETAIL_SIDEBAR: { w: 300, h: 600 },
+  FOOTER_STRIP: { w: 1200, h: 100 },
+};
 
 const AD_SLOT_LABELS = {
   HOMEPAGE_TOP: "Ana Səhifə — Yuxarı Banner",
