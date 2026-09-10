@@ -114,7 +114,7 @@ export async function sendWelcomeEmail({ to, fullName }) {
         İndi məhsul axtara, fermerlərlə əlaqə saxlaya və ən təzə kənd məhsullarını sifariş edə bilərsiniz.
       </p>
       <div style="text-align:center;margin:24px 0">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://fermermarket.vercel.app'}/products" 
+        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://www.fermermarket.az'}/products" 
            style="background:#16a34a;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
           Məhsullara bax →
         </a>

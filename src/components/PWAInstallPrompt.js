@@ -10,14 +10,25 @@ export default function PWAInstallPrompt() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     
-    if (window.matchMedia("(display-mode: standalone)").matches || localStorage.getItem("pwaPromptDismissed")) {
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      return;
+    }
+
+    // 7 günlük interval: yalnız hər 7 gündə bir göstərilir
+    const LAST_KEY = "pwaPromptLastShown";
+    const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+    const lastShown = Number(localStorage.getItem(LAST_KEY) || 0);
+    if (Date.now() - lastShown < COOLDOWN_MS) {
       return;
     }
 
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setTimeout(() => setShowPrompt(true), 3000);
+      setTimeout(() => {
+        setShowPrompt(true);
+        localStorage.setItem(LAST_KEY, String(Date.now()));
+      }, 3000);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
@@ -30,13 +41,14 @@ export default function PWAInstallPrompt() {
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
       setShowPrompt(false);
+      localStorage.setItem("pwaPromptLastShown", String(Date.now()));
     }
     setDeferredPrompt(null);
   };
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem("pwaPromptDismissed", "true");
+    localStorage.setItem("pwaPromptLastShown", String(Date.now()));
   };
 
   if (!showPrompt) return null;

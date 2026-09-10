@@ -35,7 +35,7 @@ export async function GET() {
   const migrationTarget = describeTarget(process.env.DIRECT_URL || "");
   const driver = configured
     ? /\.neon\.tech/i.test(url) && (process.env.PRISMA_NEON_ADAPTER || "").toLowerCase() !== "off"
-      ? "neon-serverless (https/websocket:443)"
+      ? "serverless (https/websocket:443)"
       : "prisma-tcp (5432)"
     : "none";
 

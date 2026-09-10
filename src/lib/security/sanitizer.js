@@ -1,5 +1,5 @@
 // Use lightweight dompurify instead of isomorphic-dompurify.
-// isomorphic-dompurify requires jsdom which fails to load on Vercel serverless.
+// isomorphic-dompurify requires jsdom which fails to load in serverless.
 // dompurify works in browser; for server-side, we do a basic tag strip.
 import DOMPurify from 'dompurify';
 

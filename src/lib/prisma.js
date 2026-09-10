@@ -7,7 +7,7 @@ import ws from "ws";
 /**
  * Prisma connection layer.
  *
- * Production runs on Vercel serverless functions talking to Neon Postgres.
+ * Production runs on serverless functions talking to managed Postgres.
  * The default Prisma engine opens a raw TCP socket to port 5432, which the
  * serverless runtime could not reach ("Can't reach database server at
  * <endpoint>-pooler...:5432") — every DB-backed page and /api/auth/login
@@ -22,7 +22,7 @@ import ws from "ws";
 
 /**
  * Hosting integrations do not agree on what to call the connection string.
- * Vercel's Neon integration writes DATABASE_URL, other setups write
+ * Some integrations write DATABASE_URL, other setups write
  * POSTGRES_URL or POSTGRES_PRISMA_URL. Accept any of them rather than reporting
  * "no database configured" while a perfectly good URL sits under another name.
  */

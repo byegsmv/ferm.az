@@ -26,7 +26,7 @@ export default function AIAgronomWidget() {
     const file = e.target.files?.[0];
     if (!file) return;
     const isImage = typeof file.type === "string" && file.type.startsWith("image/");
-    const isValidSize = file.size <= 4 * 1024 * 1024; // 4MB (Vercel serverless body limit ~4.5MB)
+    const isValidSize = file.size <= 4 * 1024 * 1024; // 4MB (serverless body limit ~4.5MB)
     if (!isImage || !isValidSize) {
       setMessages((prev) => [...prev, { role: "ai", content: "Yalnız 4MB-a qədər şəkil faylı yükləyə bilərsiniz." }]);
       e.target.value = "";

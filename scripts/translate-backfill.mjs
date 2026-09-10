@@ -55,6 +55,28 @@ async function groqChat(key, prompt) {
       response_format: { type: "json_object" },
     }),
   });
+  if (r.status === 429) {
+    // Rate limit — 65 saniyə gözlə, 3 dəfə yenidən cəhd et
+    for (let i = 0; i < 3; i++) {
+      await new Promise(res => setTimeout(res, 65000));
+      const rr = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: groqModel,
+          messages: [{ role: "system", content: SYS }, { role: "user", content: prompt }],
+          temperature: 0.2,
+          max_tokens: 2048,
+          response_format: { type: "json_object" },
+        }),
+      });
+      if (rr.ok) {
+        const dd = await rr.json();
+        return dd.choices?.[0]?.message?.content || "";
+      }
+    }
+    throw new Error("Groq 429 (3 retrydan sonra da)");
+  }
   if (!r.ok) throw new Error(`Groq ${r.status}: ${(await r.text()).slice(0, 200)}`);
   const d = await r.json();
   return d.choices?.[0]?.message?.content || "";

@@ -253,7 +253,8 @@ export default async function ProductDetailPage({ params }) {
 
   const isGuestListing = !product.sellerId;
   const contactPhone = isGuestListing ? product.guestPhone : product.seller?.phone;
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || product.store?.whatsapp || contactPhone || "994501234567";
+  const waSetting = await prisma.siteText.findUnique({ where: { key: "whatsapp_number" } }).catch(() => null);
+  const whatsappNumber = (waSetting?.valueAz || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || contactPhone || "").replace(/\D/g, "");
 
   const jsonLd = {
     "@context": "https://schema.org",

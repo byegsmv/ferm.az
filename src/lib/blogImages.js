@@ -8,7 +8,7 @@
  *
  * This module downloads them once, re-encodes them at a clean target size
  * with high-quality resampling (supersample-then-downscale removes the
- * generator's block artifacts), and re-hosts the result on Vercel Blob so
+ * generator's block artifacts), and re-hosts the result on blob storage so
  * they load fast, look sharp at any display width, and never break.
  */
 import { put } from "@vercel/blob";
@@ -97,7 +97,7 @@ async function sharpen(buffer) {
 
 /**
  * Download every pollinations URL in `content` (HTML) and `coverUrl`,
- * quality-process, upload to Vercel Blob, and return rewritten content/coverUrl.
+ * quality-process, upload to blob storage, and return rewritten content/coverUrl.
  * On any failure the original URL is kept (graceful degradation).
  */
 export async function persistBlogImages(content, coverUrl) {
@@ -142,7 +142,7 @@ export async function persistBlogImages(content, coverUrl) {
 
 /**
  * One-time/healing migration: re-host + quality-fix pollinations images of
- * EXISTING posts on Vercel Blob (pollinations rate-limits with 429s and its
+ * EXISTING posts on blob storage (pollinations rate-limits with 429s and its
  * raw output is blocky when stretched → broken/pixelated images).
  * Also re-processes posts whose cover/content already point at a Blob URL
  * but were uploaded before the quality fix (re-fetches from Blob, sharpens,
@@ -194,7 +194,7 @@ export async function migrateBlogImages(budgetMs = 50000) {
 }
 
 /**
- * Re-processes images that are ALREADY on Vercel Blob but were uploaded
+ * Re-processes images that are ALREADY on blob storage but were uploaded
  * before the quality (sharpen/resize) fix shipped — fetches each blob image,
  * re-encodes it with sharpen(), and re-uploads in place (new blob key,
  * old one is superseded in the DB record). Use this once to fix pixelation

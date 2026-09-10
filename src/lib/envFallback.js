@@ -1,7 +1,7 @@
 /**
  * Runtime environment fallback.
  *
- * On Vercel, the runtime process.env is populated ONLY from the dashboard
+ * In production, the runtime process.env is populated ONLY from the hosting panel
  * Environment Variables. The committed .env.production file is read by
  * Next.js at BUILD time (and by the build's migrate script), but it is NOT
  * present in the serverless runtime — so a deployment whose dashboard env
@@ -11,7 +11,7 @@
  *
  * This module guarantees the three runtime-critical values are always
  * present, sourced from the same values committed in .env.production
- * (private repo). Real environment variables (Vercel dashboard) always
+ * (private repo). Real environment variables (hosting panel) always
  * take precedence — these are only last-resort defaults.
  */
 

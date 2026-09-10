@@ -6,15 +6,15 @@ export const maxDuration = 60;
 
 /**
  * Re-hosts pollinations.ai images (rate-limited / unreliable → broken images)
- * on Vercel Blob for ALL blog posts that still reference them.
- * Called daily by Vercel cron; also safe to call manually.
+ * on blob storage for ALL blog posts that still reference them.
+ * Called daily by the scheduled cron; also safe to call manually.
  */
 export async function GET(request) {
   const ua = request.headers.get("user-agent") || "";
   const secret = request.headers.get("x-cron-secret");
-  const isVercelCron = ua.includes("vercel-cron") || ua.includes("vercel-cron/v");
+  const isPlatformCron = ua.includes("vercel-cron") || ua.includes("vercel-cron/v");
   const hasSecret = process.env.CRON_SECRET && secret === process.env.CRON_SECRET;
-  if (!isVercelCron && !hasSecret) {
+  if (!isPlatformCron && !hasSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
