@@ -131,9 +131,11 @@ export async function POST(request) {
 
   // First store gets isActive = true, subsequent stores get isActive = false
   const isFirstStore = activeStoresCount === 0;
+  // acceptTerms DB-də yoxdur — prisma-ya yayılmamalıdır (yoxsa "Unknown argument" → 500)
+  const { acceptTerms: _termsAccepted, ...storeData } = data;
   const store = await prisma.store.create({
     data: {
-      ...data,
+      ...storeData,
       slug,
       ownerId: authUser.sub,
       isActive: isFirstStore,

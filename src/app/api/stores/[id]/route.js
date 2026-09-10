@@ -87,9 +87,11 @@ export async function PATCH(request, { params }) {
     );
   }
 
+  // acceptTerms DB-də yoxdur — prisma-ya yayılmamalıdır (yoxsa "Unknown argument" → 500)
+  const { acceptTerms: _termsAccepted, ...storeData } = parsed.data;
   const updated = await prisma.store.update({
     where: { id: store.id },
-    data: { ...parsed.data, ...extra },
+    data: { ...storeData, ...extra },
   });
 
   return Response.json({ store: updated });
