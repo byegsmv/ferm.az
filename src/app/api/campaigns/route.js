@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, requireRole } from "@/lib/auth";
 import { campaignCreateSchema } from "@/lib/validators";
+import { optimizeCampaignBanner } from "@/lib/campaignBanner";
 
 // GET /api/campaigns?type=&status=&region=  — public: active banners for placement
 // GET /api/campaigns?all=1                  — admin/store-owner only: every
@@ -75,6 +76,12 @@ export async function POST(request) {
   }
 
   const data = parsed.data;
+
+  // AI-size optimization: base64 banners are resized to the placement box
+  // and re-hosted on Blob storage instead of living in Postgres.
+  if (data.bannerUrl) {
+    data.bannerUrl = await optimizeCampaignBanner(data.bannerUrl, data.type);
+  }
 
   if (data.storeId) {
     const store = await prisma.store.findUnique({ where: { id: data.storeId } });
