@@ -93,12 +93,12 @@ export default function BottomNav() {
         <div className="flex-shrink-0 w-[68px] flex flex-col items-center justify-center relative">
           <Link
             href="/elan-yerlesdir"
-            aria-label={st("nav.postAdAria", "Elan yerləşdir")}
+            aria-label={st("nav.postAdAria", "Mağazam")}
             className="w-[52px] h-[52px] rounded-full bg-gradient-to-br from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 active:scale-95 text-white flex items-center justify-center shadow-lg shadow-brand-500/30 border-[3px] border-white transition-all duration-200 -mt-6"
           >
-            <Icon name="plus" size={24} strokeWidth={2.8} />
+            <Icon name="store" size={22} strokeWidth={2.6} />
           </Link>
-          <span className="text-[9px] font-bold text-brand-600 leading-none mt-1"><span data-ve-key="nav.sell">{st("nav.sell", "Sat")}</span></span>
+          <span className="text-[9px] font-bold text-brand-600 leading-none mt-1"><span data-ve-key="nav.sell">{st("nav.sell", "Mağaza")}</span></span>
         </div>
 
         {/* Sağ 2 buton — bərabər flex-1 */}
