@@ -49,3 +49,38 @@ export async function getAdSlotContent(key, { region } = {}) {
     return null;
   }
 }
+
+/**
+ * Sol/sağ yan rayların vəziyyəti + reklam üçün WhatsApp linki.
+ * - on: slot mövcuddur və mode !== "off"
+ * - content: aktiv kampaniya varsa onun banneri, yoxdursa null
+ *   (null olduqda SideAdRails "Burada sizin reklamınız ola bilər"
+ *   WhatsApp yönləndirmə kartını göstərir)
+ */
+export async function getSidebarRails() {
+  try {
+    const [leftSlot, rightSlot, waText] = await Promise.all([
+      prisma.adSlot.findUnique({ where: { key: "SIDEBAR_LEFT" } }),
+      prisma.adSlot.findUnique({ where: { key: "SIDEBAR_RIGHT" } }),
+      prisma.siteText.findUnique({ where: { key: "footer.whatsappPhone" } }),
+    ]);
+    const waPhone = (waText?.valueAz || "+994 10 521 09 09").replace(/[^\d]/g, "");
+    const waMsg = encodeURIComponent("Salam! FermerMarket-də reklam yerləşdirmək istəyirəm.");
+    const whatsappUrl = `https://wa.me/${waPhone}?text=${waMsg}`;
+
+    return {
+      left: {
+        on: !!leftSlot && leftSlot.mode !== "off",
+        content: leftSlot && leftSlot.mode !== "off" ? await getAdSlotContent("SIDEBAR_LEFT") : null,
+      },
+      right: {
+        on: !!rightSlot && rightSlot.mode !== "off",
+        content: rightSlot && rightSlot.mode !== "off" ? await getAdSlotContent("SIDEBAR_RIGHT") : null,
+      },
+      whatsappUrl,
+    };
+  } catch (err) {
+    console.warn("⚠️ adSlots: sidebar rayları yüklənmədi:", err?.message);
+    return { left: { on: false, content: null }, right: { on: false, content: null }, whatsappUrl: "" };
+  }
+}

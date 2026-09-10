@@ -4,7 +4,8 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import AdBanner from "@/components/AdBanner";
-import { getAdSlotContent } from "@/lib/adSlots";
+import SideAdRails from "@/components/SideAdRails";
+import { getAdSlotContent, getSidebarRails } from "@/lib/adSlots";
 import Footer from "@/components/Footer";
 import AIAgronomWidget from "@/components/AIAgronomWidget";
 import SmoothScroll from "@/components/SmoothScroll";
@@ -77,8 +78,9 @@ export default async function RootLayout({ children, params }) {
   }
 
   const messages = await getMessages();
-  const topAd = await getAdSlotContent("home_top");
-  const bottomAd = await getAdSlotContent("home_bottom");
+  const topAd = await getAdSlotContent("HOMEPAGE_TOP");
+  const bottomAd = await getAdSlotContent("FOOTER_STRIP");
+  const sideRails = await getSidebarRails();
 
   return (
     <html lang={locale} dir="ltr">
@@ -94,14 +96,15 @@ export default async function RootLayout({ children, params }) {
             <WhatsAppFloat />
             <Toaster position="top-center" />
             
-            {topAd && <AdBanner ad={topAd} position="top" />}
+            {topAd && <AdBanner content={topAd} />}
             
             <Header />
+            <SideAdRails left={sideRails.left} right={sideRails.right} whatsappUrl={sideRails.whatsappUrl} />
             <main className="flex-1 w-full max-w-[1440px] mx-auto pb-16 md:pb-0">
               {children}
             </main>
             
-            {bottomAd && <AdBanner ad={bottomAd} position="bottom" />}
+            {bottomAd && <AdBanner content={bottomAd} />}
             
             <BottomNav />
             <Footer />
