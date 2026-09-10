@@ -1,6 +1,6 @@
-import { normalizeIncomingImages } from "@/lib/imageStorage";
 import { prisma } from "@/lib/prisma";
 import { mapProductImages } from "@/lib/imageUrl";
+import { normalizeIncomingImages } from "@/lib/imageStorage";
 import { getAuthUser } from "@/lib/auth";
 import { productUpdateSchema } from "@/lib/validators";
 import { extractAndSaveKeywords } from "@/lib/keywords";
