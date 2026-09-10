@@ -71,7 +71,7 @@ export default function Footer() {
         { href: "/blog", label: st("footer.blog", "Bloq") },
         { href: "/leaderboard", label: st("footer.leaders", "Liderlər") },
         { href: "/agronom", label: st("footer.aiAgronomist", "AI Aqronom") },
-        { href: "/elan-yerlesdir", label: st("footer.postAd", "Elan yerləşdir") },
+        { href: "/elan-yerlesdir", label: st("footer.postAd", "Mağazam") },
         { href: "/register", label: st("footer.register", "Qeydiyyat") },
       ],
     },

@@ -26,7 +26,7 @@ const DEFAULT_SLIDES = [
     iconName: "sparkles",
     bg: "from-amber-500 via-orange-500 to-red-500",
     href: "/elan-yerlesdir",
-    btn: "Elan Yerləşdir"
+    btn: "Mağaza Aç"
   },
   {
     title: "İndi Al, Hissə-Hissə Ödə!",

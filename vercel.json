@@ -12,5 +12,6 @@
       "path": "/api/cron/blog-image-migrate",
       "schedule": "30 3 * * *"
     }
-  ]
+  ],
+  "installCommand": "npm install"
 }

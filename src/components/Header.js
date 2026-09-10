@@ -333,8 +333,8 @@ export default function Header() {
             href="/elan-yerlesdir"
             className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all active:scale-95 shadow-sm"
           >
-            <Icon name="plus" size={16} strokeWidth={2.3} />
-            {st("header.newListing", "Yeni Elan")}
+            <Icon name="store" size={16} strokeWidth={2.3} />
+            {st("header.myStore", "Mağazam")}
           </Link>
 
           {user && (
@@ -451,8 +451,8 @@ export default function Header() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 shadow-sm min-h-[44px]"
               >
-                <Icon name="plus" size={16} strokeWidth={2.3} />
-                {st("header.newListing", "Yeni Elan")}
+                <Icon name="store" size={16} strokeWidth={2.3} />
+                {st("header.myStore", "Mağazam")}
               </Link>
             )}
           </div>

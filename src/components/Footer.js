@@ -62,7 +62,7 @@ export default function Footer() {
             <li><Link href="/categories" className="hover:text-brand-400 transition-colors">Kateqoriyalar</Link></li>
             <li><Link href="/stores" className="hover:text-brand-400 transition-colors">Mağazalar</Link></li>
             <li><Link href="/campaigns" className="hover:text-brand-400 transition-colors">Kampaniyalar</Link></li>
-            <li><Link href="/elan-yerlesdir" className="hover:text-brand-400 transition-colors flex items-center gap-2">Elan Yerləşdir <span className="bg-brand-600/20 text-brand-400 px-1.5 py-0.5 rounded text-[10px] font-bold">+</span></Link></li>
+            <li><Link href="/elan-yerlesdir" className="hover:text-brand-400 transition-colors flex items-center gap-2">Mağazam <span className="bg-brand-600/20 text-brand-400 px-1.5 py-0.5 rounded text-[10px] font-bold">+</span></Link></li>
           </ul>
         </div>
 
