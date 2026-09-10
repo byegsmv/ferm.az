@@ -27,10 +27,3 @@ export function mapProductImages(p) {
     images: p.images.map((img) => ({ ...img, url: publicImgUrl(img) })),
   };
 }
-
-// "/api/img/<id>" proxy yoludurmu? — client-safe, heç bir server importu yoxdur
-export function parseProxyImageId(url) {
-  if (typeof url !== "string") return null;
-  const m = url.match(/^\/api\/img\/([A-Za-z0-9_-]+)$/);
-  return m ? m[1] : null;
-}

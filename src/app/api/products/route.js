@@ -5,7 +5,6 @@ import { resolveCategorySlugs } from "@/lib/categoryFilter";
 import slugify from "slugify";
 import { extractAndSaveKeywords } from "@/lib/keywords";
 import { publicImgUrl } from "@/lib/imageUrl";
-import { normalizeIncomingImages } from "@/lib/imageStorage";
 
 // GET /api/products?category=&minPrice=&maxPrice=&region=&search=&page=&pageSize=&locale=
 // GET /api/products?mine=1 (auth) — caller's own listings, any status
@@ -351,12 +350,6 @@ export async function POST(request) {
     const { images, durationDays: rawDuration, ...data } = parsed.data;
     const durationDays = Number(rawDuration) || 1;
 
-    // Gələn şəkilləri təhlükəsiz hala gətir: "/api/img/<id>" istinadlarını əsl
-    // datayla həll et, base64 data: URI-ləri Vercel Blob-a köçür (xətada base64 qalır).
-    const finalImages = images?.length
-      ? await normalizeIncomingImages(images)
-      : images;
-
     // Fetch dynamic listing pricing
     let packagePrice = 0;
     try {
@@ -425,9 +418,9 @@ export async function POST(request) {
         sellerId: authUser.sub,
         storeId: data.storeId || (userStore ? userStore.id : undefined),
         status: isStaff ? "ACTIVE" : "PENDING_REVIEW",
-        images: finalImages?.length
+        images: images?.length
           ? {
-            create: finalImages.map((img, idx) => ({
+            create: images.map((img, idx) => ({
               url: img.url,
               altText: img.altText,
               sortOrder: idx,
