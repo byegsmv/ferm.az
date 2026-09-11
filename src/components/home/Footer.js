@@ -73,6 +73,8 @@ export default function Footer() {
         { href: "/agronom", label: st("footer.aiAgronomist", "AI Aqronom") },
         { href: "/elan-yerlesdir", label: st("footer.postAd", "Mağazam") },
         { href: "/register", label: st("footer.register", "Qeydiyyat") },
+        { href: "/mexfilik-siyaseti", label: st("footer.privacy", "Məxfilik Siyasəti") },
+        { href: "/istifade-serleri", label: st("footer.terms", "İstifadə Şərtləri") },
       ],
     },
     {

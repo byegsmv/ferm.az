@@ -17,6 +17,7 @@ import { getMessages } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { Toaster } from "react-hot-toast";
 import { prisma } from "@/lib/prisma";
+import AdPixels from "@/components/AdPixels";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -87,12 +88,19 @@ export default async function RootLayout({ children, params }) {
     <html lang={locale} dir="ltr">
       <head>
         <meta name="theme-color" content="#4f46e5" />
+        {process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION && (
+          <meta name="facebook-domain-verification" content={process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION} />
+        )}
+        {process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && (
+          <meta name="google-site-verification" content={process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION} />
+        )}
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className={`${inter.className} min-h-screen flex flex-col bg-gray-50 text-gray-900`}>
         <NextIntlClientProvider messages={messages}>
           <SmoothScroll>
             <ServiceWorkerRegister />
+            <AdPixels />
             <PWAInstallPrompt />
             <WhatsAppFloat />
             <Toaster position="top-center" />
