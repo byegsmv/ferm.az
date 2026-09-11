@@ -75,23 +75,11 @@ export default function MobileAdBand() {
                       target="_blank"
                       rel="noopener noreferrer"
                       title={s.title}
-                      className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-white/95 shadow-sm transition-transform duration-200 hover:scale-110 active:scale-95"
+                      className="flex items-center justify-center p-0.5 transition-transform duration-200 hover:scale-110 active:scale-95"
                     >
-                      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] sm:h-5 sm:w-5" aria-hidden="true">
-                        {s.key === "ig" ? (
-                          <>
-                            <defs>
-                              <linearGradient id={`grad-${s.key}`} x1="0" y1="1" x2="1" y2="0">
-                                <stop offset="0" stopColor="#F58529" />
-                                <stop offset="0.5" stopColor="#DD2A7B" />
-                                <stop offset="1" stopColor="#8134AF" />
-                              </linearGradient>
-                            </defs>
-                            <path fill={`url(#grad-${s.key})`} d={s.path} />
-                          </>
-                        ) : (
-                          <path fill={s.color || "#111827"} d={s.path} />
-                        )}
+                      <svg viewBox="0 0 24 24" className="h-6 w-6 sm:h-7 sm:w-7 drop-shadow-md" aria-hidden="true">
+                        {/* bütün ikonlar monoxrom ağ — premium görünüş */}
+                        <path fill="#ffffff" d={s.path} />
                       </svg>
                     </a>
                   ))}
