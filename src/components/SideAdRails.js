@@ -23,7 +23,7 @@ export default function SideAdRails({ left, right, whatsappUrl }) {
       {/* Arxa plan — yazısız premium görsel */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/img/ad-rail-bg.png"
+        src="/img/ad-rail-bg-portrait.jpg"
         alt=""
         aria-hidden="true"
         className="absolute inset-0 w-full h-full object-cover"
