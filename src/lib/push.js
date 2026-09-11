@@ -87,3 +87,24 @@ export async function broadcastPush(payload, { role } = {}) {
 
   return { sent: results.filter((r) => r.status === "fulfilled").length, total: subs.length };
 }
+
+/**
+ * İstifadəçi hadisə bildirişi — yeni məhsul/mağaza/kampaniya bütün abunelərə
+ * (hər cihaza: telefon, planşet, kompüter) web push ilə göndərilir.
+ * Fire-and-forget: heç vaxt əsas axını sındırmır, xətaları udur.
+ */
+export async function notifyAllUsers({ title, body, url, tag }) {
+  try {
+    return await broadcastPush({
+      title,
+      body,
+      url: url || "/",
+      tag: tag || "fermermarket",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+    });
+  } catch (err) {
+    console.warn("[push] notifyAllUsers failed:", err?.message);
+    return { skipped: true };
+  }
+}

@@ -479,6 +479,17 @@ export async function POST(request) {
     // Extract and save keywords for SEO
     await extractAndSaveKeywords({ ...product, category });
 
+    // Push bildirişi: yeni məhsul dərhal aktivdirsə bütün abunə cihazlara xəbər ver
+    if (product.status === "ACTIVE") {
+      const { notifyAllUsers } = await import("@/lib/push");
+      notifyAllUsers({
+        title: "🌾 Yeni məhsul əlavə olundu",
+        body: product.titleAz?.slice(0, 100) || "FermerMarket-də yeni məhsul görün",
+        url: `/products/${product.slug}`,
+        tag: "new-product",
+      }).catch(() => {});
+    }
+
     return Response.json({ product, listing: { durationDays, endDate, tier } }, { status: 201 });
   } catch (error) {
     console.error("POST product error:", error);

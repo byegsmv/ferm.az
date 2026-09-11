@@ -6,33 +6,74 @@ import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req) {
-  // 1. Fetch RSS feed
-  let rssText = "";
-  try {
-    const res = await fetch('https://report.az/rss/', {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      next: { revalidate: 0 }
-    });
-    rssText = await res.text();
-  } catch (err) {
-    return NextResponse.json({ error: "Failed to fetch RSS" }, { status: 500 });
-  }
+// RSS mənbələri — sırayla cəhd olunur. report.az 2026-09-dan datasenter
+// İP-lərini (Vercel daxil) 403 ilə bloklayır; apa.az eyni formatda işləyir.
+// Hər mənbə CDATA və ya sadə <title> formatında ola bilər — hər ikisi oxunur.
+const RSS_SOURCES = [
+  { name: "apa.az", url: "https://apa.az/rss" },
+  { name: "report.az", url: "https://report.az/rss/" },
+  { name: "az.trend.az", url: "https://az.trend.az/rss" },
+];
 
-  // 2. Extract titles and descriptions
-  const items = [];
-  const itemMatches = rssText.matchAll(/<item>([\s\S]*?)<\/item>/g);
-  for (const match of itemMatches) {
-    const itemStr = match[1];
-    const titleMatch = itemStr.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/);
-    const descMatch = itemStr.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/);
-    
-    if (titleMatch) {
-      items.push({
-        title: titleMatch[1],
-        description: descMatch ? descMatch[1] : ""
+function stripTags(s) {
+  return String(s || "")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
+}
+
+async function fetchRssItems() {
+  for (const source of RSS_SOURCES) {
+    try {
+      const res = await fetch(source.url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+          Accept: "application/rss+xml, application/xml, text/xml, */*",
+        },
+        cache: "no-store",
+        signal: AbortSignal.timeout(15000),
       });
+      if (!res.ok) {
+        console.warn(`[ai-news-agent] ${source.name} HTTP ${res.status} — növbəti mənbə`);
+        continue;
+      }
+      const rssText = await res.text();
+
+      // Həm CDATA, həm sadə format: <title>X</title> və <title><![CDATA[X]]></title>
+      const items = [];
+      const itemMatches = rssText.matchAll(/<item>([\s\S]*?)<\/item>/g);
+      for (const match of itemMatches) {
+        const itemStr = match[1];
+        const titleMatch = itemStr.match(/<title>([\s\S]*?)<\/title>/);
+        const descMatch = itemStr.match(/<description>([\s\S]*?)<\/description>/);
+        const title = titleMatch ? stripTags(titleMatch[1]) : "";
+        if (title) {
+          items.push({ title, description: descMatch ? stripTags(descMatch[1]).slice(0, 300) : "" });
+        }
+      }
+      if (items.length > 0) {
+        console.log(`[ai-news-agent] ${source.name}: ${items.length} xəbər alındı`);
+        return items;
+      }
+    } catch (err) {
+      console.warn(`[ai-news-agent] ${source.name} xəta: ${err?.message} — növbəti mənbə`);
     }
+  }
+  return [];
+}
+
+export async function GET(req) {
+  // 1. Fetch RSS feed — çoxmənbəli (apa.az → report.az → trend.az)
+  const items = await fetchRssItems();
+  if (!items.length) {
+    return NextResponse.json({ error: "Bütün RSS mənbələri əlçatmazdır" }, { status: 500 });
   }
 
   // Take top 40 items

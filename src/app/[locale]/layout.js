@@ -7,6 +7,7 @@ import AdBanner from "@/components/AdBanner";
 import SideAdRails from "@/components/SideAdRails";
 import { getAdSlotContent, getSidebarRails } from "@/lib/adSlots";
 import Footer from "@/components/Footer";
+import PushPermissionPrompt from "@/components/PushPermissionPrompt";
 import AIAgronomWidget from "@/components/AIAgronomWidget";
 import SmoothScroll from "@/components/SmoothScroll";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
@@ -108,6 +109,7 @@ export default async function RootLayout({ children, params }) {
             
             <BottomNav />
             <Footer />
+            <PushPermissionPrompt />
             <AIAgronomWidget />
           </SmoothScroll>
         </NextIntlClientProvider>

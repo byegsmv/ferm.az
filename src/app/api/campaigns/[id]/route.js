@@ -66,6 +66,17 @@ export async function PATCH(request, { params }) {
   }
 
   const updated = await prisma.campaign.update({ where: { id }, data: prismaData });
+
+  // Push bildirişi: kampaniya AKTİV olduqda (endirim/reklam) bütün abunələrə xəbər ver
+  if (prismaData.status === "ACTIVE" && campaign.status !== "ACTIVE") {
+    const { notifyAllUsers } = await import("@/lib/push");
+    notifyAllUsers({
+      title: "🔥 Yeni kampaniya başladı",
+      body: updated.title?.slice(0, 100) || "Endirim kampaniyası aktivdir — baxın!",
+      url: updated.targetUrl || "/campaigns",
+      tag: "new-campaign",
+    }).catch(() => {});
+  }
   return Response.json({ campaign: updated });
 }
 

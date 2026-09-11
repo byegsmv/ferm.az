@@ -94,6 +94,17 @@ export async function PATCH(request, { params }) {
     data: { ...storeData, ...extra },
   });
 
+  // Push bildirişi: mağaza təsdiqləndikdə bütün abunələrə xəbər ver
+  if (extra.isVerified === true && store.isVerified !== true) {
+    const { notifyAllUsers } = await import("@/lib/push");
+    notifyAllUsers({
+      title: "🏪 Yeni mağaza qoşuldu",
+      body: updated.name?.slice(0, 100) || "FermerMarket-də yeni təsdiqlənmiş mağaza",
+      url: `/stores/${updated.slug || updated.id}`,
+      tag: "new-store",
+    }).catch(() => {});
+  }
+
   return Response.json({ store: updated });
 }
 

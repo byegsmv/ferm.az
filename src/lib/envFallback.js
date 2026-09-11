@@ -24,6 +24,12 @@ const FALLBACKS = {
     "393554fc3308d17483775921a5ce96ec5cac0faae853a3d818c40f38e68366e9",
   JWT_REFRESH_SECRET:
     "9d1929f23fcca0a3d6a885ba20f7ce434e2b3a6c54b3396b04ad4db214f2a576",
+  // Web Push VAPID — push bildirişlərinin runtime-da işləməsi üçün
+  VAPID_PUBLIC_KEY:
+    "BAjb8o4DoW9WYNuiSB13_MTg2WtHCd43jMw-8ATC6nLwHRzdNxRvecvDfkRD2bw4xURKyL6KETXym3Su-AMHQcg",
+  VAPID_PRIVATE_KEY:
+    "wmt6IrLUT6lFd2swysTYy0iDXNZdLL7PNACe61BRFys",
+  VAPID_SUBJECT: "mailto:info@fermermarket.az",
 };
 
 export function ensureRuntimeEnv() {

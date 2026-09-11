@@ -195,6 +195,17 @@ export async function PATCH(request, { params }) {
       }
     }
 
+    // Push bildirişi: məhsul təsdiqlənib AKTİV olduqda bütün abunə cihazlara xəbər ver
+    if (finalData.status === "ACTIVE" && product.status !== "ACTIVE") {
+      const { notifyAllUsers } = await import("@/lib/push");
+      notifyAllUsers({
+        title: "🌾 Yeni məhsul əlavə olundu",
+        body: updated.titleAz?.slice(0, 100) || "FermerMarket-də yeni məhsul görün",
+        url: `/products/${updated.slug}`,
+        tag: "new-product",
+      }).catch(() => {});
+    }
+
     // Extract and save keywords for SEO
     await extractAndSaveKeywords(updated);
 
