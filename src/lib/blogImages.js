@@ -16,6 +16,10 @@ import sharp from "sharp";
 
 const POLLINATIONS_RE = /https:\/\/image\.pollinations\.ai\/prompt\/[^\s"'<>)]+/gi;
 
+// Agent'tan gelen AI kapak görselleri (media.base44.com) da ölümsüz kaynak
+// sayılır — self-heal onları Vercel Blob'a qaldırır (Elgün 2026-09-11).
+const MEDIA44_RE = /https:\/\/media\.base44\.com\/[^\s"'<>)]+/gi;
+
 // Minimum source resolution we request FROM pollinations before downscaling.
 // Requesting at least this wide forces the generator to render more detail,
 // which we then supersample-downscale — this is what actually removes the
@@ -51,7 +55,10 @@ function upscaleSourceRequest(url) {
 // Find all pollinations URLs inside a text (content HTML or a single cover URL)
 export function findPollinationsUrls(text) {
   if (!text) return [];
-  const matches = text.match(POLLINATIONS_RE) || [];
+  const matches = [
+    ...(text.match(POLLINATIONS_RE) || []),
+    ...(text.match(MEDIA44_RE) || []),
+  ];
   return [...new Set(matches.map((u) => u.replace(/&amp;/g, "&")))];
 }
 
@@ -157,7 +164,7 @@ export async function migrateBlogImages(budgetMs = 50000) {
   let posts;
   try {
     posts = await prisma.blogPost.findMany({
-      where: { OR: [{ contentAz: { contains: "pollinations" } }, { coverUrl: { contains: "pollinations" } }] },
+      where: { OR: [{ contentAz: { contains: "pollinations" } }, { coverUrl: { contains: "pollinations" } }, { contentAz: { contains: "media.base44.com" } }, { coverUrl: { contains: "media.base44.com" } }] },
       select: { id: true, contentAz: true, coverUrl: true },
       orderBy: { createdAt: "asc" },
       take: 50,
@@ -186,7 +193,7 @@ export async function migrateBlogImages(budgetMs = 50000) {
   let remaining = -1;
   try {
     remaining = await prisma.blogPost.count({
-      where: { OR: [{ contentAz: { contains: "pollinations" } }, { coverUrl: { contains: "pollinations" } }] },
+      where: { OR: [{ contentAz: { contains: "pollinations" } }, { coverUrl: { contains: "pollinations" } }, { contentAz: { contains: "media.base44.com" } }, { coverUrl: { contains: "media.base44.com" } }] },
     });
   } catch {}
 
