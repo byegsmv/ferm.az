@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Rocket, Crown, Sparkles, Image, Check, AlertCircle,
-  ShieldCheck, Wallet, ArrowRight, X, Loader2
+  ShieldCheck, Wallet, ArrowRight, X, Loader2, Smartphone, Copy
 } from 'lucide-react';
 import { apiFetch, getUser } from '@/lib/apiClient';
 import { useToast } from '@/components/ui/Toast';
@@ -16,6 +16,8 @@ export default function BoostModal({ isOpen, onClose, targetType = "PRODUCT", ta
   const [wallet, setWallet] = useState(null);
   const [selectedKey, setSelectedKey] = useState("");
   const [boosting, setBoosting] = useState(false);
+  const [paymentAccounts, setPaymentAccounts] = useState(null);
+  const [copiedM10, setCopiedM10] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -27,7 +29,8 @@ export default function BoostModal({ isOpen, onClose, targetType = "PRODUCT", ta
       apiFetch("/api/config/promotions").then(d => {
         if (d?.promotions) setPromotions(d.promotions);
       }).catch(() => {}),
-      user ? apiFetch("/api/wallet").then(d => setWallet(d.wallet)).catch(() => {}) : Promise.resolve()
+      user ? apiFetch("/api/wallet").then(d => setWallet(d.wallet)).catch(() => {}) : Promise.resolve(),
+      apiFetch("/api/config/payment-methods").then(d => setPaymentAccounts(d?.paymentAccounts || null)).catch(() => {})
     ]).finally(() => setLoading(false));
   }, [isOpen]);
 
@@ -48,6 +51,19 @@ export default function BoostModal({ isOpen, onClose, targetType = "PRODUCT", ta
   });
 
   const selectedPromo = promotions[selectedKey];
+  const m10Number = paymentAccounts?.m10Number || "+994 10 223 89 89";
+  const waPhone = (paymentAccounts?.m10Number || "+994 10 223 89 89").replace(/[^\d]/g, "");
+  const m10WaMessage = selectedPromo
+    ? encodeURIComponent(
+        `Salam! "${targetItem?.titleAz || targetItem?.name || "Elan"}" üçün ${selectedPromo.days} günlük "${selectedPromo.name}" paketini seçdim (${selectedPromo.price} ₼). M10-dan ${m10Number} nömrəsinə ödəniş edib dekontu göndərirəm.`
+      )
+    : "";
+  const m10WaLink = `https://wa.me/${waPhone}?text=${m10WaMessage}`;
+  const copyM10 = () => {
+    navigator.clipboard?.writeText(m10Number.replace(/\s+/g, "")).catch(() => {});
+    setCopiedM10(true);
+    setTimeout(() => setCopiedM10(false), 1600);
+  };
 
   const handleBoost = async () => {
     if (!selectedKey) {
@@ -56,7 +72,7 @@ export default function BoostModal({ isOpen, onClose, targetType = "PRODUCT", ta
     }
 
     if (selectedPromo && selectedPromo.price > userBalance) {
-      toast(`Balansınız kifayət etmir (${userBalance.toFixed(2)} ₼). Ən azı ${selectedPromo.price} ₼ lazımdır.`, "error");
+      toast(`Balansınız kifayət etmir (${userBalance.toFixed(2)} ₼). M10 ilə ödəyib dekontu WhatsApp-dan göndərə bilərsiniz.`, "error");
       return;
     }
 
@@ -175,6 +191,51 @@ export default function BoostModal({ isOpen, onClose, targetType = "PRODUCT", ta
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* M10 İLƏ ÖDƏ — dekontu WhatsApp-dan göndər */}
+          {selectedPromo && (
+            <div className="rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Smartphone className="w-4 h-4 text-purple-600" />
+                  M10 ilə Ödə
+                </span>
+                <span className="text-[11px] font-bold text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full">
+                  {selectedPromo.price} ₼
+                </span>
+              </div>
+
+              <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
+                1) M10 tətbiqində <strong>{m10Number}</strong> nömrəsinə{" "}
+                <strong>{selectedPromo.price} ₼</strong> köçürün.{" "}
+                2) Aşağıdakı düymə ilə ödəniş qəbzini (dekontu) WhatsApp-dan göndərin.{" "}
+                3) Administrator qəbzi təsdiqləyən kimi paketiniz aktivləşəcək.
+              </p>
+
+              <div className="bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] text-gray-400 font-semibold uppercase">M10 Nömrəsi</p>
+                  <p className="text-sm font-mono font-black text-gray-900 tracking-wider">{m10Number}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={copyM10}
+                  className="p-2 bg-gray-100 hover:bg-purple-50 hover:text-purple-600 rounded-xl transition-colors"
+                >
+                  {copiedM10 ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+
+              <a
+                href={m10WaLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1eb856] text-white text-xs font-bold transition-colors"
+              >
+                Dekontu WhatsApp-dan Göndər
+              </a>
             </div>
           )}
         </div>

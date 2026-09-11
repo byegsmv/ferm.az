@@ -205,7 +205,7 @@ export default function CheckoutPage() {
   const bankCard = paymentAccounts?.bankCardNumber || "4169 7388 1234 5678";
   const bankCardHolder = paymentAccounts?.bankCardHolder || "Fermer Market MMC";
   const bankName = paymentAccounts?.bankName || "ABB Bank / Kapital Bank";
-  const m10Num = paymentAccounts?.m10Number || "+994 10 521 09 09";
+  const m10Num = paymentAccounts?.m10Number || "+994 10 223 89 89";
   const m10Holder = paymentAccounts?.m10Holder || "Fermer Market";
   const payInstructions = paymentAccounts?.instructions || "Ödəniş etdikdən sonra qəbzin şəklini yükləyin.";
 
