@@ -2,8 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser, requireRole } from "@/lib/auth";
 
 export const DEFAULT_PAYMENT_CONFIG = {
-  bankName: "ABB Bank / Kapital Bank",
-  bankCardNumber: "4169 7388 1234 5678",
+  bankName: "Biznes Kart",
+  bankCardNumber: "4172 1154 2722 8671",
   bankCardHolder: "Fermer Market MMC",
   m10Number: "+994 10 223 89 89",
   m10Holder: "Fermer Market MMC",
