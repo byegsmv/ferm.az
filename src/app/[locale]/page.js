@@ -163,6 +163,7 @@ export default async function HomePage({ searchParams }) {
       { type: "AD_BANNER", props: {} },
       { type: "CAMPAIGNS", props: { title: bt.campaigns } },
       { type: "PREMIUM_ADS", props: { title: bt.premium } },
+      { type: "PROMO_AD", props: {} },
       { type: "LATEST_ADS", props: { title: bt.latest, count: 8 } },
       { type: "BUNDLES", props: { title: bt.bundles } },
       { type: "BLOG", props: {} }

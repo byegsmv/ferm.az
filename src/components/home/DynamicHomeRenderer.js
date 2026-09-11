@@ -13,6 +13,7 @@ import AdBanner from "@/components/AdBanner";
 import CategoriesSlider from "@/components/home/CategoriesSlider";
 import BrandsSlider from "@/components/home/BrandsSlider";
 import StoresSlider from "@/components/home/StoresSlider";
+import MobileAdBand from "@/components/home/MobileAdBand";
 export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode }) {
   const [blocks, setBlocks] = useState(initialBlocks);
 
@@ -230,6 +231,8 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
               </div>
             </section>
           );
+        } else if (block.type === "PROMO_AD") {
+          content = <MobileAdBand />;
         } else if (block.type === "AD_BANNER") {
           if (!homeData?.homepageAd) return null;
           content = <div className="max-w-6xl mx-auto px-4 mt-10"><AdBanner content={homeData.homepageAd} /></div>;
