@@ -173,7 +173,7 @@ export default async function HomePage({ searchParams }) {
   return (
     <div className="bg-[#F8FAFC]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="max-w-[1600px] mx-auto flex gap-4 md:gap-6 pt-4 md:pt-6 px-3 sm:px-4">
+      <div className="max-w-[1280px] mx-auto flex gap-4 md:gap-6 pt-4 md:pt-6 px-3 sm:px-4">
         <div className="hidden xl:block">
           <SideBanner position="left" />
         </div>

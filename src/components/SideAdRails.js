@@ -17,7 +17,7 @@ export default function SideAdRails({ left, right, whatsappUrl }) {
 
   const placeholder = (
     <div
-      className="relative block w-[clamp(150px,8.5vw,190px)] aspect-[160/600] rounded-2xl overflow-hidden shadow-md bg-emerald-950 transition-shadow duration-300 hover:shadow-xl"
+      className="relative block w-[clamp(110px,7vw,150px)] aspect-[160/600] rounded-2xl overflow-hidden shadow-md bg-emerald-950 transition-shadow duration-300 hover:shadow-xl"
       style={{ containerType: "inline-size" }}
     >
       {/* Arxa plan — yazısız premium görsel */}
@@ -81,12 +81,12 @@ export default function SideAdRails({ left, right, whatsappUrl }) {
   const rail = (data, side) =>
     !data?.on ? null : (
       <div
-        className={`hidden [@media(min-width:1800px)]:block fixed top-1/2 -translate-y-1/2 z-30 ${
-          side === "left" ? "left-3" : "right-3"
+        className={`hidden [@media(min-width:1650px)]:block fixed top-1/2 -translate-y-1/2 z-30 ${
+          side === "left" ? "left-2" : "right-2"
         }`}
       >
         {data.content ? (
-          <AdBanner content={data.content} imgClassName="w-[160px] h-[600px] object-cover" />
+          <AdBanner content={data.content} imgClassName="w-full h-full object-cover" />
         ) : (
           placeholder
         )}
