@@ -22,7 +22,7 @@ const SOCIALS = [
 ];
 
 const BANNERS = [
-  { id: "placeholder", title: "Burada Sizin Reklamınız Ola Bilər", bg: "/img/ad-rail-bg.png" },
+  { id: "placeholder", title: "Burada Sizin Reklamınız Ola Bilər", bg: "/img/ad-band-bg-wide.jpg" },
   // Gələcək reklam kartları bura əlavə olunacaq:
   // { id: "-client-", title: "...", bg: "..." },
 ];
@@ -60,10 +60,10 @@ export default function MobileAdBand() {
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
           {BANNERS.map((b) => (
-            <div key={b.id} className="w-full shrink-0 relative">
+            <div key={b.id} className="w-full shrink-0 relative aspect-[1600/680]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={b.bg} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" />
-              <div className="relative flex flex-col items-center justify-center gap-2 px-3 py-3 sm:py-3.5">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3">
                 <h3 className="w-full text-center text-[13px] sm:text-base font-bold leading-tight text-white drop-shadow-md truncate">
                   {b.title}
                 </h3>
