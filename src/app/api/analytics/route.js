@@ -13,39 +13,39 @@ export async function GET(request) {
 
   const dailyOrders = await prisma.$queryRaw`
     SELECT
-      DATE(created_at AT TIME ZONE 'Asia/Baku') AS day,
+      DATE("createdAt" AT TIME ZONE 'Asia/Baku') AS day,
       COUNT(*)::int AS orders,
-      COALESCE(SUM(total), 0)::float AS revenue
-    FROM orders
-    WHERE created_at >= ${since}
-      AND status NOT IN ('CANCELLED', 'REFUNDED')
+      COALESCE(SUM("total"), 0)::float AS revenue
+    FROM "Order"
+    WHERE "createdAt" >= ${since}
+      AND "status" NOT IN ('CANCELLED', 'REFUNDED')
     GROUP BY day ORDER BY day ASC`;
 
   const topProducts = await prisma.$queryRaw`
-    SELECT p.id, p.title_az AS title,
-      SUM(oi.quantity)::int AS sold,
-      SUM(oi.quantity * oi.unit_price)::float AS revenue
-    FROM order_items oi
-    JOIN products p ON p.id = oi.product_id
-    JOIN orders o ON o.id = oi.order_id
-    WHERE o.created_at >= ${since} AND o.status NOT IN ('CANCELLED','REFUNDED')
-    GROUP BY p.id, p.title_az
+    SELECT p.id, p."titleAz" AS title,
+      SUM(oi."quantity")::int AS sold,
+      SUM(oi."quantity" * oi."unitPrice")::float AS revenue
+    FROM "OrderItem" oi
+    JOIN "Product" p ON p.id = oi."productId"
+    JOIN "Order" o ON o.id = oi."orderId"
+    WHERE o."createdAt" >= ${since} AND o."status" NOT IN ('CANCELLED','REFUNDED')
+    GROUP BY p.id, p."titleAz"
     ORDER BY sold DESC LIMIT 10`;
 
   const topCategories = await prisma.$queryRaw`
-    SELECT c.name_az AS category,
+    SELECT c."nameAz" AS category,
       COUNT(DISTINCT p.id)::int AS products,
-      COALESCE(SUM(oi.quantity),0)::int AS sold
-    FROM order_items oi
-    JOIN products p ON p.id = oi.product_id
-    JOIN categories c ON c.id = p.category_id
-    JOIN orders o ON o.id = oi.order_id
-    WHERE o.created_at >= ${since} AND o.status NOT IN ('CANCELLED','REFUNDED')
-    GROUP BY c.name_az ORDER BY sold DESC LIMIT 8`;
+      COALESCE(SUM(oi."quantity"),0)::int AS sold
+    FROM "OrderItem" oi
+    JOIN "Product" p ON p.id = oi."productId"
+    JOIN "Category" c ON c.id = p."categoryId"
+    JOIN "Order" o ON o.id = oi."orderId"
+    WHERE o."createdAt" >= ${since} AND o."status" NOT IN ('CANCELLED','REFUNDED')
+    GROUP BY c."nameAz" ORDER BY sold DESC LIMIT 8`;
 
   const dailySignups = await prisma.$queryRaw`
-    SELECT DATE(created_at AT TIME ZONE 'Asia/Baku') AS day, COUNT(*)::int AS signups
-    FROM users WHERE created_at >= ${since}
+    SELECT DATE("createdAt" AT TIME ZONE 'Asia/Baku') AS day, COUNT(*)::int AS signups
+    FROM "User" WHERE "createdAt" >= ${since}
     GROUP BY day ORDER BY day ASC`;
 
   const [roleBreakdown, orderStatusBreakdown] = await Promise.all([

@@ -25,7 +25,9 @@ export async function extractAndSaveKeywords(product) {
 
     const uniqueWords = Array.from(words).filter(w => w.length > 0);
 
-    // 4. Upsert into database
+    // 4. Upsert into database (SearchKeyword modeli mövcud deyilsə səssiz keç —
+    // köhnə DB-lərdə bu cədvəl olmaya bilər)
+    if (!prisma.searchKeyword) return;
     for (const word of uniqueWords) {
       await prisma.searchKeyword.upsert({
         where: { word },

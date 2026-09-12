@@ -19,24 +19,24 @@ export async function GET(request) {
   ]);
 
   const revenueByProduct = await prisma.$queryRaw`
-    SELECT p.title_az AS title,
-      SUM(oi.quantity * oi.unit_price)::float AS revenue,
-      SUM(oi.quantity)::int AS sold
-    FROM order_items oi
-    JOIN products p ON p.id = oi.product_id
-    JOIN orders o ON o.id = oi.order_id
-    WHERE oi.seller_id = ${sellerId} AND o.status = 'DELIVERED' AND o.created_at >= ${since}
-    GROUP BY p.title_az ORDER BY revenue DESC LIMIT 5`;
+    SELECT p."titleAz" AS title,
+      SUM(oi."quantity" * oi."unitPrice")::float AS revenue,
+      SUM(oi."quantity")::int AS sold
+    FROM "OrderItem" oi
+    JOIN "Product" p ON p.id = oi."productId"
+    JOIN "Order" o ON o.id = oi."orderId"
+    WHERE oi."sellerId" = ${sellerId} AND o."status" = 'DELIVERED' AND o."createdAt" >= ${since}
+    GROUP BY p."titleAz" ORDER BY revenue DESC LIMIT 5`;
 
   const dailySales = await prisma.$queryRaw`
-    SELECT DATE(o.created_at AT TIME ZONE 'Asia/Baku') AS day,
-      SUM(oi.quantity * oi.unit_price)::float AS revenue,
+    SELECT DATE(o."createdAt" AT TIME ZONE 'Asia/Baku') AS day,
+      SUM(oi."quantity" * oi."unitPrice")::float AS revenue,
       COUNT(DISTINCT o.id)::int AS orders
-    FROM order_items oi
-    JOIN orders o ON o.id = oi.order_id
-    WHERE oi.seller_id = ${sellerId}
-      AND o.status NOT IN ('CANCELLED','REFUNDED')
-      AND o.created_at >= ${since}
+    FROM "OrderItem" oi
+    JOIN "Order" o ON o.id = oi."orderId"
+    WHERE oi."sellerId" = ${sellerId}
+      AND o."status" NOT IN ('CANCELLED','REFUNDED')
+      AND o."createdAt" >= ${since}
     GROUP BY day ORDER BY day ASC`;
 
   return Response.json({
