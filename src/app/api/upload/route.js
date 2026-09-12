@@ -2,6 +2,7 @@ import { put } from "@vercel/blob";
 import { rateLimit } from "@/lib/rateLimit";
 import fs from "fs/promises";
 import path from "path";
+import { saveImageFromBuffer } from "@/lib/localMedia";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB per image
 const MAX_FILES = 8;
@@ -37,15 +38,20 @@ export async function POST(request) {
       if (file.size > MAX_FILE_SIZE) {
         return Response.json({ error: `Şəkil çox böyükdür (maks 5MB): ${file.name}` }, { status: 422 });
       }
+
+      if (process.env.MEDIA_STORAGE === "local") {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const url = saveImageFromBuffer(buffer, file.type);
+        uploaded.push({ url });
+        continue;
+      }
+
       const ext = (file.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
       const key = `products/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
       
       if (process.env.BLOB_READ_WRITE_TOKEN) {
         try {
-          // Convert the web File/Blob to a plain Buffer before handing it to
-          // Blob SDK put() — passing the raw File object directly has
-          // proven unreliable in some serverless runtimes (silent failures
-          // that fell through to a base64 data-URI fallback in production).
           const arrayBuffer = await file.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);
           const blob = await put(key, buffer, {

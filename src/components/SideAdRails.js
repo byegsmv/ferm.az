@@ -10,9 +10,8 @@ import AdBanner from "@/components/AdBanner";
  *   banner şəkli (FermerMarket logo + WhatsApp CTA, wa.me link)
  * - Slot admin tərəfindən söndürülübsə → heç nə göstərilir
  *
- * Mövqe: header ilə heç bir əlaqəsi yoxdur — header hündürlüyü canlı
- * ölçülür (ResizeObserver + scroll), ray bunun altında qalmağa məcburdur,
- * heç vaxt üstünə çıxmır (z-index də header-dən aşağı saxlanılır).
+ * Mövqe: header və footer dinamik izlənilir (ResizeObserver + scroll),
+ * ray bunların arasında saxlanılır və heç vaxt üstlərinə çıxmır.
  */
 function useSafeTop(railRef) {
   const [top, setTop] = useState(null);
@@ -25,14 +24,16 @@ function useSafeTop(railRef) {
       const el = railRef.current;
       if (!el) return;
       const header = document.querySelector("header");
+      const footer = document.querySelector("footer");
       const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+      const footerTop = footer ? footer.getBoundingClientRect().top : Infinity;
       const vh = window.innerHeight;
       const railH = el.offsetHeight || 600;
 
       const minTop = Math.max(headerBottom + gap, gap);
       const idealTop = (vh - railH) / 2;
-      const maxTop = Math.max(minTop, vh - railH - gap);
-      const nextTop = Math.max(minTop, Math.min(idealTop, maxTop));
+      const maxTop = Math.min(vh - railH - gap, footerTop - railH - gap);
+      const nextTop = Math.min(Math.max(minTop, idealTop), maxTop);
       setTop(nextTop);
     }
 
@@ -53,6 +54,8 @@ function useSafeTop(railRef) {
     if (railRef.current) ro.observe(railRef.current);
     const headerEl = document.querySelector("header");
     if (headerEl) ro.observe(headerEl);
+    const footerEl = document.querySelector("footer");
+    if (footerEl) ro.observe(footerEl);
 
     return () => {
       window.removeEventListener("scroll", schedule);
@@ -63,6 +66,18 @@ function useSafeTop(railRef) {
   }, [railRef]);
 
   return top;
+}
+
+function CurtainReveal({ children }) {
+  return (
+    <div className="relative overflow-hidden rounded-3xl shadow-2xl">
+      {children}
+      <div
+        className="absolute inset-0 z-20 pointer-events-none rounded-3xl animate-curtain-reveal bg-gradient-to-br from-emerald-800 via-emerald-900 to-amber-700 shadow-xl"
+        style={{ animationDelay: "550ms" }}
+      />
+    </div>
+  );
 }
 
 function RailShell({ side, children }) {
@@ -81,12 +96,16 @@ function RailShell({ side, children }) {
       style={{
         top: top == null ? "50%" : `${top}px`,
         transition: "top 0.35s ease-out",
+        "--content-gap": "calc((100vw - 1200px) / 2)",
+        "--rail-w": "clamp(56px, calc(var(--content-gap) - 8px), 190px)",
+        width: "var(--rail-w)",
+        [side === "left" ? "left" : "right"]: "calc(var(--content-gap) - var(--rail-w))",
       }}
-      className={`hidden [@media(min-width:1350px)]:block fixed z-30 w-[clamp(56px,calc((100vw_-_1200px)/2_-_10px),150px)] ${
-        side === "left" ? "left-2" : "right-2"
-      } ${entered ? (side === "left" ? "animate-rail-in-left" : "animate-rail-in-right") : "opacity-0"}`}
+      className={`hidden [@media(min-width:1350px)]:block fixed z-30 ${
+        entered ? (side === "left" ? "animate-rail-in-left" : "animate-rail-in-right") : "opacity-0"
+      }`}
     >
-      {children}
+      <CurtainReveal>{children}</CurtainReveal>
     </div>
   );
 }
@@ -129,7 +148,7 @@ export default function SideAdRails({ left, right, whatsappUrl }) {
       <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10 pointer-events-none" />
 
       {/* Yazı katmanı — HTML (Elgün istəyi: mətn şəklin üzərinə bişirilmir, real mətn) */}
-      <div className="relative h-full flex flex-col items-center justify-center gap-[10cqw] px-[12cqw] text-center">
+      <div className="relative h-full flex flex-col items-center justify-center gap-[10cqw] px-[12cqw] text-center animate-rail-float">
         <div className="animate-fade-in-up" style={{ animationDelay: "150ms" }}>
           <h3 className="text-[13.5cqw] font-black leading-[1.15] text-white drop-shadow-md">
             Burada Sizin Reklamınız Ola Bilər
@@ -186,7 +205,9 @@ export default function SideAdRails({ left, right, whatsappUrl }) {
     !data?.on ? null : (
       <RailShell side={side}>
         {data.content ? (
-          <AdBanner content={data.content} imgClassName="w-full h-full object-cover" />
+          <div className="animate-rail-float">
+            <AdBanner content={data.content} imgClassName="w-full h-full object-cover" />
+          </div>
         ) : (
           placeholder(side)
         )}

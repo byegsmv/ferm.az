@@ -1,40 +1,17 @@
 /**
  * Blog image persistence + quality helper.
- *
- * Pollinations.ai image URLs are generated on-the-fly and have two problems:
- *  1) They are slow/unreliable/rate-limited in browsers (broken images).
- *  2) The raw generated JPEG is heavily compressed and looks blocky/pixelated
- *     when stretched to the blog's full content width by CSS (`width: 100%`).
- *
- * This module downloads them once, re-encodes them at a clean target size
- * with high-quality resampling (supersample-then-downscale removes the
- * generator's block artifacts), and re-hosts the result on blob storage so
- * they load fast, look sharp at any display width, and never break.
  */
 import { put } from "@vercel/blob";
 import sharp from "sharp";
+import { saveImageFromBuffer } from "@/lib/localMedia";
 
 const POLLINATIONS_RE = /https:\/\/image\.pollinations\.ai\/prompt\/[^\s"'<>)]+/gi;
-
-// Agent'tan gelen AI kapak görselleri (media.base44.com) da ölümsüz kaynak
-// sayılır — self-heal onları Vercel Blob'a qaldırır (Elgün 2026-09-11).
 const MEDIA44_RE = /https:\/\/media\.base44\.com\/[^\s"'<>)]+/gi;
 
-// Minimum source resolution we request FROM pollinations before downscaling.
-// Requesting at least this wide forces the generator to render more detail,
-// which we then supersample-downscale — this is what actually removes the
-// blocky/pixelated look, not just re-compressing the same low-res source.
 const MIN_SOURCE_WIDTH = 1600;
-// Max width we ever display a blog image at (blog column caps ~736px,
-// homepage/list cards are narrower) — smaller than MIN_SOURCE_WIDTH on
-// purpose so the downscale step genuinely smooths generator artifacts.
 const TARGET_MAX_WIDTH = 1200;
 const JPEG_QUALITY = 88;
 
-// Rewrites a pollinations.ai URL's width/height query params up to at least
-// MIN_SOURCE_WIDTH (preserving aspect ratio) so we always fetch a
-// high-detail source to downscale from, even for older posts that stored a
-// low-resolution URL (e.g. width=1024).
 function upscaleSourceRequest(url) {
   try {
     const u = new URL(url);
@@ -52,7 +29,6 @@ function upscaleSourceRequest(url) {
   }
 }
 
-// Find all pollinations URLs inside a text (content HTML or a single cover URL)
 export function findPollinationsUrls(text) {
   if (!text) return [];
   const matches = [
@@ -74,7 +50,7 @@ async function downloadWithTimeout(url, ms) {
     const contentType = res.headers.get("content-type") || "image/jpeg";
     if (!contentType.startsWith("image/")) return null;
     const buffer = Buffer.from(await res.arrayBuffer());
-    if (buffer.length < 1024) return null; // bogus/error payload
+    if (buffer.length < 1024) return null;
     return { buffer, contentType };
   } catch {
     return null;
@@ -83,12 +59,6 @@ async function downloadWithTimeout(url, ms) {
   }
 }
 
-/**
- * Re-encodes a raw downloaded image to remove generator block artifacts:
- * resizes down (never up) to TARGET_MAX_WIDTH with high-quality (lanczos3)
- * resampling and re-compresses as a clean mozjpeg JPEG. Falls back to the
- * original buffer if processing fails for any reason.
- */
 async function sharpen(buffer) {
   try {
     const processed = await sharp(buffer)
@@ -102,39 +72,39 @@ async function sharpen(buffer) {
   }
 }
 
-/**
- * Download every pollinations URL in `content` (HTML) and `coverUrl`,
- * quality-process, upload to blob storage, and return rewritten content/coverUrl.
- * On any failure the original URL is kept (graceful degradation).
- */
 export async function persistBlogImages(content, coverUrl) {
   const result = { content: content || "", coverUrl: coverUrl || "" };
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return result;
+  if (process.env.MEDIA_STORAGE !== "local" && !process.env.BLOB_READ_WRITE_TOKEN) return result;
 
-  const urlMap = new Map(); // original -> blob url
+  const urlMap = new Map();
   const urls = [...findPollinationsUrls(result.content), ...findPollinationsUrls(result.coverUrl)];
 
   for (const url of urls) {
     if (urlMap.has(url)) continue;
     const fetchUrl = upscaleSourceRequest(url);
     let downloaded = await downloadWithTimeout(fetchUrl, 60_000);
-    if (!downloaded) downloaded = await downloadWithTimeout(fetchUrl, 60_000); // one retry (generation can be slow)
-    if (!downloaded && fetchUrl !== url) downloaded = await downloadWithTimeout(url, 60_000); // fall back to original size
+    if (!downloaded) downloaded = await downloadWithTimeout(fetchUrl, 60_000);
+    if (!downloaded && fetchUrl !== url) downloaded = await downloadWithTimeout(url, 60_000);
     if (!downloaded) continue;
 
     const sharpened = await sharpen(downloaded.buffer);
     const finalImg = sharpened || downloaded;
 
     try {
-      const ext = finalImg.contentType.includes("png") ? "png" : "jpg";
-      const key = `blog/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
-      const blob = await put(key, finalImg.buffer, {
-        access: "public",
-        contentType: finalImg.contentType,
-      });
-      urlMap.set(url, blob.url);
+      if (process.env.MEDIA_STORAGE === "local") {
+        const localUrl = saveImageFromBuffer(finalImg.buffer, finalImg.contentType);
+        urlMap.set(url, localUrl);
+      } else {
+        const ext = finalImg.contentType.includes("png") ? "png" : "jpg";
+        const key = `blog/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
+        const blob = await put(key, finalImg.buffer, {
+          access: "public",
+          contentType: finalImg.contentType,
+        });
+        urlMap.set(url, blob.url);
+      }
     } catch (err) {
-      console.error("blogImages: blob put failed:", err?.message);
+      console.error("blogImages: storage save failed:", err?.message);
     }
   }
 
@@ -147,15 +117,6 @@ export async function persistBlogImages(content, coverUrl) {
   return result;
 }
 
-/**
- * One-time/healing migration: re-host + quality-fix pollinations images of
- * EXISTING posts on blob storage (pollinations rate-limits with 429s and its
- * raw output is blocky when stretched → broken/pixelated images).
- * Also re-processes posts whose cover/content already point at a Blob URL
- * but were uploaded before the quality fix (re-fetches from Blob, sharpens,
- * re-uploads) so older migrated posts get fixed too.
- * Processes as many posts as fit in `budgetMs`. Safe to run repeatedly.
- */
 export async function migrateBlogImages(budgetMs = 50000) {
   const { prisma } = await import("@/lib/prisma");
   const deadline = Date.now() + budgetMs;
@@ -200,13 +161,6 @@ export async function migrateBlogImages(budgetMs = 50000) {
   return { migrated, checked, remaining };
 }
 
-/**
- * Re-processes images that are ALREADY on blob storage but were uploaded
- * before the quality (sharpen/resize) fix shipped — fetches each blob image,
- * re-encodes it with sharpen(), and re-uploads in place (new blob key,
- * old one is superseded in the DB record). Use this once to fix pixelation
- * on posts migrated before this fix.
- */
 export async function requalifyBlobImages(budgetMs = 50000) {
   const { prisma } = await import("@/lib/prisma");
   const deadline = Date.now() + budgetMs;
@@ -242,14 +196,22 @@ export async function requalifyBlobImages(budgetMs = 50000) {
       const sharpened = await sharpen(downloaded.buffer);
       if (!sharpened) continue;
       try {
-        const key = `blog/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.jpg`;
-        const blob = await put(key, sharpened.buffer, { access: "public", contentType: "image/jpeg" });
-        const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        content = content.replace(new RegExp(escaped, "g"), blob.url);
-        if (coverUrl === url) coverUrl = blob.url;
-        changed = true;
+        if (process.env.MEDIA_STORAGE === "local") {
+          const localUrl = saveImageFromBuffer(sharpened.buffer, sharpened.contentType);
+          const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          content = content.replace(new RegExp(escaped, "g"), localUrl);
+          if (coverUrl === url) coverUrl = localUrl;
+          changed = true;
+        } else {
+          const key = `blog/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.jpg`;
+          const blob = await put(key, sharpened.buffer, { access: "public", contentType: "image/jpeg" });
+          const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          content = content.replace(new RegExp(escaped, "g"), blob.url);
+          if (coverUrl === url) coverUrl = blob.url;
+          changed = true;
+        }
       } catch (err) {
-        console.error("requalifyBlobImages: blob put failed:", err?.message);
+        console.error("requalifyBlobImages: storage save failed:", err?.message);
       }
     }
 

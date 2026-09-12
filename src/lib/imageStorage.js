@@ -1,6 +1,7 @@
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { parseProxyImageId } from "@/lib/imageUrl";
+import { saveImageFromBase64 } from "@/lib/localMedia";
 
 // Gələn images massivini "təhlükəsiz" hala gətirir — iki kök problemi həll edir:
 //
@@ -11,8 +12,7 @@ import { parseProxyImageId } from "@/lib/imageUrl";
 //    Həll: istinad id-ləri mövcud qeydlərin ƏSL url-ləri ilə əvəz olunur.
 //
 // 2) BASE64 KÖÇÜRÜLMƏSİ (Neon egress): data: URI kimi göndərilən şəkillər
-//    Vercel Blob-a yüklənib CDN url ilə əvəz olunur. Blob alınmadıqda
-//    (token yoxduru vs.) base64 saxlanılır — əməliyyat HEÇ VAXT bloklanmır.
+//    Vercel Blob və ya yerli diskə yüklənib URL ilə əvəz olunur.
 export async function normalizeIncomingImages(images, existingRows = []) {
   if (!Array.isArray(images) || images.length === 0) return images;
 
@@ -39,11 +39,15 @@ export async function normalizeIncomingImages(images, existingRows = []) {
     return target ? { ...img, url: target } : img;
   });
 
-  // ── 2) data: URI-ləri Vercel Blob-a köçür (uğursuzsa base64 qalır)
+  // ── 2) data: URI-ləri Vercel Blob və ya local disk-ə köçür (uğursuzsa base64 qalır)
   resolved = await Promise.all(
     resolved.map(async (img) => {
       if (typeof img?.url !== "string" || !img.url.startsWith("data:")) return img;
       try {
+        if (process.env.MEDIA_STORAGE === "local") {
+          const localUrl = saveImageFromBase64(img.url);
+          return { ...img, url: localUrl };
+        }
         const m = img.url.match(/^data:([^;,]+);base64,(.*)$/s);
         if (!m) return img;
         const buf = Buffer.from(m[2], "base64");
@@ -52,7 +56,7 @@ export async function normalizeIncomingImages(images, existingRows = []) {
         const blob = await put(key, buf, { contentType: m[1], access: "public" });
         return { ...img, url: blob.url };
       } catch {
-        return img; // Blob xətası — base64 saxla, əməliyyatı bloklama
+        return img; // Blob/Local xətası — base64 saxla, əməliyyatı bloklama
       }
     })
   );
