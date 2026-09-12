@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/ui/Icon";
 import { apiFetch } from "@/lib/apiClient";
+import { DEFAULT_STORE_PACKAGES, PACKAGE_PAYMENT } from "@/lib/storePackages";
 
 /**
  * StoreCreateWizard — 2026-09-10 tələblərinə tam uyğun mağaza yaradma axını:
@@ -45,6 +46,9 @@ export default function StoreCreateWizard({ user, onCreated }) {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [pos, setPos] = useState(null); // {lat,lng}
   const [creating, setCreating] = useState(false);
+  const [pkgKey, setPkgKey] = useState("START");
+  const [pkgs, setPkgs] = useState(DEFAULT_STORE_PACKAGES);
+  const [createdStore, setCreatedStore] = useState(null);
   const [error, setError] = useState("");
   const [mapReady, setMapReady] = useState(false);
   const [nameError, setNameError] = useState("");
@@ -52,6 +56,13 @@ export default function StoreCreateWizard({ user, onCreated }) {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const mapDivRef = useRef(null);
+
+  // Paketləri yüklə (admin qiymət dəyişikliyini dəstəklə, fallback default)
+  useEffect(() => {
+    apiFetch("/api/config/store-packages")
+      .then((d) => { if (Array.isArray(d?.packages) && d.packages.length) setPkgs(d.packages); })
+      .catch(() => {});
+  }, []);
 
   // Ad düzgünlüyü: hərf olmalıdır
   useEffect(() => {
@@ -126,9 +137,10 @@ export default function StoreCreateWizard({ user, onCreated }) {
           lat: pos.lat,
           lng: pos.lng,
           acceptTerms: true,
+          packageKey: pkgKey,
         }),
       });
-      if (onCreated) onCreated(res?.store || res);
+      setCreatedStore(res?.store || res);
     } catch (err) {
       const det = err.details ? " (" + Object.values(err.details).flat().join(", ") + ")" : "";
       setError((err.message || "Mağaza yaradıla bilmədi") + det);
@@ -137,9 +149,93 @@ export default function StoreCreateWizard({ user, onCreated }) {
     }
   }
 
+  // Mağaza yaradıldıqdan sonra: ödəniş təlimatı paneli
+  if (createdStore) {
+    const pkg = pkgs.find((x) => x.key === pkgKey) || DEFAULT_STORE_PACKAGES[0];
+    return (
+      <div className="space-y-5">
+        <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-6 text-center">
+          <div className="text-4xl">✅</div>
+          <h3 className="mt-2 text-lg font-black text-emerald-900">Mağazanız yaradıldı!</h3>
+          <p className="mt-1 text-sm text-emerald-800">
+            «{createdStore.name}» uğurla qeydiyyatdan keçdi. İndi paket ödənişini tamamlayın:
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase">Seçilmiş paket</p>
+              <p className="text-lg font-black text-gray-900">{pkg.badge} {pkg.name}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-bold text-gray-500 uppercase">Məbləğ</p>
+              <p className="text-lg font-black text-brand-700">{pkg.price} AZN</p>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-amber-200 text-sm text-gray-700 space-y-2">
+            <p>
+              Ödənişi <span className="font-black">{PACKAGE_PAYMENT.method} ({PACKAGE_PAYMENT.number})</span> hesabına edin.
+            </p>
+            <p>Qeydə mağaza adınızı yazın: <span className="font-bold">«{createdStore.name}»</span></p>
+            <p>Dekontu WhatsApp-da göndərərək təsdiqləyin — paketiniz dərhal aktivləşdirilir.</p>
+          </div>
+          <div className="mt-4 flex flex-col sm:flex-row gap-3">
+            <a
+              href={PACKAGE_PAYMENT.whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#1eb85a] text-white text-sm font-bold py-3 transition-colors"
+            >
+              Dekontu WhatsApp-da göndər
+            </a>
+            {onCreated && (
+              <button
+                type="button"
+                onClick={() => onCreated(createdStore)}
+                className="flex-1 inline-flex items-center justify-center rounded-xl border-2 border-brand-600 text-brand-700 text-sm font-bold py-3 hover:bg-brand-50 transition-colors"
+              >
+                Dashboard-a keç
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-3">{error}</p>}
+
+      {/* Paket seçimi — məcburi */}
+      <div>
+        <label className="label-sm">Mağaza paketi seçin *</label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {pkgs.map((p) => {
+            const active = pkgKey === p.key;
+            return (
+              <button
+                type="button"
+                key={p.key}
+                onClick={() => setPkgKey(p.key)}
+                className={`relative text-left rounded-xl border-2 p-3 transition-all ${active ? "border-brand-600 bg-brand-50 shadow-sm" : "border-gray-200 bg-white hover:border-gray-300"}`}
+              >
+                {p.popular && (
+                  <span className="absolute -top-2 right-2 bg-brand-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Populyar</span>
+                )}
+                <p className="text-sm font-black text-gray-900">{p.badge} {p.name}</p>
+                <p className="text-lg font-black text-brand-700">{p.price} <span className="text-xs text-gray-500">AZN</span></p>
+                <p className="text-[11px] text-gray-500 leading-snug mt-0.5">{p.tagline}</p>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-xs text-gray-400 mt-1">
+          Ödəniş mağaza yaradıldıqdan sonra {PACKAGE_PAYMENT.method} ({PACKAGE_PAYMENT.number}) vasitəsilə, dekont WhatsApp-da təsdiqlənir.
+          Paketlər haqqında: <a href="/az/paketler" target="_blank" rel="noreferrer" className="font-bold text-brand-700 underline">Ətraflı bax</a>
+        </p>
+      </div>
 
       {/* Şərtlər — məcburi */}
       <label className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-3 cursor-pointer">

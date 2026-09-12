@@ -142,8 +142,30 @@ export async function POST(request) {
     },
   });
 
+  // ── Paket seçimi: SubscriptionPlan upsert + StoreSubscription (PENDING_PAYMENT) ──
+  const pkgKey = String(body.packageKey || "START").toUpperCase();
+  const pkg = DEFAULT_STORE_PACKAGES.find((p) => p.key === pkgKey);
+  let subscription = null;
+  if (pkg) {
+    try {
+      const plan = await prisma.subscriptionPlan.upsert({
+        where: { name: pkg.key },
+        update: { price: pkg.price, currency: "AZN", isActive: true },
+        create: { name: pkg.key, price: pkg.price, currency: "AZN", isActive: true },
+      });
+      subscription = await prisma.storeSubscription.upsert({
+        where: { storeId: store.id },
+        update: { plan: pkg.key, planId: plan.id, status: "PENDING_PAYMENT" },
+        create: { storeId: store.id, plan: pkg.key, planId: plan.id, status: "PENDING_PAYMENT" },
+      });
+    } catch (e) {
+      console.error("StoreSubscription yazilmadi:", e?.message);
+    }
+  }
+
   return Response.json({
     store,
+    subscription,
     isFirstStore,
     message: isFirstStore
       ? "Mağaza uğurla yaradıldı və aktivləşdirildi!"
