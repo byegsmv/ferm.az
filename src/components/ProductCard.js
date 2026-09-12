@@ -186,7 +186,7 @@ export default function ProductCard({ product, tier, compact = false, initialFav
       />
 
       {/* Image Container — subtle gradient backdrop instead of flat gray */}
-      <div className="relative w-full bg-gradient-to-br from-gray-50 via-white to-brand-50/40 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "4/3" }}>
+      <div className="relative w-full bg-gradient-to-br from-gray-50 via-white to-brand-50/40 flex items-center justify-center overflow-hidden pointer-events-none" style={{ aspectRatio: "4/3" }}>
         {product.coverImage ? (
           <SafeImage
             src={product.coverImage}
