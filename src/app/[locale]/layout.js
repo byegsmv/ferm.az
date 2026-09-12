@@ -109,7 +109,7 @@ export default async function RootLayout({ children, params }) {
             
             <Header />
             <SideAdRails left={sideRails.left} right={sideRails.right} whatsappUrl={sideRails.whatsappUrl} />
-            <main className="flex-1 w-full max-w-[1440px] mx-auto pb-16 md:pb-0">
+            <main className="flex-1 w-full max-w-[1200px] mx-auto pb-16 md:pb-0">
               {children}
             </main>
             

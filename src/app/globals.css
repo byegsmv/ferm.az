@@ -200,6 +200,17 @@ body {
 .animate-scale-in     { animation: scaleIn 0.25s ease-out both; }
 .animate-spin-slow    { animation: spin 2s linear infinite; }
 
+/* Yan reklam rayları — premium giriş + canlı efektler */
+@keyframes railInLeft  { from{opacity:0;transform:translateX(-24px) scale(.92)} to{opacity:1;transform:translateX(0) scale(1)} }
+@keyframes railInRight { from{opacity:0;transform:translateX(24px) scale(.92)} to{opacity:1;transform:translateX(0) scale(1)} }
+@keyframes railGlow    { 0%,100%{box-shadow:0 8px 32px -8px rgba(16,185,129,.35),0 0 0 1px rgba(251,191,36,.15)} 50%{box-shadow:0 12px 40px -6px rgba(16,185,129,.55),0 0 0 1px rgba(251,191,36,.35)} }
+@keyframes railSway    { 0%,100%{transform:rotate(-1.5deg)} 50%{transform:rotate(1.5deg)} }
+.animate-rail-in-left  { animation: railInLeft .7s cubic-bezier(.16,1,.3,1) both; }
+.animate-rail-in-right { animation: railInRight .7s cubic-bezier(.16,1,.3,1) both; }
+.animate-rail-glow     { animation: railGlow 3.2s ease-in-out infinite; }
+.animate-rail-sway     { animation: railSway 4s ease-in-out infinite; transform-origin: center; }
+.animate-shimmer-sweep { background-size: 200% 100%; animation: shimmer 3.5s linear infinite; }
+
 /* Toast */
 .toast { @apply fixed bottom-24 sm:bottom-6 right-2 sm:right-4 z-[100] w-[calc(100%-16px)] sm:max-w-sm max-w-sm; }
 .toast-inner { @apply bg-white rounded-[var(--r-xl)] border border-[var(--border)] shadow-[var(--shadow-xl)] p-3 sm:p-4 flex items-start gap-3; animation: slideInRight 0.35s ease-out both; }
