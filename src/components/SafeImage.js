@@ -17,6 +17,14 @@ function needsPlainImg(src) {
   // fetch of the same row on every optimizer miss, which is what exhausted the
   // database's data transfer budget, and the optimizer route was failing anyway.
   if (src.startsWith(IMG_PROXY)) return true;
+  // Locally-migrated media (VDS disk storage): served directly by Nginx's
+  // /media/ alias, OUTSIDE the Next.js app — next/image's server-side
+  // optimizer tries to self-fetch these and gets a 404 (no matching Next
+  // route/public file), which breaks every product image. These files are
+  // already final JPEGs with a 1-year immutable Cache-Control from Nginx,
+  // so there's no benefit to re-optimizing them anyway — same reasoning as
+  // the IMG_PROXY case above.
+  if (src.startsWith("/media/")) return true;
   try {
     const { hostname } = new URL(src);
     return UNOPTIMIZED_HOSTS.some((h) => hostname === h || hostname.endsWith(`.${h}`));
