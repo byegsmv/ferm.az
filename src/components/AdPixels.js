@@ -74,5 +74,18 @@ export default function AdPixels() {
   }, [googleTagId]);
 
   if (!metaId && !tiktokId && !googleTagId) return null;
-  return null;
+
+  // noscript fallback (JS qapalı istifadəçilər üçün — Meta rəsmi tövsiyəsi)
+  if (!metaId) return null;
+  return (
+    <noscript>
+      <img
+        height="1"
+        width="1"
+        style={{ display: "none" }}
+        alt=""
+        src={`https://www.facebook.com/tr?id=${metaId}&ev=PageView&noscript=1`}
+      />
+    </noscript>
+  );
 }
