@@ -66,6 +66,15 @@ export default function DynamicHomeRenderer({ initialBlocks, homeData, editMode 
 
         if (block.type === "HERO_SLIDER") {
           content = <HeroSlider />;
+        } else if (block.type === "CUSTOM_CODE") {
+          // Admin-in Visual Studio-dan əlavə etdiyi xüsusi HTML/CSS bloku
+          // (yalnız admin yarada bilər — /api/blocks POST ADMIN/SUPER_ADMIN qorunur)
+          content = (
+            <section className="max-w-6xl mx-auto px-3 sm:px-4 mt-6">
+              {p.css ? <style dangerouslySetInnerHTML={{ __html: p.css }} /> : null}
+              {p.html ? <div dangerouslySetInnerHTML={{ __html: p.html }} /> : null}
+            </section>
+          );
         } else if (block.type === "CATEGORIES") {
           content = (
             <CategoriesSlider

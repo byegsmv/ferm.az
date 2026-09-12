@@ -84,6 +84,13 @@ export default async function RootLayout({ children, params }) {
   const bottomAd = await getAdSlotContent("FOOTER_STRIP");
   const sideRails = await getSidebarRails();
 
+  // Qlobal Xüsusi CSS (Visual Studio → "Qlobal CSS" paneli, admin-only yazılır)
+  let globalCss = "";
+  try {
+    const cssBlock = await prisma.dynamicBlock.findFirst({ where: { page: "system", type: "custom_css" } });
+    if (cssBlock?.props?.css) globalCss = cssBlock.props.css;
+  } catch {}
+
   return (
     <html lang={locale} dir="ltr">
       <head>
@@ -121,6 +128,7 @@ export default async function RootLayout({ children, params }) {
             <AIAgronomWidget />
           </SmoothScroll>
         </NextIntlClientProvider>
+      {globalCss ? <style dangerouslySetInnerHTML={{ __html: globalCss }} /> : null}
       {/* Universal Visual Editor — bütün səhifələrdə override tətbiqi (?ve=1 = redaktə rejimi) */}
       <script defer src="/visual-editor/visual-editor.js" />
       </body>

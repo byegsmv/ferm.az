@@ -14,8 +14,29 @@ const DEFAULT_BLOCKS = [
   { type: "BLOG", props: {} }
 ];
 
+// Canlı redaktə edilə bilən səhifələr (visual-editor.js bütün səhifələrdə yüklü;
+// override-lar /api/admin/visual-overrides üzərindən PATH-ə görə saxlanılır)
+const EDITABLE_PAGES = [
+  { label: "🏠 Ana Səhifə", path: "/" },
+  { label: "📦 Məhsullar", path: "/products" },
+  { label: "🏪 Mağazalar", path: "/stores" },
+  { label: "🗂 Kateqoriyalar", path: "/categories" },
+  { label: "🏷 Brendlər", path: "/brands" },
+  { label: "🎯 Kampaniyalar", path: "/campaigns" },
+  { label: "📰 Blog", path: "/blog" },
+  { label: "🌱 Mağaza Paketləri", path: "/paketler" },
+];
+
 export default function LiveHomeStudio() {
   const [blocks, setBlocks] = useState([]);
+  const [pagePath, setPagePath] = useState("/");
+  const [iframeKey, setIframeKey] = useState(0);
+  const [ovr, setOvr] = useState({});
+  const [ovrPaths, setOvrPaths] = useState({}); // key → hansı PATH-də saxlanılıb
+  const [ovrLoading, setOvrLoading] = useState(false);
+  const [cssOpen, setCssOpen] = useState(false);
+  const [cssVal, setCssVal] = useState("");
+  const [cssSaving, setCssSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeBlockIndex, setActiveBlockIndex] = useState(null);
@@ -124,6 +145,67 @@ export default function LiveHomeStudio() {
     }
   };
 
+  // ── Digər səhifələrin override idarəsi ──
+  const fetchOverrides = async (p) => {
+    if (!p || p === "/") { setOvr({}); setOvrPaths({}); return; }
+    setOvrLoading(true);
+    const pathsToTry = [p, "/az" + p]; // middleware redirect nəticəsində PATH fərqli qeyd oluna bilər
+    const merged = {};
+    const keyPath = {};
+    for (const tp of pathsToTry) {
+      try {
+        const d = await apiFetch("/api/admin/visual-overrides?path=" + encodeURIComponent(tp));
+        for (const [k, v] of Object.entries(d?.overrides || {})) {
+          if (!merged[k]) { merged[k] = v; keyPath[k] = tp; }
+        }
+      } catch {}
+    }
+    setOvr(merged);
+    setOvrPaths(keyPath);
+    setOvrLoading(false);
+  };
+
+  const changePage = (p) => {
+    setPagePath(p);
+    setVisualActive(false);
+    setActiveBlockIndex(null);
+    if (p !== "/") fetchOverrides(p);
+  };
+
+  const deleteOverride = async (key, kind) => {
+    try {
+      await apiFetch("/api/admin/visual-overrides", {
+        method: "POST",
+        body: JSON.stringify({ path: ovrPaths[key] || pagePath, key, kind: kind || "text", value: "", prev: "", remove: true }),
+      });
+      await fetchOverrides(pagePath);
+      setIframeKey((k) => k + 1); // preview-i təzələ (override tətbiqi üçün)
+    } catch (e) {
+      setVeStatus("⚠ Silinmədi: " + (e.message || ""));
+    }
+  };
+
+  // ── Qlobal CSS paneli ──
+  const openCssPanel = async () => {
+    setCssOpen(true);
+    try {
+      const d = await apiFetch("/api/admin/custom-css");
+      setCssVal(d?.css || "");
+    } catch { setCssVal(""); }
+  };
+
+  const saveCss = async () => {
+    setCssSaving(true);
+    try {
+      await apiFetch("/api/admin/custom-css", { method: "POST", body: JSON.stringify({ css: cssVal }) });
+      setVeStatus("✓ Qlobal CSS yadda saxlanıldı — bütün sayta tətbiq olunur");
+      setIframeKey((k) => k + 1);
+      setCssOpen(false);
+    } catch (e) {
+      setVeStatus("⚠ CSS xətası: " + (e.message || ""));
+    } finally { setCssSaving(false); }
+  };
+
   const toggleVisualEdit = () => {
     const next = !visualActive;
     setVisualActive(next);
@@ -200,6 +282,7 @@ export default function LiveHomeStudio() {
     if (type === "PREMIUM_ADS") newBlock.props = { title: "Premium Elanlar", subtitle: "Önə çıxan elanlar" };
     if (type === "LATEST_ADS") newBlock.props = { title: "Yeni Elanlar", subtitle: "Ən son əlavə edilmiş məhsullar", count: 8 };
     if (type === "BUNDLES") newBlock.props = { title: "Bağlamalar" };
+    if (type === "CUSTOM_CODE") newBlock.props = { html: "<div class=\"text-center p-6 text-2xl font-bold text-brand-700\">Xüsusi məzmun bloku</div>", css: "" };
     
     setBlocks([...blocks, newBlock]);
     setActiveBlockIndex(blocks.length);
@@ -261,7 +344,18 @@ export default function LiveHomeStudio() {
       {/* LEFT PANEL: Editor & Blocks */}
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full z-10 shadow-lg shrink-0">
         <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-          <h2 className="font-bold text-gray-800">Visual Studio</h2>
+          <div>
+            <h2 className="font-bold text-gray-800">Visual Studio</h2>
+            <select
+              value={pagePath}
+              onChange={(e) => changePage(e.target.value)}
+              className="mt-1.5 w-full text-xs font-semibold text-gray-700 border border-gray-300 rounded-lg p-1.5 bg-white"
+            >
+              {EDITABLE_PAGES.map((pg) => (
+                <option key={pg.path} value={pg.path}>{pg.label} — {pg.path}</option>
+              ))}
+            </select>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={toggleVisualEdit}
@@ -270,13 +364,22 @@ export default function LiveHomeStudio() {
             >
               {visualActive ? "● Redaktə AÇIQ" : "Vizual Redaktə"}
             </button>
-            <button 
-              onClick={saveLayout}
-              disabled={saving}
-              className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition"
+            <button
+              onClick={openCssPanel}
+              title="Bütün sayta tətbiq olunan xüsusi CSS yazın (kod redaktəsi)"
+              className="bg-gray-800 hover:bg-black text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition"
             >
-              {saving ? "..." : "Yadda Saxla"}
+              {"</>"} Qlobal CSS
             </button>
+            {pagePath === "/" ? (
+              <button 
+                onClick={saveLayout}
+                disabled={saving}
+                className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition"
+              >
+                {saving ? "..." : "Yadda Saxla"}
+              </button>
+            ) : null}
           </div>
         </div>
         {veStatus && (
@@ -294,6 +397,8 @@ export default function LiveHomeStudio() {
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           
+          {pagePath === "/" ? (
+            <>
           {/* Active Block Editor */}
           {activeBlock ? (
             <div className="bg-brand-50 border border-brand-100 p-4 rounded-xl relative">
@@ -308,17 +413,29 @@ export default function LiveHomeStudio() {
               </h3>
               
               <div className="space-y-3">
-                {Object.keys(activeBlock.props).map(key => (
-                  <div key={key}>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1 capitalize">{key}</label>
-                    <input 
-                      type={typeof activeBlock.props[key] === 'number' ? 'number' : 'text'}
-                      value={activeBlock.props[key]}
-                      onChange={(e) => updateActiveBlock(key, e.target.type === 'number' ? Number(e.target.value) : e.target.value)}
-                      className="w-full text-sm border border-brand-200 rounded-lg p-2 focus:ring-2 focus:ring-brand-400 focus:outline-none"
-                    />
-                  </div>
-                ))}
+                {Object.keys(activeBlock.props).map(key => {
+                  const isLong = key === "html" || key === "css" || String(activeBlock.props[key] ?? "").length > 80;
+                  return (
+                    <div key={key}>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1 capitalize">{key}</label>
+                      {isLong ? (
+                        <textarea
+                          rows={key === "html" ? 6 : 4}
+                          value={activeBlock.props[key] ?? ""}
+                          onChange={(e) => updateActiveBlock(key, e.target.value)}
+                          className="w-full text-xs font-mono border border-brand-200 rounded-lg p-2 focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                        />
+                      ) : (
+                        <input 
+                          type={typeof activeBlock.props[key] === "number" ? "number" : "text"}
+                          value={activeBlock.props[key]}
+                          onChange={(e) => updateActiveBlock(key, e.target.type === "number" ? Number(e.target.value) : e.target.value)}
+                          className="w-full text-sm border border-brand-200 rounded-lg p-2 focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ) : (
@@ -366,9 +483,56 @@ export default function LiveHomeStudio() {
               <button onClick={() => addBlock('STATS')} className="text-[11px] font-semibold border border-gray-200 rounded-lg p-2 hover:bg-gray-50 hover:border-brand-300 transition">Statistika</button>
               <button onClick={() => addBlock('BLOG')} className="text-[11px] font-semibold border border-gray-200 rounded-lg p-2 hover:bg-gray-50 hover:border-brand-300 transition">Blog / Xəbərlər</button>
               <button onClick={() => addBlock('AD_BANNER')} className="text-[11px] font-semibold border border-gray-200 rounded-lg p-2 hover:bg-gray-50 hover:border-brand-300 transition">Reklam Banneri</button>
+              <button onClick={() => addBlock('CUSTOM_CODE')} className="text-[11px] font-semibold border border-gray-200 rounded-lg p-2 hover:bg-gray-50 hover:border-brand-300 transition">Xüsusi HTML/Kod</button>
             </div>
           </div>
+            </>
+          ) : (
+            <div className="space-y-3">
+              <div className="bg-purple-50 border border-purple-100 rounded-xl p-3 text-[11px] text-gray-700 leading-relaxed">
+                Bu səhifədə <b>Vizual Redaktə</b> düyməsinə basıb ekrandakı <b>hər hansı mətnə, başlığa, düyməyə, şəkilə və ya linkə klikləyib</b> birbaşa dəyişə bilərsiniz — dəyişikliklər avtomatik yadda saxlanılır və canlı saytda dərhal görünür.
+                <div className="mt-2 pt-2 border-t border-purple-100 text-gray-500">
+                  Aşağıda bu səhifədə indiyə qədər redaktə edilmiş bütün elementlər görünür — Sil düyməsi ilə orijinala qaytarıla bilər.
+                </div>
+              </div>
 
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Redaktə edilən elementlər</h3>
+                <button onClick={() => fetchOverrides(pagePath)} className="text-[11px] font-bold text-brand-700 hover:text-brand-800">
+                  Yenilə
+                </button>
+              </div>
+
+              {ovrLoading ? (
+                <p className="text-xs text-gray-400 text-center p-3">Yüklənir...</p>
+              ) : Object.keys(ovr).length === 0 ? (
+                <p className="text-xs text-gray-400 text-center p-4 border border-dashed rounded-xl">
+                  Bu səhifədə hələ redaktə edilən element yoxdur. Vizual Redaktə düyməsinə basıb ekranda istənilən mətnə klikləyin.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {Object.entries(ovr).map(([key, o]) => (
+                    <div key={key} className="p-2.5 rounded-xl border border-gray-200 bg-white">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] text-gray-400 line-through truncate">{o.prev || "(orijinal mətn qeydə alınmayıb)"}</p>
+                          <p className="text-[11px] font-bold text-gray-800 truncate">{o.value || "(boş)"}</p>
+                          <p className="text-[9px] text-gray-300 mt-0.5 uppercase">{o.kind}</p>
+                        </div>
+                        <button
+                          onClick={() => deleteOverride(key, o.kind)}
+                          title="Bu redaktəni sil (orijinala qaytar)"
+                          className="text-[10px] font-bold text-red-400 hover:text-red-600 shrink-0 border border-red-100 rounded-lg px-2 py-1"
+                        >
+                          Sil
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -380,11 +544,47 @@ export default function LiveHomeStudio() {
         <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border-4 border-gray-800 relative">
            <iframe 
              id="preview-iframe"
-             src="/?editMode=true"
+             key={pagePath + "-" + iframeKey}
+             src={`${pagePath}?editMode=true`}
+             onLoad={() => {
+               // səhifə dəyişəndə redaktə rejimi avtomatik yenidən aktivləşsin
+               setTimeout(() => {
+                 if (visualActive) postToIframe({ type: "TOGGLE_VISUAL_EDIT", active: true });
+               }, 900);
+             }}
              className="w-full h-full border-none"
            />
         </div>
       </div>
+
+      {/* Qlobal CSS modal */}
+      {cssOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setCssOpen(false)}>
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-5 max-h-[85vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-bold text-gray-800">{"</>"} Qlobal Xüsusi CSS</h3>
+              <button onClick={() => setCssOpen(false)} className="text-gray-400 hover:text-gray-800 font-bold text-xl leading-none">×</button>
+            </div>
+            <p className="text-[11px] text-gray-500 mb-3 leading-relaxed">
+              Burada yazdığınız CSS <b>bütün saytın hər səhifəsinə</b> tətbiq olunur (rənglər, fontlar, ölçülər, gizlətmələr və s.). Yalnız adminlər dəyişə bilər. Nümunə: <code className="bg-gray-100 px-1 rounded">.footer {"{ font-size:14px }"}</code>
+            </p>
+            <textarea
+              value={cssVal}
+              onChange={(e) => setCssVal(e.target.value)}
+              rows={12}
+              spellCheck={false}
+              placeholder={"/* Məsələn: */\n.footer { font-size: 14px; }\n.some-banner { display: none; }"}
+              className="w-full text-xs font-mono border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-brand-400 focus:outline-none"
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button onClick={() => setCssOpen(false)} className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Ləğv et</button>
+              <button onClick={saveCss} disabled={cssSaving} className="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold">
+                {cssSaving ? "Saxlanılır..." : "Yadda Saxla və Tətbiq Et"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
