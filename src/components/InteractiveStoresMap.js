@@ -16,7 +16,6 @@ export default function InteractiveStoresMap({ stores = [], salesPoints = [] }) 
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css";
-    link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzVCf9xK4Qpf0U0rOTfnGNu4T4=";
     link.crossOrigin = "";
     document.head.appendChild(link);
     return () => { document.head.removeChild(link); };
@@ -94,7 +93,6 @@ export default function InteractiveStoresMap({ stores = [], salesPoints = [] }) 
     <div>
       <Script
         src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nVDchvRj7x4F7P5K6m4qfUqSG5lS8f5x5f2Q6e6e6="
         crossOrigin=""
         onLoad={() => setLeafletLoaded(true)}
       />

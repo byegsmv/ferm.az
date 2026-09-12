@@ -54,7 +54,7 @@ export default function PWAInstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-24 left-4 right-4 md:bottom-6 md:left-auto md:right-6 md:w-96 z-[99] animate-in slide-in-from-bottom-5 fade-in duration-500">
+    <div className="w-full md:w-96 max-w-full animate-in slide-in-from-bottom-5 fade-in duration-500">
       <div className="bg-white/95 backdrop-blur-xl border border-gray-200/50 p-4 rounded-3xl shadow-2xl flex items-start gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-2">
           <button onClick={handleDismiss} className="text-gray-400 hover:text-gray-700 bg-gray-50/50 rounded-full p-1 transition-colors">

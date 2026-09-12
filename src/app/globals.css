@@ -215,6 +215,22 @@ body {
 .animate-rail-float     { animation: railFloat 3.6s ease-in-out infinite; }
 .animate-shimmer-sweep { background-size: 200% 100%; animation: shimmer 3.5s linear infinite; }
 
+/* Reklam bannerləri — davamlı diqqət-çəkici "açılış-bağlanış" pərdə dövrü
+   (Elgün istəyi 2026-09-12: statik qalmasın, hərəkətli olsun ki, gəzən
+   insanın diqqətini çəksin). Məzmun ~78% vaxt görünür, sonra qısa bir
+   "pərdə" keçidi ilə örtülüb yenidən açılır — sonsuz təkrarlanır. */
+@keyframes curtainCycle {
+  0%, 76%   { transform: translateY(-101%); }
+  82%, 90%  { transform: translateY(0); }
+  100%      { transform: translateY(-101%); }
+}
+.animate-curtain-cycle { animation: curtainCycle 9s cubic-bezier(.65,0,.35,1) infinite; }
+@keyframes bannerPulseGlow {
+  0%,100% { box-shadow: 0 8px 28px -6px rgba(101,163,13,.45), 0 0 0 1px rgba(250,204,21,.25); }
+  50%     { box-shadow: 0 14px 40px -6px rgba(101,163,13,.65), 0 0 0 1px rgba(250,204,21,.45); }
+}
+.animate-banner-pulse { animation: bannerPulseGlow 3.4s ease-in-out infinite; }
+
 /* Toast */
 .toast { @apply fixed bottom-24 sm:bottom-6 right-2 sm:right-4 z-[100] w-[calc(100%-16px)] sm:max-w-sm max-w-sm; }
 .toast-inner { @apply bg-white rounded-[var(--r-xl)] border border-[var(--border)] shadow-[var(--shadow-xl)] p-3 sm:p-4 flex items-start gap-3; animation: slideInRight 0.35s ease-out both; }

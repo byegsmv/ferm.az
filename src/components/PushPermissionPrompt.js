@@ -127,7 +127,7 @@ export default function PushPermissionPrompt() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm z-[60] animate-fade-in-up">
+    <div className="w-full sm:w-96 max-w-full animate-fade-in-up">
       <div className="relative overflow-hidden rounded-2xl bg-gray-900/95 backdrop-blur-md text-white shadow-2xl ring-1 ring-white/10 p-4">
         <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-emerald-500/20 blur-2xl" />
         <div className="flex items-start gap-3">

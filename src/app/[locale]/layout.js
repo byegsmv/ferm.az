@@ -108,7 +108,6 @@ export default async function RootLayout({ children, params }) {
           <SmoothScroll>
             <ServiceWorkerRegister />
             <AdPixels />
-            <PWAInstallPrompt />
             <WhatsAppFloat />
             <Toaster position="top-center" />
             
@@ -124,8 +123,15 @@ export default async function RootLayout({ children, params }) {
             
             <BottomNav />
             <Footer />
-            <PushPermissionPrompt />
-            <AIAgronomWidget />
+
+            {/* Sağ-aşağı künc: bütün üzən elementlər (AI Aqronom, bildiriş kartları)
+                BİR ortaq flex sütununda saxlanılır ki, biri digərinin altında qalıb
+                gizlənməsin — hər kart öz hündürlüyünə görə avtomatik yuxarı sürüşür. */}
+            <div className="fixed inset-x-0 bottom-0 z-[100] flex flex-col-reverse items-end gap-3 px-4 md:px-6 pb-24 md:pb-6 pointer-events-none [&>*]:pointer-events-auto">
+              <AIAgronomWidget />
+              <PushPermissionPrompt />
+              <PWAInstallPrompt />
+            </div>
           </SmoothScroll>
         </NextIntlClientProvider>
       {globalCss ? <style dangerouslySetInnerHTML={{ __html: globalCss }} /> : null}

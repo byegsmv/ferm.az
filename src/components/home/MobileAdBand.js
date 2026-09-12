@@ -22,9 +22,9 @@ const SOCIALS = [
 ];
 
 const BANNERS = [
-  { id: "placeholder", title: "Burada Sizin Reklamınız Ola Bilər", bg: "/img/ad-band-bg-wide.jpg" },
+  { id: "placeholder", title: "Burada Sizin Reklamınız Ola Bilər" },
   // Gələcək reklam kartları bura əlavə olunacaq:
-  // { id: "-client-", title: "...", bg: "..." },
+  // { id: "-client-", title: "..." },
 ];
 
 export default function MobileAdBand() {
@@ -60,14 +60,38 @@ export default function MobileAdBand() {
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
           {BANNERS.map((b) => (
-            <div key={b.id} className="w-full shrink-0 relative aspect-[1600/680]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={b.bg} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3">
-                <h3 className="w-full text-center text-[13px] sm:text-base font-bold leading-tight text-white drop-shadow-md truncate">
+            <div key={b.id} className="w-full shrink-0 relative aspect-[1600/680] animate-banner-pulse">
+              {/* Marka rəngli qradient arxa fon (FermerMarket loqosu: zeytun-yaşıl → qızılı-sarı) — statik şəkil yox, kod-səviyyəli, hər ekranda kəskin */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#3f6212] via-[#65a30d] to-[#eab308]" />
+              {/* İncə buğday sünbülü naxışı — dekorativ, aşağı opasitli */}
+              <svg className="absolute inset-0 w-full h-full opacity-[0.16]" viewBox="0 0 400 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <g stroke="#fff" strokeWidth="1.4" fill="none" strokeLinecap="round">
+                  {[20, 90, 310, 380].map((cx, i) => (
+                    <g key={i} transform={`translate(${cx},${i % 2 === 0 ? -10 : 90})`}>
+                      <path d="M0,0 L0,90" />
+                      {[0,1,2,3,4,5].map((n) => (
+                        <g key={n}>
+                          <path d={`M0,${10 + n * 13} q10,-6 16,2`} />
+                          <path d={`M0,${10 + n * 13} q-10,-6 -16,2`} />
+                        </g>
+                      ))}
+                    </g>
+                  ))}
+                </g>
+              </svg>
+              {/* Işıq şimmeri */}
+              <div
+                className="absolute inset-0 opacity-30 mix-blend-overlay animate-shimmer-sweep pointer-events-none"
+                style={{ backgroundImage: "linear-gradient(115deg, transparent 35%, rgba(255,255,255,.6) 50%, transparent 65%)" }}
+              />
+              {/* Davamlı "açılış-bağlanış" pərdə keçidi — diqqət çəkmək üçün */}
+              <div className="absolute inset-0 z-10 pointer-events-none animate-curtain-cycle bg-gradient-to-br from-[#365314] via-[#4d7c0f] to-[#ca8a04]" />
+
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 px-3">
+                <h3 className="w-full text-center text-base sm:text-xl font-extrabold leading-tight text-white drop-shadow-md tracking-tight">
                   {b.title}
                 </h3>
-                <div className="flex items-center justify-center gap-2.5 sm:gap-3">
+                <div className="flex items-center justify-center gap-2.5 sm:gap-3.5">
                   {SOCIALS.map((s) => (
                     <a
                       key={s.key}
@@ -75,10 +99,9 @@ export default function MobileAdBand() {
                       target="_blank"
                       rel="noopener noreferrer"
                       title={s.title}
-                      className="flex items-center justify-center p-0.5 transition-transform duration-200 hover:scale-110 active:scale-95"
+                      className="flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/20 ring-1 ring-white/30 backdrop-blur-sm transition-transform duration-200 hover:scale-110 hover:bg-white/30 active:scale-95"
                     >
-                      <svg viewBox="0 0 24 24" className="h-6 w-6 sm:h-7 sm:w-7 drop-shadow-md" aria-hidden="true">
-                        {/* bütün ikonlar monoxrom ağ — premium görünüş */}
+                      <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6 drop-shadow-md" aria-hidden="true">
                         <path fill="#ffffff" d={s.path} />
                       </svg>
                     </a>
