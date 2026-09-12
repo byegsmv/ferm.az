@@ -257,3 +257,17 @@ body {
 .blog-content th { background: #f9fafb; font-weight: 700; color: #111827; }
 .blog-content div { margin: 0; }
 .blog-content div > p:only-child { margin-bottom: 0; }
+
+/* Elgun isteyi (2026-09-12): reklam kartindaki hover olcekleme kaldirildi;
+   360 donme ikonlara ve urun karti resimlerine tasindi */
+@keyframes spinOnce { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+.icon-spin-on-hover:hover > svg { animation: spinOnce .75s cubic-bezier(.16,1,.3,1); }
+
+@keyframes productImgSpin {
+  0%   { transform: rotate(0deg)   scale(1); }
+  20%  { transform: rotate(70deg)  scale(1.32); }
+  50%  { transform: rotate(180deg) scale(1.32); }
+  80%  { transform: rotate(290deg) scale(1.32); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+.group:hover .product-img-spin { animation: productImgSpin 1.15s cubic-bezier(.45,0,.25,1); }
